@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS postings (
   industry_memo    TEXT NOT NULL,
   raw_text         TEXT NOT NULL,
   is_deleted       INTEGER DEFAULT 0,
-  created_at       TEXT DEFAULT (datetime('now')),
-  updated_at       TEXT DEFAULT (datetime('now'))
+  created_at       TEXT DEFAULT (datetime('now', '+9 hours')),
+  updated_at       TEXT DEFAULT (datetime('now', '+9 hours'))
 );
 
 CREATE TABLE IF NOT EXISTS review_items (
@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS review_items (
   approved_value    TEXT,
   status            TEXT DEFAULT 'unconfirmed',
   dictionary_apply  INTEGER DEFAULT 0,
-  created_at        TEXT DEFAULT (datetime('now')),
-  updated_at        TEXT DEFAULT (datetime('now')),
+  created_at        TEXT DEFAULT (datetime('now', '+9 hours')),
+  updated_at        TEXT DEFAULT (datetime('now', '+9 hours')),
   FOREIGN KEY (posting_id) REFERENCES postings(id)
 );
 
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS analysis_results (
   extracted_skills       TEXT,
   extracted_competencies TEXT,
   unconfirmed_count      INTEGER DEFAULT 0,
-  analyzed_at            TEXT DEFAULT (datetime('now')),
+  analyzed_at            TEXT DEFAULT (datetime('now', '+9 hours')),
   FOREIGN KEY (posting_id) REFERENCES postings(id)
 );
 """
