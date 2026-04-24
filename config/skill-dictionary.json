@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "name": "API",
+    "aliases": []
+  },
+  {
+    "name": "PRD",
+    "aliases": []
+  },
+  {
+    "name": "SRS",
+    "aliases": []
+  },
+  {
+    "name": "UX/UI",
+    "aliases": [
+      "UI/UX"
+    ]
+  },
+  {
+    "name": "언리얼 엔진",
+    "aliases": []
+  },
+  {
+    "name": "LLM",
+    "aliases": []
+  },
+  {
+    "name": "LangChain",
+    "aliases": []
+  },
+  {
+    "name": "Claude Code",
+    "aliases": []
+  },
+  {
+    "name": "Jira",
+    "aliases": [
+      "JIRA"
+    ]
+  },
+  {
+    "name": "Confluence",
+    "aliases": []
+  },
+  {
+    "name": "Figma",
+    "aliases": []
+  },
+  {
+    "name": "Slack",
+    "aliases": []
+  },
+  {
+    "name": "생성형 AI",
+    "aliases": []
+  },
+  {
+    "name": "챗봇",
+    "aliases": []
+  },
+  {
+    "name": "쇼피파이",
+    "aliases": [
+      "Shopify"
+    ]
+  },
+  {
+    "name": "ChatGPT",
+    "aliases": []
+  }
+]
