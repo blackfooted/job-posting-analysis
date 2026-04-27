@@ -116,6 +116,7 @@ def update_review_item(
             (approved_value, status, dictionary_apply, review_item_id),
         )
 
+        _sync_analysis_unconfirmed_count(connection, existing["posting_id"])
         updated = _fetch_review_item(connection, review_item_id)
         connection.commit()
     finally:
@@ -149,6 +150,33 @@ def _fetch_review_item(
     if row is None:
         return None
     return _row_to_review_item(row)
+
+
+def _sync_analysis_unconfirmed_count(
+    connection: sqlite3.Connection,
+    posting_id: int,
+) -> None:
+    unconfirmed_count = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM review_items AS review_items
+        INNER JOIN postings AS postings
+          ON postings.id = review_items.posting_id
+        WHERE review_items.posting_id = ?
+          AND review_items.status = 'unconfirmed'
+          AND postings.is_deleted = 0
+        """,
+        (posting_id,),
+    ).fetchone()[0]
+
+    connection.execute(
+        """
+        UPDATE analysis_results
+        SET unconfirmed_count = ?
+        WHERE posting_id = ?
+        """,
+        (unconfirmed_count, posting_id),
+    )
 
 
 def _row_to_review_item(row: sqlite3.Row) -> dict[str, Any]:
