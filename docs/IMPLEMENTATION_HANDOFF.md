@@ -79,13 +79,17 @@
 2. 내용 수정 후 저장
 3. 전체 재분류
 4. 기존 `analysis_results`는 UPDATE 덮어쓰기
-5. 기존 `review_items`는 초기화 후 재생성
-6. 기존 confirmed 정제값도 초기화
+5. 기존 `review_items`는 전체 삭제 후 재생성
+6. 기존 confirmed 정제값도 보존하지 않고 초기화
+7. 공고 수정은 이전 정제 판단을 reset하는 동작임을 UX/문구에서 명확히 안내
 
 ### 6.3 대시보드 확인
 1. 사용자가 대시보드 진입
 2. 누적 데이터 기준 카드/차트 확인
-3. 사용자가 새로고침 버튼 클릭 시 재계산
+3. 사용자가 새로고침 버튼 클릭 시 아래 3개 API를 병렬 호출하여 재조회
+   - `GET /api/dashboard/summary`
+   - `GET /api/dashboard/charts`
+   - `GET /api/dashboard/comparison`
 
 ### 6.4 데이터 정제
 1. 데이터 정제 관리 화면 진입
@@ -207,6 +211,10 @@ CREATE TABLE analysis_results (
   FOREIGN KEY (posting_id) REFERENCES postings(id)
 );
 ```
+
+### 시간 처리 주의
+- 현재 구현은 SQLite 표현식 기준 KST 처리에 의존함
+- 로컬 외 배포, 서버 타임존 변경, 컨테이너 환경 변경 전에는 Python layer 시간 처리 또는 UTC 저장 방식으로 이전이 필요한지 검토
 
 ---
 
@@ -433,7 +441,7 @@ postings API만 구현
 - 저장
 - 목록
 - 단건 조회
-- 수정(전체 재분류 포함)
+- 수정
 - 삭제(soft delete)
 
 ### 4단계
@@ -449,6 +457,9 @@ review_items API만 구현
 
 ### 6단계
 React LNB + 빈 화면 뼈대
+- CORS는 이 단계 전까지 구현하지 않음
+- frontend 프로젝트 초기화 직후, 첫 frontend API 연동 전에 CORS 추가
+- 기본 예정 frontend origin: `http://localhost:3000`
 
 ### 7단계
 개별 공고 분석 화면 구현
@@ -509,10 +520,9 @@ React LNB + 빈 화면 뼈대
 
 조건:
 - soft delete 적용
-- 수정 시 전체 재분류
 - `analysis_results`는 UPDATE 방식
 - 공통 응답 포맷 준수
-- `review_items`는 재분류 시 초기화 후 재생성
+- 공고 수정 정책은 6.2 기준 준수
 
 중요:
 - 다른 API는 만들지 말 것
