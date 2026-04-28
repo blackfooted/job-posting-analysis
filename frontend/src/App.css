@@ -1,10 +1,47 @@
 .app {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   min-height: 100vh;
   align-items: center;
   justify-content: center;
   padding: 24px;
   text-align: center;
+}
+
+.app > p {
+  margin-top: 24px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+  width: min(100%, 760px);
+}
+
+.summary-grid article {
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.summary-grid span,
+.summary-grid strong {
+  display: block;
+}
+
+.summary-grid span {
+  color: #57606a;
+  font-size: 14px;
+}
+
+.summary-grid strong {
+  margin-top: 8px;
+  color: #24292f;
+  font-size: 28px;
+}
+
+.error {
+  color: #b42318;
 }
