@@ -5,7 +5,12 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
-import { createPosting, fetchPosting, fetchPostings } from './api/postingsApi'
+import {
+  createPosting,
+  fetchPosting,
+  fetchPostings,
+  updatePosting,
+} from './api/postingsApi'
 import { fetchReviewItems, updateReviewItem } from './api/reviewItemsApi'
 
 function App() {
@@ -224,6 +229,9 @@ function App() {
       }
 
       setSelectedPosting(result.data)
+      setPostingForm(_postingToForm(result.data, initialPostingForm))
+      setPostingCreateError('')
+      setPostingCreateMessage('')
     } catch (requestError) {
       setSelectedPostingError(
         requestError.message || 'Failed to load posting detail.',
@@ -248,25 +256,54 @@ function App() {
     setPostingCreateMessage('')
 
     try {
-      const result = await createPosting(postingForm)
+      const result = selectedPosting
+        ? await updatePosting(selectedPosting.id, postingForm)
+        : await createPosting(postingForm)
 
       if (result.error) {
         setPostingCreateError(
-          result.error.message || 'Failed to create posting.',
+          result.error.message || 'Failed to save posting.',
         )
         return
       }
 
       await loadPostings()
-      setPostingForm(initialPostingForm)
-      setPostingCreateMessage('공고가 저장되었습니다.')
+      if (selectedPosting) {
+        await refreshSelectedPosting(selectedPosting.id)
+        setPostingCreateMessage('공고가 수정되었습니다.')
+      } else {
+        setPostingForm(initialPostingForm)
+        setPostingCreateMessage('공고가 저장되었습니다.')
+      }
     } catch (requestError) {
       setPostingCreateError(
-        requestError.message || 'Failed to create posting.',
+        requestError.message || 'Failed to save posting.',
       )
     } finally {
       setPostingCreateLoading(false)
     }
+  }
+
+  async function refreshSelectedPosting(postingId) {
+    const detailResult = await fetchPosting(postingId)
+
+    if (detailResult.error) {
+      setSelectedPostingError(
+        detailResult.error.message || 'Failed to load posting detail.',
+      )
+      return
+    }
+
+    setSelectedPosting(detailResult.data)
+    setPostingForm(_postingToForm(detailResult.data, initialPostingForm))
+  }
+
+  function handleNewPostingInput() {
+    setSelectedPosting(null)
+    setSelectedPostingError('')
+    setPostingForm(initialPostingForm)
+    setPostingCreateError('')
+    setPostingCreateMessage('')
   }
 
   async function loadReviewItemsPage(
@@ -557,8 +594,22 @@ function App() {
             </section>
 
             <section className="posting-create" aria-label="Create posting">
-              <h2>신규 공고 입력</h2>
+              <div className="posting-create-header">
+                <h2>{selectedPosting ? '공고 수정' : '신규 공고 등록'}</h2>
+                {selectedPosting && (
+                  <button type="button" onClick={handleNewPostingInput}>
+                    신규 입력
+                  </button>
+                )}
+              </div>
               <p className="form-note">모든 필드를 입력한 뒤 저장하세요.</p>
+
+              {selectedPosting && (
+                <p className="form-note">
+                  공고 수정 시 전체 재분류가 발생하며 기존 정제 항목과
+                  confirmed 값이 초기화될 수 있습니다.
+                </p>
+              )}
 
               {postingCreateError && (
                 <p className="error">{postingCreateError}</p>
@@ -569,6 +620,7 @@ function App() {
               <PostingCreateForm
                 form={postingForm}
                 isSaving={postingCreateLoading}
+                isEditing={Boolean(selectedPosting)}
                 onChange={handlePostingFormChange}
                 onSubmit={handleCreatePosting}
               />
@@ -832,7 +884,7 @@ function PostingsTable({ items = [], onViewDetail }) {
   )
 }
 
-function PostingCreateForm({ form, isSaving, onChange, onSubmit }) {
+function PostingCreateForm({ form, isSaving, isEditing, onChange, onSubmit }) {
   const fields = [
     ['company', '회사명', 'input'],
     ['position', '포지션', 'input'],
@@ -861,7 +913,7 @@ function PostingCreateForm({ form, isSaving, onChange, onSubmit }) {
       ))}
       <div className="posting-create-actions">
         <button type="submit" disabled={isSaving}>
-          {isSaving ? '저장 중...' : '저장'}
+          {isSaving ? '저장 중...' : isEditing ? '수정 저장' : '등록'}
         </button>
       </div>
     </form>
@@ -972,6 +1024,13 @@ function formatValue(value) {
 
 function formatList(value) {
   return Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'
+}
+
+function _postingToForm(posting, initialPostingForm) {
+  return Object.keys(initialPostingForm).reduce((form, field) => {
+    form[field] = posting?.[field] || ''
+    return form
+  }, {})
 }
 
 export default App

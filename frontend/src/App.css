@@ -209,6 +209,26 @@
   width: min(100%, 1100px);
 }
 
+.posting-create-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.posting-create-header h2 {
+  margin: 0;
+}
+
+.posting-create-header button {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+}
+
 .form-note {
   color: #57606a;
   font-size: 14px;
@@ -586,6 +606,11 @@
 
   .posting-create-form {
     grid-template-columns: 1fr;
+  }
+
+  .posting-create-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .comparison-table th,
