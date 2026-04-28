@@ -1,11 +1,18 @@
 .app {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   align-items: center;
   justify-content: center;
   padding: 24px;
   text-align: center;
+}
+
+.app * {
+  box-sizing: border-box;
 }
 
 .app > p {
@@ -91,10 +98,12 @@
 .comparison-table-wrap {
   margin-top: 16px;
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .comparison-table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -104,8 +113,69 @@
   border: 1px solid #d8dee4;
   padding: 10px;
   vertical-align: top;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .comparison-table th {
   background: #f6f8fa;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .app {
+    padding: 20px;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .chart-groups {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .comparison-table {
+    min-width: 780px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 16px 12px;
+  }
+
+  .app > p {
+    margin-top: 16px;
+  }
+
+  .summary-grid,
+  .chart-groups {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .summary-grid {
+    margin-top: 16px;
+  }
+
+  .summary-grid article,
+  .chart-list {
+    padding: 14px;
+  }
+
+  .summary-grid strong {
+    font-size: 24px;
+  }
+
+  .charts,
+  .comparison {
+    margin-top: 24px;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 8px;
+    font-size: 14px;
+  }
 }
