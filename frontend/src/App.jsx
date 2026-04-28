@@ -9,6 +9,7 @@ import { fetchPosting, fetchPostings } from './api/postingsApi'
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard')
+  const [isNavigationOpen, setIsNavigationOpen] = useState(false)
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -146,6 +147,19 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isNavigationOpen) {
+      return undefined
+    }
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [isNavigationOpen])
+
   async function handleViewPostingDetail(postingId) {
     setSelectedPosting(null)
     setSelectedPostingError('')
@@ -177,10 +191,44 @@ function App() {
     { id: 'reviewItems', label: '데이터 정제 관리' },
     { id: 'aiRecommendations', label: 'AI 추천 관리' },
   ]
+  const activePageLabel =
+    navigationItems.find((item) => item.id === activePage)?.label || ''
+
+  function handleNavigationClick(pageId) {
+    setActivePage(pageId)
+    setIsNavigationOpen(false)
+  }
 
   return (
     <div className="app">
-      <aside className="lnb" aria-label="Primary navigation">
+      <header className="mobile-header">
+        <button
+          type="button"
+          className="hamburger-button"
+          aria-label="Open navigation"
+          aria-expanded={isNavigationOpen}
+          onClick={() => setIsNavigationOpen((isOpen) => !isOpen)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <strong>{activePageLabel}</strong>
+      </header>
+
+      {isNavigationOpen && (
+        <button
+          type="button"
+          className="navigation-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setIsNavigationOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`lnb ${isNavigationOpen ? 'is-open' : ''}`}
+        aria-label="Primary navigation"
+      >
         <nav>
           {navigationItems.map((item) => (
             <button
@@ -189,7 +237,7 @@ function App() {
               className={`lnb-button ${
                 activePage === item.id ? 'is-active' : ''
               }`}
-              onClick={() => setActivePage(item.id)}
+              onClick={() => handleNavigationClick(item.id)}
             >
               {item.label}
             </button>
