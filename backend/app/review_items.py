@@ -116,7 +116,26 @@ def update_review_item(
             (approved_value, status, dictionary_apply, review_item_id),
         )
 
-        _sync_analysis_unconfirmed_count(connection, existing["posting_id"])
+        affected_posting_ids = {existing["posting_id"]}
+        if (
+            dictionary_apply == 1
+            and status == "confirmed"
+            and approved_value is not None
+            and approved_value != ""
+        ):
+            affected_posting_ids.update(
+                _apply_dictionary_to_matching_review_items(
+                    connection=connection,
+                    field_type=existing["field_type"],
+                    raw_value=existing["raw_value"],
+                    approved_value=approved_value,
+                    exclude_id=review_item_id,
+                )
+            )
+
+        for posting_id in affected_posting_ids:
+            _sync_analysis_unconfirmed_count(connection, posting_id)
+
         updated = _fetch_review_item(connection, review_item_id)
         connection.commit()
     finally:
@@ -177,6 +196,59 @@ def _sync_analysis_unconfirmed_count(
         """,
         (unconfirmed_count, posting_id),
     )
+
+
+def _normalize_review_value(value: str) -> str:
+    return "".join(str(value).split())
+
+
+def _apply_dictionary_to_matching_review_items(
+    connection: sqlite3.Connection,
+    field_type: str,
+    raw_value: str,
+    approved_value: str,
+    exclude_id: int,
+) -> set[int]:
+    normalized_raw_value = _normalize_review_value(raw_value)
+    rows = connection.execute(
+        """
+        SELECT review_items.id,
+               review_items.posting_id,
+               review_items.raw_value
+        FROM review_items AS review_items
+        INNER JOIN postings AS postings
+          ON postings.id = review_items.posting_id
+        WHERE review_items.id != ?
+          AND review_items.field_type = ?
+          AND review_items.status = 'unconfirmed'
+          AND postings.is_deleted = 0
+        """,
+        (exclude_id, field_type),
+    ).fetchall()
+
+    matched_rows = [
+        row
+        for row in rows
+        if _normalize_review_value(row["raw_value"]) == normalized_raw_value
+    ]
+    matched_ids = [row["id"] for row in matched_rows]
+    affected_posting_ids = {row["posting_id"] for row in matched_rows}
+
+    if matched_ids:
+        placeholders = ", ".join("?" for _ in matched_ids)
+        connection.execute(
+            f"""
+            UPDATE review_items
+            SET approved_value = ?,
+                status = 'confirmed',
+                dictionary_apply = 1,
+                updated_at = datetime('now', '+9 hours')
+            WHERE id IN ({placeholders})
+            """,
+            (approved_value, *matched_ids),
+        )
+
+    return affected_posting_ids
 
 
 def _row_to_review_item(row: sqlite3.Row) -> dict[str, Any]:
