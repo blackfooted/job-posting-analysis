@@ -100,6 +100,11 @@
   width: min(100%, 1100px);
 }
 
+.posting-detail {
+  margin-top: 32px;
+  width: min(100%, 1100px);
+}
+
 .comparison-table-wrap {
   margin-top: 16px;
   overflow-x: auto;
@@ -121,7 +126,7 @@
 
 .postings-table {
   width: 100%;
-  min-width: 720px;
+  min-width: 820px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -143,6 +148,39 @@
   white-space: nowrap;
 }
 
+.detail-button {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.posting-detail-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  text-align: left;
+}
+
+.posting-detail-item {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: 12px;
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.posting-detail-item dt {
+  color: #57606a;
+  font-weight: 700;
+}
+
+.posting-detail-item dd {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 20px;
@@ -161,7 +199,7 @@
   }
 
   .postings-table {
-    min-width: 680px;
+    min-width: 760px;
   }
 }
 
@@ -195,7 +233,8 @@
 
   .charts,
   .comparison,
-  .postings {
+  .postings,
+  .posting-detail {
     margin-top: 24px;
   }
 
@@ -205,5 +244,11 @@
   .postings-table td {
     padding: 8px;
     font-size: 14px;
+  }
+
+  .posting-detail-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px;
   }
 }

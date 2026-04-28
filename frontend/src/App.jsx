@@ -5,7 +5,7 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
-import { fetchPostings } from './api/postingsApi'
+import { fetchPosting, fetchPostings } from './api/postingsApi'
 
 function App() {
   const [summary, setSummary] = useState(null)
@@ -20,6 +20,9 @@ function App() {
   const [postings, setPostings] = useState([])
   const [postingsLoading, setPostingsLoading] = useState(true)
   const [postingsError, setPostingsError] = useState('')
+  const [selectedPosting, setSelectedPosting] = useState(null)
+  const [selectedPostingLoading, setSelectedPostingLoading] = useState(false)
+  const [selectedPostingError, setSelectedPostingError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -142,6 +145,31 @@ function App() {
     }
   }, [])
 
+  async function handleViewPostingDetail(postingId) {
+    setSelectedPosting(null)
+    setSelectedPostingError('')
+    setSelectedPostingLoading(true)
+
+    try {
+      const result = await fetchPosting(postingId)
+
+      if (result.error) {
+        setSelectedPostingError(
+          result.error.message || 'Failed to load posting detail.',
+        )
+        return
+      }
+
+      setSelectedPosting(result.data)
+    } catch (requestError) {
+      setSelectedPostingError(
+        requestError.message || 'Failed to load posting detail.',
+      )
+    } finally {
+      setSelectedPostingLoading(false)
+    }
+  }
+
   return (
     <main className="app">
       <h1>Dashboard Summary</h1>
@@ -216,7 +244,28 @@ function App() {
         )}
 
         {!postingsLoading && !postingsError && (
-          <PostingsTable items={postings} />
+          <PostingsTable
+            items={postings}
+            onViewDetail={handleViewPostingDetail}
+          />
+        )}
+      </section>
+
+      <section className="posting-detail" aria-label="Posting detail">
+        <h2>Posting Detail</h2>
+
+        {!selectedPostingLoading && !selectedPostingError && !selectedPosting && (
+          <p>Select a posting to view details.</p>
+        )}
+
+        {selectedPostingLoading && <p>Loading posting detail...</p>}
+
+        {!selectedPostingLoading && selectedPostingError && (
+          <p className="error">{selectedPostingError}</p>
+        )}
+
+        {!selectedPostingLoading && !selectedPostingError && selectedPosting && (
+          <PostingDetail posting={selectedPosting} />
         )}
       </section>
     </main>
@@ -282,7 +331,7 @@ function ComparisonTable({ items = [] }) {
   )
 }
 
-function PostingsTable({ items = [] }) {
+function PostingsTable({ items = [], onViewDetail }) {
   if (items.length === 0) {
     return <p>No postings</p>
   }
@@ -297,6 +346,7 @@ function PostingsTable({ items = [] }) {
             <th>고용 형태</th>
             <th>근무 형태</th>
             <th>생성일</th>
+            <th>상세</th>
           </tr>
         </thead>
         <tbody>
@@ -307,11 +357,49 @@ function PostingsTable({ items = [] }) {
               <td>{formatValue(item.employment_type)}</td>
               <td>{formatValue(item.work_type)}</td>
               <td>{formatValue(item.created_at)}</td>
+              <td>
+                <button
+                  type="button"
+                  className="detail-button"
+                  onClick={() => onViewDetail(item.id)}
+                >
+                  상세 보기
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  )
+}
+
+function PostingDetail({ posting }) {
+  const detailItems = [
+    ['회사명', posting.company],
+    ['포지션', posting.position],
+    ['담당 업무', posting.duties],
+    ['자격 요건', posting.requirements],
+    ['우대 사항', posting.preferred],
+    ['기술/툴', posting.tools],
+    ['경력', posting.experience],
+    ['고용 형태', posting.employment_type],
+    ['근무 형태', posting.work_type],
+    ['산업 메모', posting.industry_memo],
+    ['원문', posting.raw_text],
+    ['생성일', posting.created_at],
+    ['수정일', posting.updated_at],
+  ]
+
+  return (
+    <dl className="posting-detail-list">
+      {detailItems.map(([label, value]) => (
+        <div key={label} className="posting-detail-item">
+          <dt>{label}</dt>
+          <dd>{formatValue(value)}</dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 
