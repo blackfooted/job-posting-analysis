@@ -177,6 +177,16 @@
   width: min(100%, 1100px);
 }
 
+.review-items {
+  margin-top: 0;
+  width: min(100%, 1100px);
+}
+
+.page-info {
+  color: #57606a;
+  font-size: 14px;
+}
+
 .placeholder-page {
   width: min(100%, 760px);
 }
@@ -197,6 +207,12 @@
   max-width: 100%;
 }
 
+.review-items-table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 .comparison-table {
   width: 100%;
   min-width: 860px;
@@ -211,10 +227,19 @@
   text-align: left;
 }
 
+.review-items-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
 .comparison-table th,
 .comparison-table td,
 .postings-table th,
-.postings-table td {
+.postings-table td,
+.review-items-table th,
+.review-items-table td {
   border: 1px solid #d8dee4;
   padding: 10px;
   vertical-align: top;
@@ -223,7 +248,8 @@
 }
 
 .comparison-table th,
-.postings-table th {
+.postings-table th,
+.review-items-table th {
   background: #f6f8fa;
   white-space: nowrap;
 }
@@ -338,6 +364,10 @@
   .postings-table {
     min-width: 760px;
   }
+
+  .review-items-table {
+    min-width: 860px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -371,6 +401,7 @@
   .charts,
   .comparison,
   .postings,
+  .review-items,
   .posting-detail {
     margin-top: 24px;
   }
@@ -378,7 +409,9 @@
   .comparison-table th,
   .comparison-table td,
   .postings-table th,
-  .postings-table td {
+  .postings-table td,
+  .review-items-table th,
+  .review-items-table td {
     padding: 8px;
     font-size: 14px;
   }

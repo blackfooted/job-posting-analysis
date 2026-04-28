@@ -6,6 +6,7 @@ import {
   fetchDashboardSummary,
 } from './api/dashboardApi'
 import { fetchPosting, fetchPostings } from './api/postingsApi'
+import { fetchReviewItems } from './api/reviewItemsApi'
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard')
@@ -25,6 +26,14 @@ function App() {
   const [selectedPosting, setSelectedPosting] = useState(null)
   const [selectedPostingLoading, setSelectedPostingLoading] = useState(false)
   const [selectedPostingError, setSelectedPostingError] = useState('')
+  const [reviewItems, setReviewItems] = useState([])
+  const [reviewItemsPageInfo, setReviewItemsPageInfo] = useState({
+    page: 1,
+    size: 15,
+    total: 0,
+  })
+  const [reviewItemsLoading, setReviewItemsLoading] = useState(true)
+  const [reviewItemsError, setReviewItemsError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -137,10 +146,45 @@ function App() {
       }
     }
 
+    async function loadReviewItems() {
+      try {
+        const result = await fetchReviewItems({ page: 1, size: 15 })
+
+        if (!isMounted) {
+          return
+        }
+
+        if (result.error) {
+          setReviewItemsError(
+            result.error.message || 'Failed to load review items.',
+          )
+          return
+        }
+
+        setReviewItems(result.data?.items || [])
+        setReviewItemsPageInfo({
+          page: result.data?.page || 1,
+          size: result.data?.size || 15,
+          total: result.data?.total || 0,
+        })
+      } catch (requestError) {
+        if (isMounted) {
+          setReviewItemsError(
+            requestError.message || 'Failed to load review items.',
+          )
+        }
+      } finally {
+        if (isMounted) {
+          setReviewItemsLoading(false)
+        }
+      }
+    }
+
     loadSummary()
     loadCharts()
     loadComparison()
     loadPostings()
+    loadReviewItems()
 
     return () => {
       isMounted = false
@@ -360,9 +404,27 @@ function App() {
         )}
 
         {activePage === 'reviewItems' && (
-          <section className="placeholder-page" aria-label="Review management">
+          <section className="review-items" aria-label="Review management">
             <h1>데이터 정제 관리</h1>
-            <p>데이터 정제 관리 화면은 다음 단계에서 구현됩니다.</p>
+
+            <p className="page-info">
+              Page {reviewItemsPageInfo.page} / Size {reviewItemsPageInfo.size}{' '}
+              / Total {reviewItemsPageInfo.total}
+            </p>
+
+            {reviewItemsLoading && <p>Loading review items...</p>}
+
+            {!reviewItemsLoading && reviewItemsError && (
+              <p className="error">{reviewItemsError}</p>
+            )}
+
+            {!reviewItemsLoading &&
+              !reviewItemsError &&
+              reviewItems.length === 0 && <p>No review items</p>}
+
+            {!reviewItemsLoading &&
+              !reviewItemsError &&
+              reviewItems.length > 0 && <ReviewItemsTable items={reviewItems} />}
           </section>
         )}
 
@@ -482,6 +544,39 @@ function PostingsTable({ items = [], onViewDetail }) {
   )
 }
 
+function ReviewItemsTable({ items = [] }) {
+  return (
+    <div className="review-items-table-wrap">
+      <table className="review-items-table">
+        <thead>
+          <tr>
+            <th>field_type</th>
+            <th>raw_value</th>
+            <th>approved_value</th>
+            <th>status</th>
+            <th>dictionary_apply</th>
+            <th>created_at</th>
+            <th>updated_at</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr key={item.id || `${item.field_type}-${item.raw_value}-${index}`}>
+              <td>{formatValue(item.field_type)}</td>
+              <td>{formatValue(item.raw_value)}</td>
+              <td>{formatValue(item.approved_value)}</td>
+              <td>{formatValue(item.status)}</td>
+              <td>{formatDictionaryApply(item.dictionary_apply)}</td>
+              <td>{formatValue(item.created_at)}</td>
+              <td>{formatValue(item.updated_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function PostingDetail({ posting }) {
   const detailItems = [
     ['회사명', posting.company],
@@ -517,6 +612,18 @@ function formatValue(value) {
 
 function formatList(value) {
   return Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'
+}
+
+function formatDictionaryApply(value) {
+  if (value === 1) {
+    return 'Y'
+  }
+
+  if (value === 0) {
+    return 'N'
+  }
+
+  return formatValue(value)
 }
 
 export default App
