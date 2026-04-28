@@ -45,3 +45,40 @@
 .error {
   color: #b42318;
 }
+
+.charts {
+  margin-top: 32px;
+  width: min(100%, 760px);
+}
+
+.chart-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.chart-list {
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.chart-list h3 {
+  margin: 0 0 12px;
+}
+
+.chart-list ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chart-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
