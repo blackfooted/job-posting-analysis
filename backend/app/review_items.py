@@ -23,23 +23,37 @@ class ReviewItemUpdate(BaseModel):
 def list_review_items(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=15, ge=1),
+    status: str | None = Query(default=None),
 ) -> dict[str, Any]:
     initialize_database()
+    if status is not None and status not in {"unconfirmed", "confirmed"}:
+        raise HTTPException(
+            status_code=400,
+            detail="status must be one of: unconfirmed, confirmed",
+        )
+
     offset = (page - 1) * size
+    status_condition = ""
+    status_params: tuple[str, ...] = ()
+    if status is not None:
+        status_condition = "AND review_items.status = ?"
+        status_params = (status,)
 
     connection = _connection()
     try:
         total = connection.execute(
-            """
+            f"""
             SELECT COUNT(*)
             FROM review_items AS review_items
             INNER JOIN postings AS postings
               ON postings.id = review_items.posting_id
             WHERE postings.is_deleted = 0
-            """
+              {status_condition}
+            """,
+            status_params,
         ).fetchone()[0]
         rows = connection.execute(
-            """
+            f"""
             SELECT review_items.*,
                    postings.company AS company,
                    postings.position AS position
@@ -47,6 +61,7 @@ def list_review_items(
             INNER JOIN postings AS postings
               ON postings.id = review_items.posting_id
             WHERE postings.is_deleted = 0
+              {status_condition}
             ORDER BY
               CASE
                 WHEN review_items.status = 'unconfirmed' THEN 0
@@ -56,7 +71,7 @@ def list_review_items(
               review_items.id DESC
             LIMIT ? OFFSET ?
             """,
-            (size, offset),
+            (*status_params, size, offset),
         ).fetchall()
     finally:
         connection.close()

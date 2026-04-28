@@ -37,6 +37,7 @@ function App() {
   const [reviewItemsError, setReviewItemsError] = useState('')
   const [savingReviewItemId, setSavingReviewItemId] = useState(null)
   const [reviewItemSaveError, setReviewItemSaveError] = useState('')
+  const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -215,6 +216,7 @@ function App() {
       const result = await fetchReviewItems({
         page,
         size: reviewItemsPageSize,
+        status: reviewItemsStatusFilter,
       })
 
       if (!shouldUpdate()) {
@@ -287,6 +289,10 @@ function App() {
 
   async function handleRefreshDashboard() {
     await Promise.all([loadSummary(), loadCharts(), loadComparison()])
+  }
+
+  function handleSearchReviewItems() {
+    loadReviewItemsPage(1)
   }
 
   const navigationItems = [
@@ -485,6 +491,29 @@ function App() {
         {activePage === 'reviewItems' && (
           <section className="review-items" aria-label="Review management">
             <h1>데이터 정제 관리</h1>
+
+            <div className="review-items-filters">
+              <label>
+                <span>Status</span>
+                <select
+                  value={reviewItemsStatusFilter}
+                  onChange={(event) =>
+                    setReviewItemsStatusFilter(event.target.value)
+                  }
+                >
+                  <option value="">전체</option>
+                  <option value="unconfirmed">unconfirmed</option>
+                  <option value="confirmed">confirmed</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={handleSearchReviewItems}
+                disabled={reviewItemsLoading}
+              >
+                조회
+              </button>
+            </div>
 
             <p className="page-info">
               Page {reviewItemsPageInfo.page} / Size {reviewItemsPageInfo.size}{' '}

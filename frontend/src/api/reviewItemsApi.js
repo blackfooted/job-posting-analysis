@@ -11,11 +11,15 @@ async function requestReviewItems(endpoint, options = {}) {
   return response.json()
 }
 
-export function fetchReviewItems({ page = 1, size = 15 } = {}) {
+export function fetchReviewItems({ page = 1, size = 15, status = '' } = {}) {
   const params = new URLSearchParams({
     page: String(page),
     size: String(size),
   })
+
+  if (status) {
+    params.set('status', status)
+  }
 
   return requestReviewItems(`/api/review-items?${params.toString()}`)
 }
