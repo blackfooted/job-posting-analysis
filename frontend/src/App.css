@@ -204,6 +204,68 @@
   width: min(100%, 1100px);
 }
 
+.posting-create {
+  margin-top: 32px;
+  width: min(100%, 1100px);
+}
+
+.form-note {
+  color: #57606a;
+  font-size: 14px;
+}
+
+.posting-create-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.posting-create-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.posting-create-form span {
+  color: #57606a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.posting-create-form input,
+.posting-create-form textarea {
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.posting-create-form textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.posting-create-actions {
+  display: flex;
+  align-items: end;
+}
+
+.posting-create-actions button {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+}
+
+.posting-create-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .review-items {
   margin-top: 0;
   width: min(100%, 1100px);
@@ -516,9 +578,14 @@
   .charts,
   .comparison,
   .postings,
+  .posting-create,
   .review-items,
   .posting-detail {
     margin-top: 24px;
+  }
+
+  .posting-create-form {
+    grid-template-columns: 1fr;
   }
 
   .comparison-table th,

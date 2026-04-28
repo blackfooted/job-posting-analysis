@@ -5,11 +5,24 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
-import { fetchPosting, fetchPostings } from './api/postingsApi'
+import { createPosting, fetchPosting, fetchPostings } from './api/postingsApi'
 import { fetchReviewItems, updateReviewItem } from './api/reviewItemsApi'
 
 function App() {
   const reviewItemsPageSize = 15
+  const initialPostingForm = {
+    company: '',
+    position: '',
+    duties: '',
+    requirements: '',
+    preferred: '',
+    tools: '',
+    experience: '',
+    employment_type: '',
+    work_type: '',
+    industry_memo: '',
+    raw_text: '',
+  }
   const [activePage, setActivePage] = useState('dashboard')
   const [isNavigationOpen, setIsNavigationOpen] = useState(false)
   const [summary, setSummary] = useState(null)
@@ -24,6 +37,10 @@ function App() {
   const [postings, setPostings] = useState([])
   const [postingsLoading, setPostingsLoading] = useState(true)
   const [postingsError, setPostingsError] = useState('')
+  const [postingForm, setPostingForm] = useState(initialPostingForm)
+  const [postingCreateLoading, setPostingCreateLoading] = useState(false)
+  const [postingCreateError, setPostingCreateError] = useState('')
+  const [postingCreateMessage, setPostingCreateMessage] = useState('')
   const [selectedPosting, setSelectedPosting] = useState(null)
   const [selectedPostingLoading, setSelectedPostingLoading] = useState(false)
   const [selectedPostingError, setSelectedPostingError] = useState('')
@@ -136,38 +153,41 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    let isMounted = true
+  async function loadPostings(shouldUpdate = () => true) {
+    setPostingsLoading(true)
+    setPostingsError('')
 
-    async function loadPostings() {
-      try {
-        const result = await fetchPostings()
+    try {
+      const result = await fetchPostings()
 
-        if (!isMounted) {
-          return
-        }
+      if (!shouldUpdate()) {
+        return
+      }
 
-        if (result.error) {
-          setPostingsError(result.error.message || 'Failed to load postings.')
-          return
-        }
+      if (result.error) {
+        setPostingsError(result.error.message || 'Failed to load postings.')
+        return
+      }
 
-        setPostings(result.data || [])
-      } catch (requestError) {
-        if (isMounted) {
-          setPostingsError(requestError.message || 'Failed to load postings.')
-        }
-      } finally {
-        if (isMounted) {
-          setPostingsLoading(false)
-        }
+      setPostings(result.data || [])
+    } catch (requestError) {
+      if (shouldUpdate()) {
+        setPostingsError(requestError.message || 'Failed to load postings.')
+      }
+    } finally {
+      if (shouldUpdate()) {
+        setPostingsLoading(false)
       }
     }
+  }
+
+  useEffect(() => {
+    let isMounted = true
 
     loadSummary(() => isMounted)
     loadCharts(() => isMounted)
     loadComparison(() => isMounted)
-    loadPostings()
+    loadPostings(() => isMounted)
     loadReviewItemsPage(1, () => isMounted)
 
     return () => {
@@ -210,6 +230,42 @@ function App() {
       )
     } finally {
       setSelectedPostingLoading(false)
+    }
+  }
+
+  function handlePostingFormChange(event) {
+    const { name, value } = event.target
+    setPostingForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
+  async function handleCreatePosting(event) {
+    event.preventDefault()
+    setPostingCreateLoading(true)
+    setPostingCreateError('')
+    setPostingCreateMessage('')
+
+    try {
+      const result = await createPosting(postingForm)
+
+      if (result.error) {
+        setPostingCreateError(
+          result.error.message || 'Failed to create posting.',
+        )
+        return
+      }
+
+      await loadPostings()
+      setPostingForm(initialPostingForm)
+      setPostingCreateMessage('공고가 저장되었습니다.')
+    } catch (requestError) {
+      setPostingCreateError(
+        requestError.message || 'Failed to create posting.',
+      )
+    } finally {
+      setPostingCreateLoading(false)
     }
   }
 
@@ -500,6 +556,24 @@ function App() {
               )}
             </section>
 
+            <section className="posting-create" aria-label="Create posting">
+              <h2>신규 공고 입력</h2>
+              <p className="form-note">모든 필드를 입력한 뒤 저장하세요.</p>
+
+              {postingCreateError && (
+                <p className="error">{postingCreateError}</p>
+              )}
+
+              {postingCreateMessage && <p>{postingCreateMessage}</p>}
+
+              <PostingCreateForm
+                form={postingForm}
+                isSaving={postingCreateLoading}
+                onChange={handlePostingFormChange}
+                onSubmit={handleCreatePosting}
+              />
+            </section>
+
             <section className="posting-detail" aria-label="Posting detail">
               <h2>Posting Detail</h2>
 
@@ -755,6 +829,42 @@ function PostingsTable({ items = [], onViewDetail }) {
         </tbody>
       </table>
     </div>
+  )
+}
+
+function PostingCreateForm({ form, isSaving, onChange, onSubmit }) {
+  const fields = [
+    ['company', '회사명', 'input'],
+    ['position', '포지션', 'input'],
+    ['duties', '담당 업무', 'textarea'],
+    ['requirements', '자격 요건', 'textarea'],
+    ['preferred', '우대 사항', 'textarea'],
+    ['tools', '기술/툴', 'textarea'],
+    ['experience', '경력', 'input'],
+    ['employment_type', '고용 형태', 'input'],
+    ['work_type', '근무 형태', 'input'],
+    ['industry_memo', '산업 메모', 'textarea'],
+    ['raw_text', '원문', 'textarea'],
+  ]
+
+  return (
+    <form className="posting-create-form" onSubmit={onSubmit}>
+      {fields.map(([name, label, control]) => (
+        <label key={name}>
+          <span>{label}</span>
+          {control === 'textarea' ? (
+            <textarea name={name} value={form[name]} onChange={onChange} />
+          ) : (
+            <input name={name} type="text" value={form[name]} onChange={onChange} />
+          )}
+        </label>
+      ))}
+      <div className="posting-create-actions">
+        <button type="submit" disabled={isSaving}>
+          {isSaving ? '저장 중...' : '저장'}
+        </button>
+      </div>
+    </form>
   )
 }
 
