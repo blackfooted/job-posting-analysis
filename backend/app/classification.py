@@ -26,40 +26,45 @@ class AnalysisDraft:
 
 def analyze_posting(posting: dict[str, str]) -> AnalysisDraft:
     configs = load_all_configs()
+    analysis_posting = {
+        key: _normalize_text_for_analysis(value) for key, value in posting.items()
+    }
     review_items: list[ReviewItemDraft] = []
 
     industry_category = _match_single_exact_or_alias(
-        posting["industry_memo"],
+        analysis_posting["industry_memo"],
         configs["industry-categories.json"],
     )
-    if industry_category is None and posting["industry_memo"].strip():
-        review_items.append(ReviewItemDraft("industry", posting["industry_memo"]))
+    if industry_category is None and analysis_posting["industry_memo"].strip():
+        review_items.append(
+            ReviewItemDraft("industry", analysis_posting["industry_memo"])
+        )
 
     domain_category = _match_single_exact_or_alias(
-        posting["industry_memo"],
+        analysis_posting["industry_memo"],
         configs["domain-categories.json"],
     )
-    if domain_category is None and posting["industry_memo"].strip():
-        review_items.append(ReviewItemDraft("domain", posting["industry_memo"]))
+    if domain_category is None and analysis_posting["industry_memo"].strip():
+        review_items.append(ReviewItemDraft("domain", analysis_posting["industry_memo"]))
 
     position_category = _match_single_exact_or_alias(
-        posting["position"],
+        analysis_posting["position"],
         configs["position-categories.json"],
     )
-    if position_category is None and posting["position"].strip():
-        review_items.append(ReviewItemDraft("position", posting["position"]))
+    if position_category is None and analysis_posting["position"].strip():
+        review_items.append(ReviewItemDraft("position", analysis_posting["position"]))
 
     extracted_skills = _match_multi_contains_alias(
-        _split_tools(posting["tools"]),
+        _split_tools(analysis_posting["tools"]),
         configs["skill-dictionary.json"],
         "skill",
         review_items,
     )
 
     competency_values = [
-        posting["duties"],
-        posting["requirements"],
-        posting["preferred"],
+        analysis_posting["duties"],
+        analysis_posting["requirements"],
+        analysis_posting["preferred"],
     ]
     extracted_competencies = _match_multi_exact_or_alias(
         competency_values,
@@ -94,6 +99,31 @@ def analysis_to_db_values(analysis: AnalysisDraft) -> dict[str, Any]:
 
 def _split_tools(tools: str) -> list[str]:
     return [value.strip() for value in re.split(r"[,/\n]+", tools) if value.strip()]
+
+
+def _normalize_text_for_analysis(text: str | None) -> str:
+    if text is None:
+        return ""
+
+    normalized = str(text)
+    normalized = re.sub(r"(?i)<\s*/?\s*(ul|ol)\s*>", "\n", normalized)
+    normalized = re.sub(r"(?i)<\s*li\s*>", "\n", normalized)
+    normalized = re.sub(r"(?i)<\s*/\s*li\s*>", "\n", normalized)
+    normalized = re.sub(r"(?i)<\s*br\s*/?\s*>", "\n", normalized)
+    normalized = re.sub(r"<[^>]+>", "", normalized)
+
+    bullet_pattern = re.compile(
+        r"^\s*(?:[•\-*·ㆍ□■▶▷①②③④⑤⑥⑦⑧⑨⑩]|"
+        r"\d+[\.)]|\(\d+\)|[가-힣][\.)]|[ㄱ-ㅎ][\.)])\s*"
+    )
+    lines = []
+    for line in normalized.splitlines():
+        line = bullet_pattern.sub("", line)
+        line = re.sub(r"[ \t]+", " ", line).strip()
+        if line:
+            lines.append(line)
+
+    return "\n".join(lines)
 
 
 def _match_multi_contains_alias(
