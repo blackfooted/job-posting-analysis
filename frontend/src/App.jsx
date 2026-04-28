@@ -42,6 +42,7 @@ function App() {
     useState('')
   const [reviewItemsDictionaryApplyFilter, setReviewItemsDictionaryApplyFilter] =
     useState('')
+  const [reviewItemsKeywordFilter, setReviewItemsKeywordFilter] = useState('')
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -212,7 +213,16 @@ function App() {
     }
   }
 
-  async function loadReviewItemsPage(page, shouldUpdate = () => true) {
+  async function loadReviewItemsPage(
+    page,
+    shouldUpdate = () => true,
+    filters = {
+      status: reviewItemsStatusFilter,
+      fieldType: reviewItemsFieldTypeFilter,
+      dictionaryApply: reviewItemsDictionaryApplyFilter,
+      keyword: reviewItemsKeywordFilter,
+    },
+  ) {
     setReviewItemsLoading(true)
     setReviewItemsError('')
 
@@ -220,9 +230,10 @@ function App() {
       const result = await fetchReviewItems({
         page,
         size: reviewItemsPageSize,
-        status: reviewItemsStatusFilter,
-        fieldType: reviewItemsFieldTypeFilter,
-        dictionaryApply: reviewItemsDictionaryApplyFilter,
+        status: filters.status,
+        fieldType: filters.fieldType,
+        dictionaryApply: filters.dictionaryApply,
+        keyword: filters.keyword,
       })
 
       if (!shouldUpdate()) {
@@ -299,6 +310,21 @@ function App() {
 
   function handleSearchReviewItems() {
     loadReviewItemsPage(1)
+  }
+
+  function handleResetReviewItemFilters() {
+    const resetFilters = {
+      status: '',
+      fieldType: '',
+      dictionaryApply: '',
+      keyword: '',
+    }
+
+    setReviewItemsStatusFilter('')
+    setReviewItemsFieldTypeFilter('')
+    setReviewItemsDictionaryApplyFilter('')
+    setReviewItemsKeywordFilter('')
+    loadReviewItemsPage(1, () => true, resetFilters)
   }
 
   const navigationItems = [
@@ -541,12 +567,30 @@ function App() {
                   <option value="1">반영</option>
                 </select>
               </label>
+              <label>
+                <span>Keyword</span>
+                <input
+                  type="search"
+                  value={reviewItemsKeywordFilter}
+                  onChange={(event) =>
+                    setReviewItemsKeywordFilter(event.target.value)
+                  }
+                  placeholder="raw_value 또는 approved_value 검색"
+                />
+              </label>
               <button
                 type="button"
                 onClick={handleSearchReviewItems}
                 disabled={reviewItemsLoading}
               >
                 조회
+              </button>
+              <button
+                type="button"
+                onClick={handleResetReviewItemFilters}
+                disabled={reviewItemsLoading}
+              >
+                초기화
               </button>
             </div>
 

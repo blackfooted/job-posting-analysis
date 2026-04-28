@@ -26,6 +26,7 @@ def list_review_items(
     status: str | None = Query(default=None),
     field_type: str | None = Query(default=None),
     dictionary_apply: int | None = Query(default=None),
+    keyword: str | None = Query(default=None),
 ) -> dict[str, Any]:
     initialize_database()
     if status is not None and status not in {"unconfirmed", "confirmed"}:
@@ -57,6 +58,13 @@ def list_review_items(
     if dictionary_apply is not None:
         filter_conditions.append("AND review_items.dictionary_apply = ?")
         filter_params.append(dictionary_apply)
+    normalized_keyword = keyword.strip() if keyword is not None else ""
+    if normalized_keyword:
+        filter_conditions.append(
+            "AND (review_items.raw_value LIKE ? OR review_items.approved_value LIKE ?)"
+        )
+        keyword_pattern = f"%{normalized_keyword}%"
+        filter_params.extend([keyword_pattern, keyword_pattern])
     filter_clause = "\n              ".join(filter_conditions)
 
     connection = _connection()

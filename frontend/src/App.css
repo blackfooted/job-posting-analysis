@@ -233,6 +233,7 @@
   font-size: 14px;
 }
 
+.review-items-filters input,
 .review-items-filters select,
 .review-items-filters button {
   border: 1px solid #d0d7de;
