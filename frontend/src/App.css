@@ -187,6 +187,27 @@
   font-size: 14px;
 }
 
+.review-items-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.review-items-pagination button {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+}
+
+.review-items-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .placeholder-page {
   width: min(100%, 760px);
 }
@@ -414,6 +435,10 @@
   .review-items-table td {
     padding: 8px;
     font-size: 14px;
+  }
+
+  .review-items-pagination {
+    flex-wrap: wrap;
   }
 
   .posting-detail-item {

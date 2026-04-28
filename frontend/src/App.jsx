@@ -9,6 +9,7 @@ import { fetchPosting, fetchPostings } from './api/postingsApi'
 import { fetchReviewItems } from './api/reviewItemsApi'
 
 function App() {
+  const reviewItemsPageSize = 15
   const [activePage, setActivePage] = useState('dashboard')
   const [isNavigationOpen, setIsNavigationOpen] = useState(false)
   const [summary, setSummary] = useState(null)
@@ -146,45 +147,11 @@ function App() {
       }
     }
 
-    async function loadReviewItems() {
-      try {
-        const result = await fetchReviewItems({ page: 1, size: 15 })
-
-        if (!isMounted) {
-          return
-        }
-
-        if (result.error) {
-          setReviewItemsError(
-            result.error.message || 'Failed to load review items.',
-          )
-          return
-        }
-
-        setReviewItems(result.data?.items || [])
-        setReviewItemsPageInfo({
-          page: result.data?.page || 1,
-          size: result.data?.size || 15,
-          total: result.data?.total || 0,
-        })
-      } catch (requestError) {
-        if (isMounted) {
-          setReviewItemsError(
-            requestError.message || 'Failed to load review items.',
-          )
-        }
-      } finally {
-        if (isMounted) {
-          setReviewItemsLoading(false)
-        }
-      }
-    }
-
     loadSummary()
     loadCharts()
     loadComparison()
     loadPostings()
-    loadReviewItems()
+    loadReviewItemsPage(1, () => isMounted)
 
     return () => {
       isMounted = false
@@ -229,6 +196,46 @@ function App() {
     }
   }
 
+  async function loadReviewItemsPage(page, shouldUpdate = () => true) {
+    setReviewItemsLoading(true)
+    setReviewItemsError('')
+
+    try {
+      const result = await fetchReviewItems({
+        page,
+        size: reviewItemsPageSize,
+      })
+
+      if (!shouldUpdate()) {
+        return
+      }
+
+      if (result.error) {
+        setReviewItemsError(
+          result.error.message || 'Failed to load review items.',
+        )
+        return
+      }
+
+      setReviewItems(result.data?.items || [])
+      setReviewItemsPageInfo({
+        page: result.data?.page || page,
+        size: result.data?.size || reviewItemsPageSize,
+        total: result.data?.total || 0,
+      })
+    } catch (requestError) {
+      if (shouldUpdate()) {
+        setReviewItemsError(
+          requestError.message || 'Failed to load review items.',
+        )
+      }
+    } finally {
+      if (shouldUpdate()) {
+        setReviewItemsLoading(false)
+      }
+    }
+  }
+
   const navigationItems = [
     { id: 'dashboard', label: '대시보드' },
     { id: 'postings', label: '개별 공고 분석' },
@@ -242,6 +249,15 @@ function App() {
     setActivePage(pageId)
     setIsNavigationOpen(false)
   }
+
+  const reviewItemsTotalPages =
+    reviewItemsPageInfo.size > 0
+      ? Math.ceil(reviewItemsPageInfo.total / reviewItemsPageInfo.size)
+      : 0
+  const isReviewItemsFirstPage = reviewItemsPageInfo.page <= 1
+  const isReviewItemsLastPage =
+    reviewItemsTotalPages === 0 ||
+    reviewItemsPageInfo.page >= reviewItemsTotalPages
 
   return (
     <div className="app">
@@ -425,6 +441,23 @@ function App() {
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length > 0 && <ReviewItemsTable items={reviewItems} />}
+
+            <div className="review-items-pagination">
+              <button
+                type="button"
+                onClick={() => loadReviewItemsPage(reviewItemsPageInfo.page - 1)}
+                disabled={reviewItemsLoading || isReviewItemsFirstPage}
+              >
+                이전
+              </button>
+              <button
+                type="button"
+                onClick={() => loadReviewItemsPage(reviewItemsPageInfo.page + 1)}
+                disabled={reviewItemsLoading || isReviewItemsLastPage}
+              >
+                다음
+              </button>
+            </div>
           </section>
         )}
 
