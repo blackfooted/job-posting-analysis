@@ -24,6 +24,7 @@ def list_review_items(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=15, ge=1),
     status: str | None = Query(default=None),
+    field_type: str | None = Query(default=None),
 ) -> dict[str, Any]:
     initialize_database()
     if status is not None and status not in {"unconfirmed", "confirmed"}:
@@ -31,13 +32,23 @@ def list_review_items(
             status_code=400,
             detail="status must be one of: unconfirmed, confirmed",
         )
+    allowed_field_types = {"industry", "domain", "position", "skill", "competency"}
+    if field_type is not None and field_type not in allowed_field_types:
+        raise HTTPException(
+            status_code=400,
+            detail="field_type must be one of: industry, domain, position, skill, competency",
+        )
 
     offset = (page - 1) * size
-    status_condition = ""
-    status_params: tuple[str, ...] = ()
+    filter_conditions: list[str] = []
+    filter_params: list[str] = []
     if status is not None:
-        status_condition = "AND review_items.status = ?"
-        status_params = (status,)
+        filter_conditions.append("AND review_items.status = ?")
+        filter_params.append(status)
+    if field_type is not None:
+        filter_conditions.append("AND review_items.field_type = ?")
+        filter_params.append(field_type)
+    filter_clause = "\n              ".join(filter_conditions)
 
     connection = _connection()
     try:
@@ -48,9 +59,9 @@ def list_review_items(
             INNER JOIN postings AS postings
               ON postings.id = review_items.posting_id
             WHERE postings.is_deleted = 0
-              {status_condition}
+              {filter_clause}
             """,
-            status_params,
+            filter_params,
         ).fetchone()[0]
         rows = connection.execute(
             f"""
@@ -61,7 +72,7 @@ def list_review_items(
             INNER JOIN postings AS postings
               ON postings.id = review_items.posting_id
             WHERE postings.is_deleted = 0
-              {status_condition}
+              {filter_clause}
             ORDER BY
               CASE
                 WHEN review_items.status = 'unconfirmed' THEN 0
@@ -71,7 +82,7 @@ def list_review_items(
               review_items.id DESC
             LIMIT ? OFFSET ?
             """,
-            (*status_params, size, offset),
+            (*filter_params, size, offset),
         ).fetchall()
     finally:
         connection.close()

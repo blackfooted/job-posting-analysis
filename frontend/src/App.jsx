@@ -38,6 +38,8 @@ function App() {
   const [savingReviewItemId, setSavingReviewItemId] = useState(null)
   const [reviewItemSaveError, setReviewItemSaveError] = useState('')
   const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
+  const [reviewItemsFieldTypeFilter, setReviewItemsFieldTypeFilter] =
+    useState('')
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -217,6 +219,7 @@ function App() {
         page,
         size: reviewItemsPageSize,
         status: reviewItemsStatusFilter,
+        fieldType: reviewItemsFieldTypeFilter,
       })
 
       if (!shouldUpdate()) {
@@ -504,6 +507,22 @@ function App() {
                   <option value="">전체</option>
                   <option value="unconfirmed">unconfirmed</option>
                   <option value="confirmed">confirmed</option>
+                </select>
+              </label>
+              <label>
+                <span>Field type</span>
+                <select
+                  value={reviewItemsFieldTypeFilter}
+                  onChange={(event) =>
+                    setReviewItemsFieldTypeFilter(event.target.value)
+                  }
+                >
+                  <option value="">전체</option>
+                  <option value="industry">industry</option>
+                  <option value="domain">domain</option>
+                  <option value="position">position</option>
+                  <option value="skill">skill</option>
+                  <option value="competency">competency</option>
                 </select>
               </label>
               <button
