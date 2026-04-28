@@ -40,6 +40,8 @@ function App() {
   const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
   const [reviewItemsFieldTypeFilter, setReviewItemsFieldTypeFilter] =
     useState('')
+  const [reviewItemsDictionaryApplyFilter, setReviewItemsDictionaryApplyFilter] =
+    useState('')
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -220,6 +222,7 @@ function App() {
         size: reviewItemsPageSize,
         status: reviewItemsStatusFilter,
         fieldType: reviewItemsFieldTypeFilter,
+        dictionaryApply: reviewItemsDictionaryApplyFilter,
       })
 
       if (!shouldUpdate()) {
@@ -523,6 +526,19 @@ function App() {
                   <option value="position">position</option>
                   <option value="skill">skill</option>
                   <option value="competency">competency</option>
+                </select>
+              </label>
+              <label>
+                <span>Dictionary apply</span>
+                <select
+                  value={reviewItemsDictionaryApplyFilter}
+                  onChange={(event) =>
+                    setReviewItemsDictionaryApplyFilter(event.target.value)
+                  }
+                >
+                  <option value="">전체</option>
+                  <option value="0">미반영</option>
+                  <option value="1">반영</option>
                 </select>
               </label>
               <button

@@ -16,6 +16,7 @@ export function fetchReviewItems({
   size = 15,
   status = '',
   fieldType = '',
+  dictionaryApply = '',
 } = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -28,6 +29,10 @@ export function fetchReviewItems({
 
   if (fieldType) {
     params.set('field_type', fieldType)
+  }
+
+  if (dictionaryApply !== '' && dictionaryApply !== null && dictionaryApply !== undefined) {
+    params.set('dictionary_apply', String(dictionaryApply))
   }
 
   return requestReviewItems(`/api/review-items?${params.toString()}`)

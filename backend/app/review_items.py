@@ -25,6 +25,7 @@ def list_review_items(
     size: int = Query(default=15, ge=1),
     status: str | None = Query(default=None),
     field_type: str | None = Query(default=None),
+    dictionary_apply: int | None = Query(default=None),
 ) -> dict[str, Any]:
     initialize_database()
     if status is not None and status not in {"unconfirmed", "confirmed"}:
@@ -38,6 +39,11 @@ def list_review_items(
             status_code=400,
             detail="field_type must be one of: industry, domain, position, skill, competency",
         )
+    if dictionary_apply is not None and dictionary_apply not in {0, 1}:
+        raise HTTPException(
+            status_code=400,
+            detail="dictionary_apply must be 0 or 1",
+        )
 
     offset = (page - 1) * size
     filter_conditions: list[str] = []
@@ -48,6 +54,9 @@ def list_review_items(
     if field_type is not None:
         filter_conditions.append("AND review_items.field_type = ?")
         filter_params.append(field_type)
+    if dictionary_apply is not None:
+        filter_conditions.append("AND review_items.dictionary_apply = ?")
+        filter_params.append(dictionary_apply)
     filter_clause = "\n              ".join(filter_conditions)
 
     connection = _connection()
