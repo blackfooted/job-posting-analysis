@@ -2,6 +2,7 @@
 import './App.css'
 import {
   fetchDashboardCharts,
+  fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
 
@@ -12,6 +13,9 @@ function App() {
   const [charts, setCharts] = useState(null)
   const [chartsLoading, setChartsLoading] = useState(true)
   const [chartsError, setChartsError] = useState('')
+  const [comparison, setComparison] = useState(null)
+  const [comparisonLoading, setComparisonLoading] = useState(true)
+  const [comparisonError, setComparisonError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -70,8 +74,38 @@ function App() {
       }
     }
 
+    async function loadComparison() {
+      try {
+        const result = await fetchDashboardComparison()
+
+        if (!isMounted) {
+          return
+        }
+
+        if (result.error) {
+          setComparisonError(
+            result.error.message || 'Failed to load dashboard comparison.',
+          )
+          return
+        }
+
+        setComparison(result.data)
+      } catch (requestError) {
+        if (isMounted) {
+          setComparisonError(
+            requestError.message || 'Failed to load dashboard comparison.',
+          )
+        }
+      } finally {
+        if (isMounted) {
+          setComparisonLoading(false)
+        }
+      }
+    }
+
     loadSummary()
     loadCharts()
+    loadComparison()
 
     return () => {
       isMounted = false
@@ -127,6 +161,20 @@ function App() {
           </div>
         )}
       </section>
+
+      <section className="comparison" aria-label="Dashboard comparison">
+        <h2>Dashboard Comparison</h2>
+
+        {comparisonLoading && <p>Loading dashboard comparison...</p>}
+
+        {!comparisonLoading && comparisonError && (
+          <p className="error">{comparisonError}</p>
+        )}
+
+        {!comparisonLoading && !comparisonError && comparison && (
+          <ComparisonTable items={comparison} />
+        )}
+      </section>
     </main>
   )
 }
@@ -149,6 +197,53 @@ function ChartList({ title, items = [] }) {
       )}
     </article>
   )
+}
+
+function ComparisonTable({ items = [] }) {
+  if (items.length === 0) {
+    return <p>No data</p>
+  }
+
+  return (
+    <div className="comparison-table-wrap">
+      <table className="comparison-table">
+        <thead>
+          <tr>
+            <th>회사명</th>
+            <th>포지션</th>
+            <th>산업 카테고리</th>
+            <th>도메인 카테고리</th>
+            <th>직무 카테고리</th>
+            <th>기술/툴</th>
+            <th>역량</th>
+            <th>미확정 항목 수</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr key={`${item.company}-${item.position}-${index}`}>
+              <td>{formatValue(item.company)}</td>
+              <td>{formatValue(item.position)}</td>
+              <td>{formatValue(item.industry_category)}</td>
+              <td>{formatValue(item.domain_category)}</td>
+              <td>{formatValue(item.position_category)}</td>
+              <td>{formatList(item.extracted_skills)}</td>
+              <td>{formatList(item.extracted_competencies)}</td>
+              <td>{formatValue(item.unconfirmed_count)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function formatValue(value) {
+  return value === null || value === undefined || value === '' ? '-' : value
+}
+
+function formatList(value) {
+  return Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'
 }
 
 export default App

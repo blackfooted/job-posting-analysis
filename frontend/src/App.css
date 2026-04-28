@@ -82,3 +82,30 @@
   justify-content: space-between;
   gap: 12px;
 }
+
+.comparison {
+  margin-top: 32px;
+  width: min(100%, 1100px);
+}
+
+.comparison-table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.comparison-table th,
+.comparison-table td {
+  border: 1px solid #d8dee4;
+  padding: 10px;
+  vertical-align: top;
+}
+
+.comparison-table th {
+  background: #f6f8fa;
+}
