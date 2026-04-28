@@ -95,7 +95,18 @@
   width: min(100%, 1100px);
 }
 
+.postings {
+  margin-top: 32px;
+  width: min(100%, 1100px);
+}
+
 .comparison-table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.postings-table-wrap {
   margin-top: 16px;
   overflow-x: auto;
   max-width: 100%;
@@ -108,8 +119,17 @@
   text-align: left;
 }
 
+.postings-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
 .comparison-table th,
-.comparison-table td {
+.comparison-table td,
+.postings-table th,
+.postings-table td {
   border: 1px solid #d8dee4;
   padding: 10px;
   vertical-align: top;
@@ -117,7 +137,8 @@
   overflow-wrap: break-word;
 }
 
-.comparison-table th {
+.comparison-table th,
+.postings-table th {
   background: #f6f8fa;
   white-space: nowrap;
 }
@@ -137,6 +158,10 @@
 
   .comparison-table {
     min-width: 780px;
+  }
+
+  .postings-table {
+    min-width: 680px;
   }
 }
 
@@ -169,12 +194,15 @@
   }
 
   .charts,
-  .comparison {
+  .comparison,
+  .postings {
     margin-top: 24px;
   }
 
   .comparison-table th,
-  .comparison-table td {
+  .comparison-table td,
+  .postings-table th,
+  .postings-table td {
     padding: 8px;
     font-size: 14px;
   }

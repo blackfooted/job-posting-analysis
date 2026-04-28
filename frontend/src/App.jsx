@@ -5,6 +5,7 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
+import { fetchPostings } from './api/postingsApi'
 
 function App() {
   const [summary, setSummary] = useState(null)
@@ -16,6 +17,9 @@ function App() {
   const [comparison, setComparison] = useState(null)
   const [comparisonLoading, setComparisonLoading] = useState(true)
   const [comparisonError, setComparisonError] = useState('')
+  const [postings, setPostings] = useState([])
+  const [postingsLoading, setPostingsLoading] = useState(true)
+  const [postingsError, setPostingsError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -103,9 +107,35 @@ function App() {
       }
     }
 
+    async function loadPostings() {
+      try {
+        const result = await fetchPostings()
+
+        if (!isMounted) {
+          return
+        }
+
+        if (result.error) {
+          setPostingsError(result.error.message || 'Failed to load postings.')
+          return
+        }
+
+        setPostings(result.data || [])
+      } catch (requestError) {
+        if (isMounted) {
+          setPostingsError(requestError.message || 'Failed to load postings.')
+        }
+      } finally {
+        if (isMounted) {
+          setPostingsLoading(false)
+        }
+      }
+    }
+
     loadSummary()
     loadCharts()
     loadComparison()
+    loadPostings()
 
     return () => {
       isMounted = false
@@ -175,6 +205,20 @@ function App() {
           <ComparisonTable items={comparison} />
         )}
       </section>
+
+      <section className="postings" aria-label="Postings">
+        <h2>Postings</h2>
+
+        {postingsLoading && <p>Loading postings...</p>}
+
+        {!postingsLoading && postingsError && (
+          <p className="error">{postingsError}</p>
+        )}
+
+        {!postingsLoading && !postingsError && (
+          <PostingsTable items={postings} />
+        )}
+      </section>
     </main>
   )
 }
@@ -230,6 +274,39 @@ function ComparisonTable({ items = [] }) {
               <td>{formatList(item.extracted_skills)}</td>
               <td>{formatList(item.extracted_competencies)}</td>
               <td>{formatValue(item.unconfirmed_count)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function PostingsTable({ items = [] }) {
+  if (items.length === 0) {
+    return <p>No postings</p>
+  }
+
+  return (
+    <div className="postings-table-wrap">
+      <table className="postings-table">
+        <thead>
+          <tr>
+            <th>회사명</th>
+            <th>포지션</th>
+            <th>고용 형태</th>
+            <th>근무 형태</th>
+            <th>생성일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr key={item.id || `${item.company}-${item.position}-${index}`}>
+              <td>{formatValue(item.company)}</td>
+              <td>{formatValue(item.position)}</td>
+              <td>{formatValue(item.employment_type)}</td>
+              <td>{formatValue(item.work_type)}</td>
+              <td>{formatValue(item.created_at)}</td>
             </tr>
           ))}
         </tbody>
