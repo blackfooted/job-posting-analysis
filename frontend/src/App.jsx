@@ -42,7 +42,10 @@ function App() {
   const [postings, setPostings] = useState([])
   const [postingsLoading, setPostingsLoading] = useState(true)
   const [postingsError, setPostingsError] = useState('')
-  const [postingForm, setPostingForm] = useState(initialPostingForm)
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
+  const [isEditingPosting, setIsEditingPosting] = useState(false)
+  const [createFormState, setCreateFormState] = useState(initialPostingForm)
+  const [editFormState, setEditFormState] = useState(initialPostingForm)
   const [postingCreateLoading, setPostingCreateLoading] = useState(false)
   const [postingCreateError, setPostingCreateError] = useState('')
   const [postingCreateMessage, setPostingCreateMessage] = useState('')
@@ -229,7 +232,9 @@ function App() {
       }
 
       setSelectedPosting(result.data)
-      setPostingForm(_postingToForm(result.data, initialPostingForm))
+      setEditFormState(_postingToForm(result.data, initialPostingForm))
+      setIsCreateFormOpen(false)
+      setIsEditingPosting(false)
       setPostingCreateError('')
       setPostingCreateMessage('')
     } catch (requestError) {
@@ -243,10 +248,33 @@ function App() {
 
   function handlePostingFormChange(event) {
     const { name, value } = event.target
-    setPostingForm((currentForm) => ({
+    setCreateFormState((currentForm) => ({
       ...currentForm,
       [name]: value,
     }))
+  }
+
+  function handleEditPostingFormChange(event) {
+    const { name, value } = event.target
+    setEditFormState((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
+  function handleOpenCreateForm() {
+    setIsCreateFormOpen(true)
+    setIsEditingPosting(false)
+    setCreateFormState(initialPostingForm)
+    setPostingCreateError('')
+    setPostingCreateMessage('')
+  }
+
+  function handleCancelCreatePosting() {
+    setIsCreateFormOpen(false)
+    setCreateFormState(initialPostingForm)
+    setPostingCreateError('')
+    setPostingCreateMessage('')
   }
 
   async function handleCreatePosting(event) {
@@ -256,28 +284,67 @@ function App() {
     setPostingCreateMessage('')
 
     try {
-      const result = selectedPosting
-        ? await updatePosting(selectedPosting.id, postingForm)
-        : await createPosting(postingForm)
+      const result = await createPosting(createFormState)
 
       if (result.error) {
         setPostingCreateError(
-          result.error.message || 'Failed to save posting.',
+          result.error.message || 'Failed to create posting.',
         )
         return
       }
 
       await loadPostings()
-      if (selectedPosting) {
-        await refreshSelectedPosting(selectedPosting.id)
-        setPostingCreateMessage('공고가 수정되었습니다.')
-      } else {
-        setPostingForm(initialPostingForm)
-        setPostingCreateMessage('공고가 저장되었습니다.')
-      }
+      setCreateFormState(initialPostingForm)
+      setIsCreateFormOpen(false)
+      setPostingCreateMessage('공고가 저장되었습니다.')
     } catch (requestError) {
       setPostingCreateError(
-        requestError.message || 'Failed to save posting.',
+        requestError.message || 'Failed to create posting.',
+      )
+    } finally {
+      setPostingCreateLoading(false)
+    }
+  }
+
+  async function handleUpdatePosting(event) {
+    event.preventDefault()
+    if (!selectedPosting) {
+      return
+    }
+
+    setPostingCreateLoading(true)
+    setPostingCreateError('')
+    setPostingCreateMessage('')
+
+    try {
+      const result = await updatePosting(selectedPosting.id, editFormState)
+
+      if (result.error) {
+        setPostingCreateError(
+          result.error.message || 'Failed to update posting.',
+        )
+        return
+      }
+
+      const [detailResult] = await Promise.all([
+        fetchPosting(selectedPosting.id),
+        loadPostings(),
+      ])
+
+      if (detailResult.error) {
+        setSelectedPostingError(
+          detailResult.error.message || 'Failed to load posting detail.',
+        )
+        return
+      }
+
+      setSelectedPosting(detailResult.data)
+      setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
+      setIsEditingPosting(false)
+      setPostingCreateMessage('공고가 수정되었습니다.')
+    } catch (requestError) {
+      setPostingCreateError(
+        requestError.message || 'Failed to update posting.',
       )
     } finally {
       setPostingCreateLoading(false)
@@ -295,13 +362,19 @@ function App() {
     }
 
     setSelectedPosting(detailResult.data)
-    setPostingForm(_postingToForm(detailResult.data, initialPostingForm))
+    setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
   }
 
-  function handleNewPostingInput() {
-    setSelectedPosting(null)
-    setSelectedPostingError('')
-    setPostingForm(initialPostingForm)
+  function handleEditPosting() {
+    setIsEditingPosting(true)
+    setIsCreateFormOpen(false)
+    setEditFormState(_postingToForm(selectedPosting, initialPostingForm))
+    setPostingCreateError('')
+    setPostingCreateMessage('')
+  }
+
+  function handleCancelEditPosting() {
+    setIsEditingPosting(false)
     setPostingCreateError('')
     setPostingCreateMessage('')
   }
@@ -576,8 +649,15 @@ function App() {
 
         {activePage === 'postings' && (
           <>
+            <div className="posting-page-header">
+              <h1>개별 공고 분석</h1>
+              <button type="button" onClick={handleOpenCreateForm}>
+                신규등록
+              </button>
+            </div>
+
             <section className="postings" aria-label="Postings">
-              <h1>Postings</h1>
+              <h2>Postings</h2>
 
               {postingsLoading && <p>Loading postings...</p>}
 
@@ -593,45 +673,36 @@ function App() {
               )}
             </section>
 
-            <section className="posting-create" aria-label="Create posting">
-              <div className="posting-create-header">
-                <h2>{selectedPosting ? '공고 수정' : '신규 공고 등록'}</h2>
-                {selectedPosting && (
-                  <button type="button" onClick={handleNewPostingInput}>
-                    신규 입력
-                  </button>
+            {isCreateFormOpen && (
+              <section className="posting-create" aria-label="Create posting">
+                <h2>신규 공고 등록</h2>
+                <p className="form-note">모든 필드를 입력한 뒤 저장하세요.</p>
+
+                {postingCreateError && (
+                  <p className="error">{postingCreateError}</p>
                 )}
-              </div>
-              <p className="form-note">모든 필드를 입력한 뒤 저장하세요.</p>
 
-              {selectedPosting && (
-                <p className="form-note">
-                  공고 수정 시 전체 재분류가 발생하며 기존 정제 항목과
-                  confirmed 값이 초기화될 수 있습니다.
-                </p>
-              )}
+                {postingCreateMessage && <p>{postingCreateMessage}</p>}
 
-              {postingCreateError && (
-                <p className="error">{postingCreateError}</p>
-              )}
-
-              {postingCreateMessage && <p>{postingCreateMessage}</p>}
-
-              <PostingCreateForm
-                form={postingForm}
-                isSaving={postingCreateLoading}
-                isEditing={Boolean(selectedPosting)}
-                onChange={handlePostingFormChange}
-                onSubmit={handleCreatePosting}
-              />
-            </section>
+                <PostingForm
+                  form={createFormState}
+                  isSaving={postingCreateLoading}
+                  submitLabel="등록"
+                  onCancel={handleCancelCreatePosting}
+                  onChange={handlePostingFormChange}
+                  onSubmit={handleCreatePosting}
+                />
+              </section>
+            )}
 
             <section className="posting-detail" aria-label="Posting detail">
               <h2>Posting Detail</h2>
 
               {!selectedPostingLoading &&
                 !selectedPostingError &&
-                !selectedPosting && <p>Select a posting to view details.</p>}
+                !selectedPosting && (
+                  <p>공고를 선택하면 상세 정보가 표시됩니다.</p>
+                )}
 
               {selectedPostingLoading && <p>Loading posting detail...</p>}
 
@@ -641,7 +712,44 @@ function App() {
 
               {!selectedPostingLoading &&
                 !selectedPostingError &&
-                selectedPosting && <PostingDetail posting={selectedPosting} />}
+                selectedPosting &&
+                !isEditingPosting && (
+                  <>
+                    <div className="posting-detail-actions">
+                      <button type="button" onClick={handleEditPosting}>
+                        수정
+                      </button>
+                    </div>
+                    <PostingDetail posting={selectedPosting} />
+                  </>
+                )}
+
+              {!selectedPostingLoading &&
+                !selectedPostingError &&
+                selectedPosting &&
+                isEditingPosting && (
+                  <div className="posting-edit">
+                    <p className="form-note">
+                      공고 수정 시 전체 재분류가 발생하며 기존 정제 항목과
+                      confirmed 값이 초기화될 수 있습니다.
+                    </p>
+
+                    {postingCreateError && (
+                      <p className="error">{postingCreateError}</p>
+                    )}
+
+                    {postingCreateMessage && <p>{postingCreateMessage}</p>}
+
+                    <PostingForm
+                      form={editFormState}
+                      isSaving={postingCreateLoading}
+                      submitLabel="수정 저장"
+                      onCancel={handleCancelEditPosting}
+                      onChange={handleEditPostingFormChange}
+                      onSubmit={handleUpdatePosting}
+                    />
+                  </div>
+                )}
             </section>
           </>
         )}
@@ -884,7 +992,7 @@ function PostingsTable({ items = [], onViewDetail }) {
   )
 }
 
-function PostingCreateForm({ form, isSaving, isEditing, onChange, onSubmit }) {
+function PostingForm({ form, isSaving, submitLabel, onCancel, onChange, onSubmit }) {
   const fields = [
     ['company', '회사명', 'input'],
     ['position', '포지션', 'input'],
@@ -913,7 +1021,10 @@ function PostingCreateForm({ form, isSaving, isEditing, onChange, onSubmit }) {
       ))}
       <div className="posting-create-actions">
         <button type="submit" disabled={isSaving}>
-          {isSaving ? '저장 중...' : isEditing ? '수정 저장' : '등록'}
+          {isSaving ? '저장 중...' : submitLabel}
+        </button>
+        <button type="button" onClick={onCancel} disabled={isSaving}>
+          취소
         </button>
       </div>
     </form>

@@ -209,24 +209,32 @@
   width: min(100%, 1100px);
 }
 
-.posting-create-header {
+.posting-page-header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  width: min(100%, 1100px);
 }
 
-.posting-create-header h2 {
+.posting-page-header h1 {
   margin: 0;
 }
 
-.posting-create-header button {
+.posting-page-header button,
+.posting-detail-actions button {
   border: 1px solid #d0d7de;
   border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
   font: inherit;
   padding: 8px 14px;
+}
+
+.posting-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }
 
 .form-note {
@@ -270,6 +278,7 @@
 .posting-create-actions {
   display: flex;
   align-items: end;
+  gap: 8px;
 }
 
 .posting-create-actions button {
@@ -608,7 +617,7 @@
     grid-template-columns: 1fr;
   }
 
-  .posting-create-header {
+  .posting-page-header {
     align-items: stretch;
     flex-direction: column;
   }
