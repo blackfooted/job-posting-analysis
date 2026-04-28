@@ -277,7 +277,7 @@
 
 .review-items-table {
   width: 100%;
-  min-width: 1040px;
+  min-width: 1240px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -438,7 +438,7 @@
   }
 
   .review-items-table {
-    min-width: 980px;
+    min-width: 1160px;
   }
 }
 

@@ -40,7 +40,9 @@ def list_review_items(
         ).fetchone()[0]
         rows = connection.execute(
             """
-            SELECT review_items.*
+            SELECT review_items.*,
+                   postings.company AS company,
+                   postings.position AS position
             FROM review_items AS review_items
             INNER JOIN postings AS postings
               ON postings.id = review_items.posting_id

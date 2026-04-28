@@ -656,6 +656,8 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
       <table className="review-items-table">
         <thead>
           <tr>
+            <th>company</th>
+            <th>position</th>
             <th>field_type</th>
             <th>raw_value</th>
             <th>approved_value</th>
@@ -669,6 +671,8 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
         <tbody>
           {items.map((item, index) => (
             <tr key={item.id || `${item.field_type}-${item.raw_value}-${index}`}>
+              <td>{formatValue(item.company)}</td>
+              <td>{formatValue(item.position)}</td>
               <td>{formatValue(item.field_type)}</td>
               <td>{formatValue(item.raw_value)}</td>
               <td>
