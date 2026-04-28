@@ -38,91 +38,100 @@ function App() {
   const [savingReviewItemId, setSavingReviewItemId] = useState(null)
   const [reviewItemSaveError, setReviewItemSaveError] = useState('')
 
+  async function loadSummary(shouldUpdate = () => true) {
+    setLoading(true)
+    setError('')
+
+    try {
+      const result = await fetchDashboardSummary()
+
+      if (!shouldUpdate()) {
+        return
+      }
+
+      if (result.error) {
+        setError(result.error.message || 'Failed to load dashboard summary.')
+        return
+      }
+
+      setSummary(result.data)
+    } catch (requestError) {
+      if (shouldUpdate()) {
+        setError(requestError.message || 'Failed to load dashboard summary.')
+      }
+    } finally {
+      if (shouldUpdate()) {
+        setLoading(false)
+      }
+    }
+  }
+
+  async function loadCharts(shouldUpdate = () => true) {
+    setChartsLoading(true)
+    setChartsError('')
+
+    try {
+      const result = await fetchDashboardCharts()
+
+      if (!shouldUpdate()) {
+        return
+      }
+
+      if (result.error) {
+        setChartsError(
+          result.error.message || 'Failed to load dashboard charts.',
+        )
+        return
+      }
+
+      setCharts(result.data)
+    } catch (requestError) {
+      if (shouldUpdate()) {
+        setChartsError(
+          requestError.message || 'Failed to load dashboard charts.',
+        )
+      }
+    } finally {
+      if (shouldUpdate()) {
+        setChartsLoading(false)
+      }
+    }
+  }
+
+  async function loadComparison(shouldUpdate = () => true) {
+    setComparisonLoading(true)
+    setComparisonError('')
+
+    try {
+      const result = await fetchDashboardComparison()
+
+      if (!shouldUpdate()) {
+        return
+      }
+
+      if (result.error) {
+        setComparisonError(
+          result.error.message || 'Failed to load dashboard comparison.',
+        )
+        return
+      }
+
+      setComparison(result.data)
+    } catch (requestError) {
+      if (shouldUpdate()) {
+        setComparisonError(
+          requestError.message || 'Failed to load dashboard comparison.',
+        )
+      }
+    } finally {
+      if (shouldUpdate()) {
+        setComparisonLoading(false)
+      }
+    }
+  }
+
   useEffect(() => {
     let isMounted = true
-
-    async function loadSummary() {
-      try {
-        const result = await fetchDashboardSummary()
-
-        if (!isMounted) {
-          return
-        }
-
-        if (result.error) {
-          setError(result.error.message || 'Failed to load dashboard summary.')
-          return
-        }
-
-        setSummary(result.data)
-      } catch (requestError) {
-        if (isMounted) {
-          setError(requestError.message || 'Failed to load dashboard summary.')
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    async function loadCharts() {
-      try {
-        const result = await fetchDashboardCharts()
-
-        if (!isMounted) {
-          return
-        }
-
-        if (result.error) {
-          setChartsError(
-            result.error.message || 'Failed to load dashboard charts.',
-          )
-          return
-        }
-
-        setCharts(result.data)
-      } catch (requestError) {
-        if (isMounted) {
-          setChartsError(
-            requestError.message || 'Failed to load dashboard charts.',
-          )
-        }
-      } finally {
-        if (isMounted) {
-          setChartsLoading(false)
-        }
-      }
-    }
-
-    async function loadComparison() {
-      try {
-        const result = await fetchDashboardComparison()
-
-        if (!isMounted) {
-          return
-        }
-
-        if (result.error) {
-          setComparisonError(
-            result.error.message || 'Failed to load dashboard comparison.',
-          )
-          return
-        }
-
-        setComparison(result.data)
-      } catch (requestError) {
-        if (isMounted) {
-          setComparisonError(
-            requestError.message || 'Failed to load dashboard comparison.',
-          )
-        }
-      } finally {
-        if (isMounted) {
-          setComparisonLoading(false)
-        }
-      }
-    }
 
     async function loadPostings() {
       try {
@@ -149,9 +158,9 @@ function App() {
       }
     }
 
-    loadSummary()
-    loadCharts()
-    loadComparison()
+    loadSummary(() => isMounted)
+    loadCharts(() => isMounted)
+    loadComparison(() => isMounted)
     loadPostings()
     loadReviewItemsPage(1, () => isMounted)
 
@@ -276,6 +285,10 @@ function App() {
     }
   }
 
+  async function handleRefreshDashboard() {
+    await Promise.all([loadSummary(), loadCharts(), loadComparison()])
+  }
+
   const navigationItems = [
     { id: 'dashboard', label: '대시보드' },
     { id: 'postings', label: '개별 공고 분석' },
@@ -298,6 +311,7 @@ function App() {
   const isReviewItemsLastPage =
     reviewItemsTotalPages === 0 ||
     reviewItemsPageInfo.page >= reviewItemsTotalPages
+  const isDashboardRefreshing = loading || chartsLoading || comparisonLoading
 
   return (
     <div className="app">
@@ -348,7 +362,16 @@ function App() {
       <main className="app-content">
         {activePage === 'dashboard' && (
           <>
-            <h1>Dashboard Summary</h1>
+            <div className="dashboard-header">
+              <h1>Dashboard Summary</h1>
+              <button
+                type="button"
+                onClick={handleRefreshDashboard}
+                disabled={isDashboardRefreshing}
+              >
+                {isDashboardRefreshing ? '새로고침 중...' : '새로고침'}
+              </button>
+            </div>
 
             {loading && <p>Loading dashboard summary...</p>}
 

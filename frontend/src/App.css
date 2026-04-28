@@ -91,6 +91,33 @@
   margin-top: 24px;
 }
 
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(100%, 760px);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+}
+
+.dashboard-header button {
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.dashboard-header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -428,6 +455,11 @@
   .chart-groups {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .dashboard-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .summary-grid {
