@@ -6,7 +6,7 @@ import {
   fetchDashboardSummary,
 } from './api/dashboardApi'
 import { fetchPosting, fetchPostings } from './api/postingsApi'
-import { fetchReviewItems } from './api/reviewItemsApi'
+import { fetchReviewItems, updateReviewItem } from './api/reviewItemsApi'
 
 function App() {
   const reviewItemsPageSize = 15
@@ -35,6 +35,8 @@ function App() {
   })
   const [reviewItemsLoading, setReviewItemsLoading] = useState(true)
   const [reviewItemsError, setReviewItemsError] = useState('')
+  const [savingReviewItemId, setSavingReviewItemId] = useState(null)
+  const [reviewItemSaveError, setReviewItemSaveError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -236,6 +238,44 @@ function App() {
     }
   }
 
+  async function handleSaveReviewItem(reviewItemId, event) {
+    const row = event.currentTarget.closest('tr')
+    const approvedValue = row
+      .querySelector('[name="approved_value"]')
+      .value.trim()
+    const status = row.querySelector('[name="status"]').value
+    const dictionaryApply = row.querySelector('[name="dictionary_apply"]')
+      .checked
+      ? 1
+      : 0
+
+    setSavingReviewItemId(reviewItemId)
+    setReviewItemSaveError('')
+
+    try {
+      const result = await updateReviewItem(reviewItemId, {
+        approved_value: approvedValue === '' ? null : approvedValue,
+        status,
+        dictionary_apply: dictionaryApply,
+      })
+
+      if (result.error) {
+        setReviewItemSaveError(
+          result.error.message || 'Failed to save review item.',
+        )
+        return
+      }
+
+      await loadReviewItemsPage(reviewItemsPageInfo.page)
+    } catch (requestError) {
+      setReviewItemSaveError(
+        requestError.message || 'Failed to save review item.',
+      )
+    } finally {
+      setSavingReviewItemId(null)
+    }
+  }
+
   const navigationItems = [
     { id: 'dashboard', label: '대시보드' },
     { id: 'postings', label: '개별 공고 분석' },
@@ -434,13 +474,23 @@ function App() {
               <p className="error">{reviewItemsError}</p>
             )}
 
+            {reviewItemSaveError && (
+              <p className="error">{reviewItemSaveError}</p>
+            )}
+
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length === 0 && <p>No review items</p>}
 
             {!reviewItemsLoading &&
               !reviewItemsError &&
-              reviewItems.length > 0 && <ReviewItemsTable items={reviewItems} />}
+              reviewItems.length > 0 && (
+                <ReviewItemsTable
+                  items={reviewItems}
+                  onSave={handleSaveReviewItem}
+                  savingReviewItemId={savingReviewItemId}
+                />
+              )}
 
             <div className="review-items-pagination">
               <button
@@ -577,7 +627,7 @@ function PostingsTable({ items = [], onViewDetail }) {
   )
 }
 
-function ReviewItemsTable({ items = [] }) {
+function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
   return (
     <div className="review-items-table-wrap">
       <table className="review-items-table">
@@ -601,12 +651,16 @@ function ReviewItemsTable({ items = [] }) {
               <td>
                 <input
                   type="text"
+                  name="approved_value"
                   defaultValue={item.approved_value || ''}
                   aria-label="approved_value"
                 />
               </td>
               <td>
-                <select defaultValue={item.status || 'unconfirmed'}>
+                <select
+                  name="status"
+                  defaultValue={item.status || 'unconfirmed'}
+                >
                   <option value="unconfirmed">unconfirmed</option>
                   <option value="confirmed">confirmed</option>
                 </select>
@@ -614,6 +668,7 @@ function ReviewItemsTable({ items = [] }) {
               <td>
                 <input
                   type="checkbox"
+                  name="dictionary_apply"
                   defaultChecked={item.dictionary_apply === 1}
                   aria-label="dictionary_apply"
                 />
@@ -621,8 +676,12 @@ function ReviewItemsTable({ items = [] }) {
               <td>{formatValue(item.created_at)}</td>
               <td>{formatValue(item.updated_at)}</td>
               <td>
-                <button type="button" disabled>
-                  저장
+                <button
+                  type="button"
+                  onClick={(event) => onSave(item.id, event)}
+                  disabled={savingReviewItemId === item.id}
+                >
+                  {savingReviewItemId === item.id ? '저장 중...' : '저장'}
                 </button>
               </td>
             </tr>

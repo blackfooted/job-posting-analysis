@@ -269,6 +269,7 @@
   border: 1px solid #d0d7de;
   border-radius: 6px;
   background: #f6f8fa;
+  cursor: pointer;
   font: inherit;
   padding: 6px 10px;
 }
