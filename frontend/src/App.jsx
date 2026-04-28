@@ -590,6 +590,7 @@ function ReviewItemsTable({ items = [] }) {
             <th>dictionary_apply</th>
             <th>created_at</th>
             <th>updated_at</th>
+            <th>action</th>
           </tr>
         </thead>
         <tbody>
@@ -597,11 +598,33 @@ function ReviewItemsTable({ items = [] }) {
             <tr key={item.id || `${item.field_type}-${item.raw_value}-${index}`}>
               <td>{formatValue(item.field_type)}</td>
               <td>{formatValue(item.raw_value)}</td>
-              <td>{formatValue(item.approved_value)}</td>
-              <td>{formatValue(item.status)}</td>
-              <td>{formatDictionaryApply(item.dictionary_apply)}</td>
+              <td>
+                <input
+                  type="text"
+                  defaultValue={item.approved_value || ''}
+                  aria-label="approved_value"
+                />
+              </td>
+              <td>
+                <select defaultValue={item.status || 'unconfirmed'}>
+                  <option value="unconfirmed">unconfirmed</option>
+                  <option value="confirmed">confirmed</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  defaultChecked={item.dictionary_apply === 1}
+                  aria-label="dictionary_apply"
+                />
+              </td>
               <td>{formatValue(item.created_at)}</td>
               <td>{formatValue(item.updated_at)}</td>
+              <td>
+                <button type="button" disabled>
+                  저장
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -645,18 +668,6 @@ function formatValue(value) {
 
 function formatList(value) {
   return Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'
-}
-
-function formatDictionaryApply(value) {
-  if (value === 1) {
-    return 'Y'
-  }
-
-  if (value === 0) {
-    return 'N'
-  }
-
-  return formatValue(value)
 }
 
 export default App

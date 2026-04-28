@@ -250,9 +250,32 @@
 
 .review-items-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1040px;
   border-collapse: collapse;
   text-align: left;
+}
+
+.review-items-table input[type='text'],
+.review-items-table select {
+  max-width: 180px;
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font: inherit;
+  padding: 6px 8px;
+}
+
+.review-items-table button {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  font: inherit;
+  padding: 6px 10px;
+}
+
+.review-items-table button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .comparison-table th,
@@ -387,7 +410,7 @@
   }
 
   .review-items-table {
-    min-width: 860px;
+    min-width: 980px;
   }
 }
 
