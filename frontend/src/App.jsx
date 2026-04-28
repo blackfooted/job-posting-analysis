@@ -8,6 +8,7 @@ import {
 import { fetchPosting, fetchPostings } from './api/postingsApi'
 
 function App() {
+  const [activePage, setActivePage] = useState('dashboard')
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -170,105 +171,164 @@ function App() {
     }
   }
 
+  const navigationItems = [
+    { id: 'dashboard', label: '대시보드' },
+    { id: 'postings', label: '개별 공고 분석' },
+    { id: 'reviewItems', label: '데이터 정제 관리' },
+    { id: 'aiRecommendations', label: 'AI 추천 관리' },
+  ]
+
   return (
-    <main className="app">
-      <h1>Dashboard Summary</h1>
+    <div className="app">
+      <aside className="lnb" aria-label="Primary navigation">
+        <nav>
+          {navigationItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`lnb-button ${
+                activePage === item.id ? 'is-active' : ''
+              }`}
+              onClick={() => setActivePage(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      {loading && <p>Loading dashboard summary...</p>}
+      <main className="app-content">
+        {activePage === 'dashboard' && (
+          <>
+            <h1>Dashboard Summary</h1>
 
-      {!loading && error && <p className="error">{error}</p>}
+            {loading && <p>Loading dashboard summary...</p>}
 
-      {!loading && !error && summary && (
-        <section className="summary-grid" aria-label="Dashboard summary">
-          <article>
-            <span>전체 공고 수</span>
-            <strong>{summary.total_postings}</strong>
-          </article>
-          <article>
-            <span>산업 카테고리 수</span>
-            <strong>{summary.total_industry_categories}</strong>
-          </article>
-          <article>
-            <span>도메인 카테고리 수</span>
-            <strong>{summary.total_domain_categories}</strong>
-          </article>
-          <article>
-            <span>직무 카테고리 수</span>
-            <strong>{summary.total_position_categories}</strong>
-          </article>
-          <article>
-            <span>미확정 정제 항목 수</span>
-            <strong>{summary.total_unconfirmed_items}</strong>
-          </article>
-        </section>
-      )}
+            {!loading && error && <p className="error">{error}</p>}
 
-      <section className="charts" aria-label="Dashboard charts">
-        <h2>Dashboard Charts</h2>
+            {!loading && !error && summary && (
+              <section className="summary-grid" aria-label="Dashboard summary">
+                <article>
+                  <span>전체 공고 수</span>
+                  <strong>{summary.total_postings}</strong>
+                </article>
+                <article>
+                  <span>산업 카테고리 수</span>
+                  <strong>{summary.total_industry_categories}</strong>
+                </article>
+                <article>
+                  <span>도메인 카테고리 수</span>
+                  <strong>{summary.total_domain_categories}</strong>
+                </article>
+                <article>
+                  <span>직무 카테고리 수</span>
+                  <strong>{summary.total_position_categories}</strong>
+                </article>
+                <article>
+                  <span>미확정 정제 항목 수</span>
+                  <strong>{summary.total_unconfirmed_items}</strong>
+                </article>
+              </section>
+            )}
 
-        {chartsLoading && <p>Loading dashboard charts...</p>}
+            <section className="charts" aria-label="Dashboard charts">
+              <h2>Dashboard Charts</h2>
 
-        {!chartsLoading && chartsError && <p className="error">{chartsError}</p>}
+              {chartsLoading && <p>Loading dashboard charts...</p>}
 
-        {!chartsLoading && !chartsError && charts && (
-          <div className="chart-groups">
-            <ChartList title="산업 분포" items={charts.industry_distribution} />
-            <ChartList title="직무 분포" items={charts.position_distribution} />
-            <ChartList title="상위 역량" items={charts.top_competencies} />
-            <ChartList title="상위 기술/툴" items={charts.top_skills} />
-          </div>
+              {!chartsLoading && chartsError && (
+                <p className="error">{chartsError}</p>
+              )}
+
+              {!chartsLoading && !chartsError && charts && (
+                <div className="chart-groups">
+                  <ChartList
+                    title="산업 분포"
+                    items={charts.industry_distribution}
+                  />
+                  <ChartList
+                    title="직무 분포"
+                    items={charts.position_distribution}
+                  />
+                  <ChartList title="상위 역량" items={charts.top_competencies} />
+                  <ChartList title="상위 기술/툴" items={charts.top_skills} />
+                </div>
+              )}
+            </section>
+
+            <section className="comparison" aria-label="Dashboard comparison">
+              <h2>Dashboard Comparison</h2>
+
+              {comparisonLoading && <p>Loading dashboard comparison...</p>}
+
+              {!comparisonLoading && comparisonError && (
+                <p className="error">{comparisonError}</p>
+              )}
+
+              {!comparisonLoading && !comparisonError && comparison && (
+                <ComparisonTable items={comparison} />
+              )}
+            </section>
+          </>
         )}
-      </section>
 
-      <section className="comparison" aria-label="Dashboard comparison">
-        <h2>Dashboard Comparison</h2>
+        {activePage === 'postings' && (
+          <>
+            <section className="postings" aria-label="Postings">
+              <h1>Postings</h1>
 
-        {comparisonLoading && <p>Loading dashboard comparison...</p>}
+              {postingsLoading && <p>Loading postings...</p>}
 
-        {!comparisonLoading && comparisonError && (
-          <p className="error">{comparisonError}</p>
+              {!postingsLoading && postingsError && (
+                <p className="error">{postingsError}</p>
+              )}
+
+              {!postingsLoading && !postingsError && (
+                <PostingsTable
+                  items={postings}
+                  onViewDetail={handleViewPostingDetail}
+                />
+              )}
+            </section>
+
+            <section className="posting-detail" aria-label="Posting detail">
+              <h2>Posting Detail</h2>
+
+              {!selectedPostingLoading &&
+                !selectedPostingError &&
+                !selectedPosting && <p>Select a posting to view details.</p>}
+
+              {selectedPostingLoading && <p>Loading posting detail...</p>}
+
+              {!selectedPostingLoading && selectedPostingError && (
+                <p className="error">{selectedPostingError}</p>
+              )}
+
+              {!selectedPostingLoading &&
+                !selectedPostingError &&
+                selectedPosting && <PostingDetail posting={selectedPosting} />}
+            </section>
+          </>
         )}
 
-        {!comparisonLoading && !comparisonError && comparison && (
-          <ComparisonTable items={comparison} />
-        )}
-      </section>
-
-      <section className="postings" aria-label="Postings">
-        <h2>Postings</h2>
-
-        {postingsLoading && <p>Loading postings...</p>}
-
-        {!postingsLoading && postingsError && (
-          <p className="error">{postingsError}</p>
+        {activePage === 'reviewItems' && (
+          <section className="placeholder-page" aria-label="Review management">
+            <h1>데이터 정제 관리</h1>
+            <p>데이터 정제 관리 화면은 다음 단계에서 구현됩니다.</p>
+          </section>
         )}
 
-        {!postingsLoading && !postingsError && (
-          <PostingsTable
-            items={postings}
-            onViewDetail={handleViewPostingDetail}
-          />
+        {activePage === 'aiRecommendations' && (
+          <section
+            className="placeholder-page"
+            aria-label="AI recommendation management"
+          >
+            <h1>AI 추천 관리</h1>
+            <p>AI 추천 관리는 후속 단계에서 제공됩니다.</p>
+          </section>
         )}
-      </section>
-
-      <section className="posting-detail" aria-label="Posting detail">
-        <h2>Posting Detail</h2>
-
-        {!selectedPostingLoading && !selectedPostingError && !selectedPosting && (
-          <p>Select a posting to view details.</p>
-        )}
-
-        {selectedPostingLoading && <p>Loading posting detail...</p>}
-
-        {!selectedPostingLoading && selectedPostingError && (
-          <p className="error">{selectedPostingError}</p>
-        )}
-
-        {!selectedPostingLoading && !selectedPostingError && selectedPosting && (
-          <PostingDetail posting={selectedPosting} />
-        )}
-      </section>
-    </main>
+      </main>
+    </div>
   )
 }
 
