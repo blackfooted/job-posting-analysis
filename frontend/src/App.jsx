@@ -87,6 +87,7 @@ function App() {
   const [reviewItemsError, setReviewItemsError] = useState('')
   const [savingReviewItemId, setSavingReviewItemId] = useState(null)
   const [reviewItemSaveError, setReviewItemSaveError] = useState('')
+  const [reviewItemSaveMessage, setReviewItemSaveMessage] = useState('')
   const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
   const [reviewItemsFieldTypeFilter, setReviewItemsFieldTypeFilter] =
     useState('')
@@ -584,6 +585,7 @@ function App() {
 
     setSavingReviewItemId(reviewItemId)
     setReviewItemSaveError('')
+    setReviewItemSaveMessage('')
 
     try {
       const result = await updateReviewItem(reviewItemId, {
@@ -593,6 +595,7 @@ function App() {
       })
 
       if (result.error) {
+        setReviewItemSaveMessage('')
         setReviewItemSaveError(
           result.error.message || 'Failed to save review item.',
         )
@@ -600,7 +603,9 @@ function App() {
       }
 
       await loadReviewItemsPage(reviewItemsPageInfo.page)
+      setReviewItemSaveMessage('정제 항목이 저장되었습니다.')
     } catch (requestError) {
+      setReviewItemSaveMessage('')
       setReviewItemSaveError(
         requestError.message || 'Failed to save review item.',
       )
@@ -614,10 +619,12 @@ function App() {
   }
 
   function handleSearchReviewItems() {
+    setReviewItemSaveMessage('')
     loadReviewItemsPage(1)
   }
 
   function handleResetReviewItemFilters() {
+    setReviewItemSaveMessage('')
     const resetFilters = {
       status: '',
       fieldType: '',
@@ -1000,6 +1007,10 @@ function App() {
               <p className="error">{reviewItemSaveError}</p>
             )}
 
+            {reviewItemSaveMessage && (
+              <p className="success-message">{reviewItemSaveMessage}</p>
+            )}
+
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length === 0 && <p>No review items</p>}
@@ -1017,14 +1028,20 @@ function App() {
             <div className="review-items-pagination">
               <button
                 type="button"
-                onClick={() => loadReviewItemsPage(reviewItemsPageInfo.page - 1)}
+                onClick={() => {
+                  setReviewItemSaveMessage('')
+                  loadReviewItemsPage(reviewItemsPageInfo.page - 1)
+                }}
                 disabled={reviewItemsLoading || isReviewItemsFirstPage}
               >
                 이전
               </button>
               <button
                 type="button"
-                onClick={() => loadReviewItemsPage(reviewItemsPageInfo.page + 1)}
+                onClick={() => {
+                  setReviewItemSaveMessage('')
+                  loadReviewItemsPage(reviewItemsPageInfo.page + 1)
+                }}
                 disabled={reviewItemsLoading || isReviewItemsLastPage}
               >
                 다음
@@ -1235,50 +1252,70 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((item, index) => (
-            <tr key={item.id || `${item.field_type}-${item.raw_value}-${index}`}>
-              <td>{formatValue(item.company)}</td>
-              <td>{formatValue(item.position)}</td>
-              <td>{formatValue(item.field_type)}</td>
-              <td>{formatValue(item.raw_value)}</td>
-              <td>
-                <input
-                  type="text"
-                  name="approved_value"
-                  defaultValue={item.approved_value || ''}
-                  aria-label="approved_value"
-                />
-              </td>
-              <td>
-                <select
-                  name="status"
-                  defaultValue={item.status || 'unconfirmed'}
-                >
-                  <option value="unconfirmed">unconfirmed</option>
-                  <option value="confirmed">confirmed</option>
-                </select>
-              </td>
-              <td>
-                <input
-                  type="checkbox"
-                  name="dictionary_apply"
-                  defaultChecked={item.dictionary_apply === 1}
-                  aria-label="dictionary_apply"
-                />
-              </td>
-              <td>{formatValue(item.created_at)}</td>
-              <td>{formatValue(item.updated_at)}</td>
-              <td>
-                <button
-                  type="button"
-                  onClick={(event) => onSave(item.id, event)}
-                  disabled={savingReviewItemId === item.id}
-                >
-                  {savingReviewItemId === item.id ? '저장 중...' : '저장'}
-                </button>
-              </td>
-            </tr>
-          ))}
+          {items.map((item, index) => {
+            const isSaving = savingReviewItemId === item.id
+
+            return (
+              <tr
+                key={item.id || `${item.field_type}-${item.raw_value}-${index}`}
+                className={isSaving ? 'is-saving' : undefined}
+              >
+                <td className="text-cell">{formatValue(item.company)}</td>
+                <td className="text-cell">{formatValue(item.position)}</td>
+                <td>{formatValue(item.field_type)}</td>
+                <td className="text-cell long-text-cell">
+                  {formatValue(item.raw_value)}
+                </td>
+                <td className="text-cell">
+                  <input
+                    type="text"
+                    name="approved_value"
+                    defaultValue={item.approved_value || ''}
+                    aria-label="approved_value"
+                  />
+                </td>
+                <td>
+                  <span
+                    className={`status-badge status-badge-${
+                      item.status || 'unconfirmed'
+                    }`}
+                  >
+                    {formatReviewItemStatus(item.status)}
+                  </span>
+                  <select
+                    name="status"
+                    defaultValue={item.status || 'unconfirmed'}
+                    aria-label="status"
+                  >
+                    <option value="unconfirmed">unconfirmed</option>
+                    <option value="confirmed">confirmed</option>
+                  </select>
+                </td>
+                <td>
+                  <label className="dictionary-apply-control">
+                    <input
+                      type="checkbox"
+                      name="dictionary_apply"
+                      defaultChecked={item.dictionary_apply === 1}
+                      aria-label="dictionary_apply"
+                    />
+                    <span>사전 반영</span>
+                  </label>
+                </td>
+                <td className="date-cell">{formatValue(item.created_at)}</td>
+                <td className="date-cell">{formatValue(item.updated_at)}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={(event) => onSave(item.id, event)}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? '저장 중...' : '저장'}
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -1353,6 +1390,10 @@ function formatValue(value) {
 
 function formatList(value) {
   return Array.isArray(value) && value.length > 0 ? value.join(', ') : '-'
+}
+
+function formatReviewItemStatus(status) {
+  return status === 'confirmed' ? '확정' : '미확인'
 }
 
 function _postingToForm(posting, initialPostingForm) {

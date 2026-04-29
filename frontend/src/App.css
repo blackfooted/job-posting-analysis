@@ -669,6 +669,12 @@ button { font-family: inherit; }
   font-weight: 500;
 }
 
+.success-message {
+  color: var(--success-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* ============================================================
    Table wrappers
    ============================================================ */
@@ -699,6 +705,10 @@ button { font-family: inherit; }
 .comparison-table  { min-width: 860px; }
 .postings-table    { min-width: 820px; }
 .review-items-table { min-width: 1240px; }
+
+.review-items-table {
+  table-layout: fixed;
+}
 
 .comparison-table th,
 .postings-table th,
@@ -735,6 +745,52 @@ button { font-family: inherit; }
 .postings-table tbody tr:hover td,
 .review-items-table tbody tr:hover td {
   background: var(--brand-50);
+}
+
+.review-items-table tbody tr.is-saving td {
+  background: var(--brand-50);
+  opacity: .72;
+}
+
+.review-items-table .text-cell {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.review-items-table .long-text-cell {
+  max-width: 260px;
+}
+
+.review-items-table .date-cell {
+  white-space: nowrap;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--gray-200);
+  border-radius: 999px;
+  background: var(--gray-50);
+  color: var(--gray-700);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+  padding: 5px 8px;
+}
+
+.status-badge-confirmed {
+  border-color: var(--brand-200);
+  background: var(--brand-50);
+  color: var(--brand-600);
+}
+
+.status-badge-unconfirmed {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 /* Review items inline controls */
@@ -778,6 +834,20 @@ button { font-family: inherit; }
 .review-items-table button:disabled {
   cursor: not-allowed;
   opacity: .5;
+}
+
+.dictionary-apply-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dictionary-apply-control input {
+  flex: 0 0 auto;
 }
 
 /* ============================================================
