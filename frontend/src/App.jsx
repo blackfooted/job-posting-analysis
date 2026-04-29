@@ -9,6 +9,7 @@ import {
   createPosting,
   deletePosting,
   fetchPosting,
+  fetchPostingAnalysis,
   fetchPostings,
   updatePosting,
 } from './api/postingsApi'
@@ -53,6 +54,11 @@ function App() {
   const [selectedPosting, setSelectedPosting] = useState(null)
   const [selectedPostingLoading, setSelectedPostingLoading] = useState(false)
   const [selectedPostingError, setSelectedPostingError] = useState('')
+  const [selectedPostingAnalysis, setSelectedPostingAnalysis] = useState(null)
+  const [selectedPostingAnalysisLoading, setSelectedPostingAnalysisLoading] =
+    useState(false)
+  const [selectedPostingAnalysisError, setSelectedPostingAnalysisError] =
+    useState('')
   const [deletingPostingId, setDeletingPostingId] = useState(null)
   const [postingDeleteError, setPostingDeleteError] = useState('')
   const [reviewItems, setReviewItems] = useState([])
@@ -222,31 +228,37 @@ function App() {
   async function handleViewPostingDetail(postingId) {
     setSelectedPosting(null)
     setSelectedPostingError('')
+    setSelectedPostingAnalysis(null)
+    setSelectedPostingAnalysisError('')
     setPostingDeleteError('')
     setSelectedPostingLoading(true)
+    setSelectedPostingAnalysisLoading(true)
 
     try {
-      const result = await fetchPosting(postingId)
+      const { detailResult, analysisResult, analysisError } =
+        await fetchPostingDetailAndAnalysis(postingId)
 
-      if (result.error) {
+      if (detailResult.error) {
         setSelectedPostingError(
-          result.error.message || 'Failed to load posting detail.',
+          detailResult.error.message || 'Failed to load posting detail.',
         )
         return
       }
 
-      setSelectedPosting(result.data)
-      setEditFormState(_postingToForm(result.data, initialPostingForm))
+      setSelectedPosting(detailResult.data)
+      setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
       setIsCreateFormOpen(false)
       setIsEditingPosting(false)
       setPostingCreateError('')
       setPostingCreateMessage('')
+      applyPostingAnalysisResult(analysisResult, analysisError)
     } catch (requestError) {
       setSelectedPostingError(
         requestError.message || 'Failed to load posting detail.',
       )
     } finally {
       setSelectedPostingLoading(false)
+      setSelectedPostingAnalysisLoading(false)
     }
   }
 
@@ -330,10 +342,12 @@ function App() {
         return
       }
 
-      const [detailResult] = await Promise.all([
-        fetchPosting(selectedPosting.id),
-        loadPostings(),
-      ])
+      setSelectedPostingAnalysisLoading(true)
+      const [{ detailResult, analysisResult, analysisError }] =
+        await Promise.all([
+          fetchPostingDetailAndAnalysis(selectedPosting.id),
+          loadPostings(),
+        ])
 
       if (detailResult.error) {
         setSelectedPostingError(
@@ -344,6 +358,7 @@ function App() {
 
       setSelectedPosting(detailResult.data)
       setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
+      applyPostingAnalysisResult(analysisResult, analysisError)
       setIsEditingPosting(false)
       setPostingCreateMessage('공고가 수정되었습니다.')
     } catch (requestError) {
@@ -352,6 +367,7 @@ function App() {
       )
     } finally {
       setPostingCreateLoading(false)
+      setSelectedPostingAnalysisLoading(false)
     }
   }
 
@@ -380,6 +396,8 @@ function App() {
 
       await loadPostings()
       setSelectedPosting(null)
+      setSelectedPostingAnalysis(null)
+      setSelectedPostingAnalysisError('')
       setIsEditingPosting(false)
       setEditFormState(initialPostingForm)
       setPostingDeleteError('')
@@ -402,6 +420,42 @@ function App() {
 
     setSelectedPosting(detailResult.data)
     setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
+  }
+
+  async function fetchPostingDetailAndAnalysis(postingId) {
+    const [detailResult, analysisOutcome] = await Promise.all([
+      fetchPosting(postingId),
+      fetchPostingAnalysis(postingId)
+        .then((analysisResult) => ({ analysisResult, analysisError: null }))
+        .catch((analysisError) => ({ analysisResult: null, analysisError })),
+    ])
+
+    return {
+      detailResult,
+      analysisResult: analysisOutcome.analysisResult,
+      analysisError: analysisOutcome.analysisError,
+    }
+  }
+
+  function applyPostingAnalysisResult(analysisResult, analysisError) {
+    if (analysisError) {
+      setSelectedPostingAnalysis(null)
+      setSelectedPostingAnalysisError(
+        analysisError.message || '분석 결과를 불러오지 못했습니다.',
+      )
+      return
+    }
+
+    if (analysisResult?.error) {
+      setSelectedPostingAnalysis(null)
+      setSelectedPostingAnalysisError(
+        analysisResult.error.message || '분석 결과를 불러오지 못했습니다.',
+      )
+      return
+    }
+
+    setSelectedPostingAnalysis(analysisResult?.data || null)
+    setSelectedPostingAnalysisError('')
   }
 
   function handleEditPosting() {
@@ -773,6 +827,11 @@ function App() {
                       <p className="error">{postingDeleteError}</p>
                     )}
                     <PostingDetail posting={selectedPosting} />
+                    <PostingAnalysisDetail
+                      analysis={selectedPostingAnalysis}
+                      isLoading={selectedPostingAnalysisLoading}
+                      error={selectedPostingAnalysisError}
+                    />
                   </>
                 )}
 
@@ -1178,6 +1237,39 @@ function PostingDetail({ posting }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+function PostingAnalysisDetail({ analysis, isLoading, error }) {
+  const analysisItems = [
+    ['산업 카테고리', analysis?.industry_category],
+    ['도메인 카테고리', analysis?.domain_category],
+    ['직무 카테고리', analysis?.position_category],
+    ['기술/툴', formatList(analysis?.extracted_skills)],
+    ['역량', formatList(analysis?.extracted_competencies)],
+    ['미확정 항목 수', analysis?.unconfirmed_count],
+    ['분석일시', analysis?.analyzed_at],
+  ]
+
+  return (
+    <section className="posting-analysis-detail" aria-label="Posting analysis">
+      <h3>분석 결과</h3>
+
+      {isLoading && <p>분석 결과를 불러오는 중...</p>}
+
+      {!isLoading && error && <p className="error">{error}</p>}
+
+      {!isLoading && !error && (
+        <dl className="posting-detail-list">
+          {analysisItems.map(([label, value]) => (
+            <div key={label} className="posting-detail-item">
+              <dt>{label}</dt>
+              <dd>{formatValue(value)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   )
 }
 

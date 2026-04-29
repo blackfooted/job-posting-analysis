@@ -19,6 +19,10 @@ export function fetchPosting(postingId) {
   return requestPostings(`/api/postings/${postingId}`)
 }
 
+export function fetchPostingAnalysis(postingId) {
+  return requestPostings(`/api/postings/${postingId}/analysis`)
+}
+
 export function createPosting(payload) {
   return requestPostings('/api/postings', {
     method: 'POST',

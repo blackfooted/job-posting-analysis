@@ -478,6 +478,18 @@
   text-align: left;
 }
 
+.posting-analysis-detail {
+  margin-top: 24px;
+  border: 1px solid #d8dee4;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: left;
+}
+
+.posting-analysis-detail h3 {
+  margin: 0;
+}
+
 .posting-detail-item {
   display: grid;
   grid-template-columns: minmax(120px, 180px) 1fr;
