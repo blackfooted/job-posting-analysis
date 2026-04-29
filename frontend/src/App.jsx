@@ -15,6 +15,20 @@ import {
 } from './api/postingsApi'
 import { fetchReviewItems, updateReviewItem } from './api/reviewItemsApi'
 
+const postingFormValidationMessages = {
+  company: '회사명을 입력하세요.',
+  position: '포지션을 입력하세요.',
+  duties: '담당 업무를 입력하세요.',
+  requirements: '자격 요건을 입력하세요.',
+  preferred: '우대 사항을 입력하세요.',
+  tools: '기술/툴을 입력하세요.',
+  experience: '경력을 입력하세요.',
+  employment_type: '고용 형태를 입력하세요.',
+  work_type: '근무 형태를 입력하세요.',
+  industry_memo: '산업 메모를 입력하세요.',
+  raw_text: '원문을 입력하세요.',
+}
+
 function App() {
   const reviewItemsPageSize = 15
   const initialPostingForm = {
@@ -48,6 +62,8 @@ function App() {
   const [isEditingPosting, setIsEditingPosting] = useState(false)
   const [createFormState, setCreateFormState] = useState(initialPostingForm)
   const [editFormState, setEditFormState] = useState(initialPostingForm)
+  const [createFormErrors, setCreateFormErrors] = useState({})
+  const [editFormErrors, setEditFormErrors] = useState({})
   const [postingCreateLoading, setPostingCreateLoading] = useState(false)
   const [postingCreateError, setPostingCreateError] = useState('')
   const [postingCreateMessage, setPostingCreateMessage] = useState('')
@@ -247,6 +263,7 @@ function App() {
 
       setSelectedPosting(detailResult.data)
       setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
+      setEditFormErrors({})
       setIsCreateFormOpen(false)
       setIsEditingPosting(false)
       setPostingCreateError('')
@@ -268,6 +285,7 @@ function App() {
       ...currentForm,
       [name]: value,
     }))
+    clearPostingFieldError(setCreateFormErrors, name)
   }
 
   function handleEditPostingFormChange(event) {
@@ -276,12 +294,14 @@ function App() {
       ...currentForm,
       [name]: value,
     }))
+    clearPostingFieldError(setEditFormErrors, name)
   }
 
   function handleOpenCreateForm() {
     setIsCreateFormOpen(true)
     setIsEditingPosting(false)
     setCreateFormState(initialPostingForm)
+    setCreateFormErrors({})
     setPostingCreateError('')
     setPostingCreateMessage('')
   }
@@ -289,15 +309,25 @@ function App() {
   function handleCancelCreatePosting() {
     setIsCreateFormOpen(false)
     setCreateFormState(initialPostingForm)
+    setCreateFormErrors({})
     setPostingCreateError('')
     setPostingCreateMessage('')
   }
 
   async function handleCreatePosting(event) {
     event.preventDefault()
-    setPostingCreateLoading(true)
     setPostingCreateError('')
     setPostingCreateMessage('')
+
+    const validationErrors = validatePostingForm(createFormState)
+
+    if (hasPostingFormErrors(validationErrors)) {
+      setCreateFormErrors(validationErrors)
+      return
+    }
+
+    setCreateFormErrors({})
+    setPostingCreateLoading(true)
 
     try {
       const result = await createPosting(createFormState)
@@ -311,6 +341,7 @@ function App() {
 
       await loadPostings()
       setCreateFormState(initialPostingForm)
+      setCreateFormErrors({})
       setIsCreateFormOpen(false)
       setPostingCreateMessage('공고가 저장되었습니다.')
     } catch (requestError) {
@@ -328,9 +359,18 @@ function App() {
       return
     }
 
-    setPostingCreateLoading(true)
     setPostingCreateError('')
     setPostingCreateMessage('')
+
+    const validationErrors = validatePostingForm(editFormState)
+
+    if (hasPostingFormErrors(validationErrors)) {
+      setEditFormErrors(validationErrors)
+      return
+    }
+
+    setEditFormErrors({})
+    setPostingCreateLoading(true)
 
     try {
       const result = await updatePosting(selectedPosting.id, editFormState)
@@ -358,6 +398,7 @@ function App() {
 
       setSelectedPosting(detailResult.data)
       setEditFormState(_postingToForm(detailResult.data, initialPostingForm))
+      setEditFormErrors({})
       applyPostingAnalysisResult(analysisResult, analysisError)
       setIsEditingPosting(false)
       setPostingCreateMessage('공고가 수정되었습니다.')
@@ -400,6 +441,7 @@ function App() {
       setSelectedPostingAnalysisError('')
       setIsEditingPosting(false)
       setEditFormState(initialPostingForm)
+      setEditFormErrors({})
       setPostingDeleteError('')
     } catch (requestError) {
       setPostingDeleteError(requestError.message || '공고 삭제에 실패했습니다.')
@@ -462,6 +504,7 @@ function App() {
     setIsEditingPosting(true)
     setIsCreateFormOpen(false)
     setEditFormState(_postingToForm(selectedPosting, initialPostingForm))
+    setEditFormErrors({})
     setPostingCreateError('')
     setPostingCreateMessage('')
     setPostingDeleteError('')
@@ -469,6 +512,7 @@ function App() {
 
   function handleCancelEditPosting() {
     setIsEditingPosting(false)
+    setEditFormErrors({})
     setPostingCreateError('')
     setPostingCreateMessage('')
     setPostingDeleteError('')
@@ -780,6 +824,7 @@ function App() {
                 {postingCreateMessage && <p>{postingCreateMessage}</p>}
 
                 <PostingForm
+                  errors={createFormErrors}
                   form={createFormState}
                   isSaving={postingCreateLoading}
                   submitLabel="등록"
@@ -852,6 +897,7 @@ function App() {
                     {postingCreateMessage && <p>{postingCreateMessage}</p>}
 
                     <PostingForm
+                      errors={editFormErrors}
                       form={editFormState}
                       isSaving={postingCreateLoading}
                       submitLabel="수정 저장"
@@ -1103,7 +1149,15 @@ function PostingsTable({ items = [], onViewDetail }) {
   )
 }
 
-function PostingForm({ form, isSaving, submitLabel, onCancel, onChange, onSubmit }) {
+function PostingForm({
+  errors = {},
+  form,
+  isSaving,
+  submitLabel,
+  onCancel,
+  onChange,
+  onSubmit,
+}) {
   const fields = [
     ['company', '회사명', 'input'],
     ['position', '포지션', 'input'],
@@ -1120,13 +1174,33 @@ function PostingForm({ form, isSaving, submitLabel, onCancel, onChange, onSubmit
 
   return (
     <form className="posting-create-form" onSubmit={onSubmit}>
+      {hasPostingFormErrors(errors) && (
+        <p className="form-validation-summary">필수 입력값을 확인하세요.</p>
+      )}
+
       {fields.map(([name, label, control]) => (
         <label key={name}>
           <span>{label}</span>
           {control === 'textarea' ? (
-            <textarea name={name} value={form[name]} onChange={onChange} />
+            <textarea
+              name={name}
+              value={form[name]}
+              onChange={onChange}
+              className={errors[name] ? 'has-validation-error' : undefined}
+              aria-invalid={errors[name] ? 'true' : undefined}
+            />
           ) : (
-            <input name={name} type="text" value={form[name]} onChange={onChange} />
+            <input
+              name={name}
+              type="text"
+              value={form[name]}
+              onChange={onChange}
+              className={errors[name] ? 'has-validation-error' : undefined}
+              aria-invalid={errors[name] ? 'true' : undefined}
+            />
+          )}
+          {errors[name] && (
+            <span className="field-validation-error">{errors[name]}</span>
           )}
         </label>
       ))}
@@ -1286,6 +1360,34 @@ function _postingToForm(posting, initialPostingForm) {
     form[field] = posting?.[field] || ''
     return form
   }, {})
+}
+
+function validatePostingForm(form) {
+  return Object.keys(postingFormValidationMessages).reduce((errors, field) => {
+    const value = form[field]
+
+    if (typeof value !== 'string' || value.trim() === '') {
+      errors[field] = postingFormValidationMessages[field]
+    }
+
+    return errors
+  }, {})
+}
+
+function hasPostingFormErrors(errors) {
+  return Object.keys(errors).length > 0
+}
+
+function clearPostingFieldError(setErrors, fieldName) {
+  setErrors((currentErrors) => {
+    if (!currentErrors[fieldName]) {
+      return currentErrors
+    }
+
+    const nextErrors = { ...currentErrors }
+    delete nextErrors[fieldName]
+    return nextErrors
+  })
 }
 
 export default App

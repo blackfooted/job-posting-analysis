@@ -467,6 +467,13 @@ button { font-family: inherit; }
   padding: 22px;
 }
 
+.form-validation-summary {
+  grid-column: 1 / -1;
+  color: var(--danger-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .posting-create-form label {
   display: grid;
   gap: 6px;
@@ -497,6 +504,25 @@ button { font-family: inherit; }
   border-color: var(--brand-400);
   box-shadow: 0 0 0 3px var(--brand-100);
   background: var(--gray-0);
+}
+
+.posting-create-form input.has-validation-error,
+.posting-create-form textarea.has-validation-error {
+  border-color: var(--danger-border);
+}
+
+.posting-create-form input.has-validation-error:focus,
+.posting-create-form textarea.has-validation-error:focus {
+  border-color: var(--danger-text);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+.posting-create-form .field-validation-error {
+  color: var(--danger-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .posting-create-form textarea {
