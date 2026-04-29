@@ -81,6 +81,34 @@ def list_postings() -> dict[str, Any]:
     return _success([_row_to_posting(row) for row in rows])
 
 
+@router.get("/{posting_id}/analysis")
+def get_posting_analysis(posting_id: int) -> dict[str, Any]:
+    initialize_database()
+    with _connection() as connection:
+        posting = _fetch_posting(connection, posting_id)
+        if posting is None:
+            raise HTTPException(status_code=404, detail="Posting not found")
+
+        row = connection.execute(
+            """
+            SELECT
+              posting_id,
+              industry_category,
+              domain_category,
+              position_category,
+              extracted_skills,
+              extracted_competencies,
+              unconfirmed_count,
+              analyzed_at
+            FROM analysis_results
+            WHERE posting_id = ?
+            """,
+            (posting_id,),
+        ).fetchone()
+
+    return _success(_row_to_posting_analysis(posting_id, row))
+
+
 @router.get("/{posting_id}")
 def get_posting(posting_id: int) -> dict[str, Any]:
     initialize_database()
@@ -247,6 +275,56 @@ def _fetch_posting(
 
 def _row_to_posting(row: sqlite3.Row) -> dict[str, Any]:
     return {key: row[key] for key in row.keys()}
+
+
+def _row_to_posting_analysis(
+    posting_id: int,
+    row: sqlite3.Row | None,
+) -> dict[str, Any]:
+    if row is None:
+        return {
+            "posting_id": posting_id,
+            "industry_category": None,
+            "domain_category": None,
+            "position_category": None,
+            "extracted_skills": [],
+            "extracted_competencies": [],
+            "unconfirmed_count": 0,
+            "analyzed_at": None,
+        }
+
+    return {
+        "posting_id": row["posting_id"],
+        "industry_category": row["industry_category"],
+        "domain_category": row["domain_category"],
+        "position_category": row["position_category"],
+        "extracted_skills": _parse_json_array(row["extracted_skills"]),
+        "extracted_competencies": _parse_json_array(
+            row["extracted_competencies"],
+        ),
+        "unconfirmed_count": row["unconfirmed_count"] or 0,
+        "analyzed_at": row["analyzed_at"],
+    }
+
+
+def _parse_json_array(raw_value: str | None) -> list[str]:
+    if not raw_value:
+        return []
+
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(parsed, list):
+        return []
+
+    values: list[str] = []
+    for item in parsed:
+        value = str(item).strip()
+        if value:
+            values.append(value)
+    return values
 
 
 def _success(data: Any) -> dict[str, Any]:
