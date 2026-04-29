@@ -7,6 +7,7 @@ import {
 } from './api/dashboardApi'
 import {
   createPosting,
+  deletePosting,
   fetchPosting,
   fetchPostings,
   updatePosting,
@@ -52,6 +53,8 @@ function App() {
   const [selectedPosting, setSelectedPosting] = useState(null)
   const [selectedPostingLoading, setSelectedPostingLoading] = useState(false)
   const [selectedPostingError, setSelectedPostingError] = useState('')
+  const [deletingPostingId, setDeletingPostingId] = useState(null)
+  const [postingDeleteError, setPostingDeleteError] = useState('')
   const [reviewItems, setReviewItems] = useState([])
   const [reviewItemsPageInfo, setReviewItemsPageInfo] = useState({
     page: 1,
@@ -219,6 +222,7 @@ function App() {
   async function handleViewPostingDetail(postingId) {
     setSelectedPosting(null)
     setSelectedPostingError('')
+    setPostingDeleteError('')
     setSelectedPostingLoading(true)
 
     try {
@@ -351,6 +355,41 @@ function App() {
     }
   }
 
+  async function handleDeletePosting() {
+    if (!selectedPosting) {
+      return
+    }
+
+    setPostingDeleteError('')
+
+    const shouldDelete = window.confirm('선택한 공고를 삭제하시겠습니까?')
+
+    if (!shouldDelete) {
+      return
+    }
+
+    setDeletingPostingId(selectedPosting.id)
+
+    try {
+      const result = await deletePosting(selectedPosting.id)
+
+      if (result.error) {
+        setPostingDeleteError(result.error.message || '공고 삭제에 실패했습니다.')
+        return
+      }
+
+      await loadPostings()
+      setSelectedPosting(null)
+      setIsEditingPosting(false)
+      setEditFormState(initialPostingForm)
+      setPostingDeleteError('')
+    } catch (requestError) {
+      setPostingDeleteError(requestError.message || '공고 삭제에 실패했습니다.')
+    } finally {
+      setDeletingPostingId(null)
+    }
+  }
+
   async function refreshSelectedPosting(postingId) {
     const detailResult = await fetchPosting(postingId)
 
@@ -371,12 +410,14 @@ function App() {
     setEditFormState(_postingToForm(selectedPosting, initialPostingForm))
     setPostingCreateError('')
     setPostingCreateMessage('')
+    setPostingDeleteError('')
   }
 
   function handleCancelEditPosting() {
     setIsEditingPosting(false)
     setPostingCreateError('')
     setPostingCreateMessage('')
+    setPostingDeleteError('')
   }
 
   async function loadReviewItemsPage(
@@ -719,7 +760,18 @@ function App() {
                       <button type="button" onClick={handleEditPosting}>
                         수정
                       </button>
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={handleDeletePosting}
+                        disabled={deletingPostingId === selectedPosting.id}
+                      >
+                        삭제
+                      </button>
                     </div>
+                    {postingDeleteError && (
+                      <p className="error">{postingDeleteError}</p>
+                    )}
                     <PostingDetail posting={selectedPosting} />
                   </>
                 )}

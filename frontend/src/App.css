@@ -231,9 +231,20 @@
   padding: 8px 14px;
 }
 
+.posting-detail-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.posting-detail-actions .danger-button {
+  border-color: #f1aeb5;
+  color: #b42318;
+}
+
 .posting-detail-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 16px;
 }
 
