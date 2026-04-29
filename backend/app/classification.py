@@ -66,6 +66,27 @@ COMPOUND_CANDIDATES = (
     "상품",
     "전시",
     "결제",
+    "Slack",
+    "Claude Code",
+    "Claude",
+    "ChatGPT",
+    "Gemini",
+    "Cursor",
+    "LLM",
+    "ERD",
+    "SRS",
+    "CRM",
+    "CMS",
+    "KYC",
+    "AML",
+    "IA",
+    "백로그",
+    "스토리보드",
+    "와이어프레임",
+    "프로젝트 리딩",
+    "우선순위 관리",
+    "이슈 관리",
+    "시스템 연동",
     "VOC",
     "SQL",
     "Jira",
@@ -88,6 +109,23 @@ SKILL_CANDIDATES = {
     "Wireframe",
     "SB",
     "QA",
+    "Slack",
+    "Claude Code",
+    "Claude",
+    "ChatGPT",
+    "Gemini",
+    "Cursor",
+    "LLM",
+    "ERD",
+    "SRS",
+    "CRM",
+    "CMS",
+    "KYC",
+    "AML",
+    "IA",
+    "백로그",
+    "스토리보드",
+    "와이어프레임",
 }
 
 DOMAIN_CANDIDATES = {
@@ -164,10 +202,63 @@ CONTEXT_WORDS = {
     "따른",
     "위한",
     "통한",
+    "통해",
+    "활용",
+    "활용한",
+    "대한",
+    "이해",
+    "우대",
+    "우대합니다",
+    "경험한",
+    "있으면",
+    "좋습니다",
+    "필요합니다",
 }
+
+CORE_PHRASE_ALLOWED_TRAILING_WORDS = (
+    "과제",
+    "기획",
+    "개발",
+    "설계",
+    "개선",
+    "분석",
+    "운영",
+    "관리",
+    "활동",
+    "업무",
+    "경험",
+    "프로젝트",
+    "프로세스",
+    "통해",
+    "기반",
+)
+
+CORE_PHRASE_EXCLUDED_TRAILING_WORDS = (
+    "열정",
+    "노력",
+    "의지",
+    "자세",
+    "관심",
+    "이해",
+    "마인드",
+    "성향",
+    "우대",
+)
+
+NOISY_CONTEXT_PREFIX_WORDS = (
+    "대한",
+    "이해",
+    "우대",
+    "우대합니다",
+    "경험한",
+    "있으면",
+    "좋습니다",
+    "필요합니다",
+)
 
 MAX_CANDIDATE_LENGTH = 25
 MIN_CANDIDATE_LENGTH = 2
+REVIEW_ONLY_FIELD_SUFFIX = ":review"
 
 
 def analyze_posting(posting: dict[str, str]) -> AnalysisDraft:
@@ -269,24 +360,27 @@ def _extract_pattern_candidates(
     for field in PATTERN_SOURCE_FIELDS:
         for line in _split_normalized_lines(posting.get(field, "")):
             for field_type, candidate in _extract_candidates_from_line(line):
+                actual_field_type = _actual_field_type(field_type)
                 normalized_candidate = _normalize(candidate)
                 if normalized_candidate in confirmed_values:
                     continue
 
-                matched_value = _match_candidate_with_dictionary(
-                    candidate,
-                    field_type,
-                    configs,
-                )
+                matched_value = None
+                if _allows_confirmation(field_type):
+                    matched_value = _match_candidate_with_dictionary(
+                        candidate,
+                        actual_field_type,
+                        configs,
+                    )
                 if matched_value is not None:
-                    if field_type == "skill":
+                    if actual_field_type == "skill":
                         _append_unique(extracted_skills, matched_value)
-                    elif field_type == "competency":
+                    elif actual_field_type == "competency":
                         _append_unique(extracted_competencies, matched_value)
                     confirmed_values.add(_normalize(matched_value))
                     continue
 
-                _append_review_item_if_valid(review_items, field_type, candidate)
+                _append_review_item_if_valid(review_items, actual_field_type, candidate)
 
 
 def _split_normalized_lines(value: str) -> list[str]:
@@ -298,20 +392,20 @@ def _extract_candidates_from_line(line: str) -> list[tuple[str, str]]:
 
     for phrase in COMPOUND_CANDIDATES:
         if phrase in line:
-            _append_candidate(candidates, _field_type_for_candidate(phrase), phrase)
+            _append_compound_candidate(candidates, phrase, line)
 
     if "데이터 분석" in line:
-        _append_candidate(candidates, "competency", "데이터 분석")
+        _append_core_phrase_candidate(candidates, "데이터 분석", line)
     if "서비스 개선" in line:
-        _append_candidate(candidates, "competency", "서비스 개선")
+        _append_core_phrase_candidate(candidates, "서비스 개선", line)
 
     for parenthetical_value in re.findall(r"\(([^)]+)\)", line):
         for segment in _split_candidate_segments(parenthetical_value):
-            _append_candidates_from_segment(candidates, segment)
+            _append_candidates_from_segment(candidates, segment, line)
 
     line_without_parentheses = re.sub(r"\([^)]*\)", " ", line)
     for segment in _split_candidate_segments(line_without_parentheses):
-        _append_candidates_from_segment(candidates, segment)
+        _append_candidates_from_segment(candidates, segment, line)
 
     return _prefer_specific_candidates(candidates)
 
@@ -319,16 +413,20 @@ def _extract_candidates_from_line(line: str) -> list[tuple[str, str]]:
 def _append_candidates_from_segment(
     candidates: list[tuple[str, str]],
     segment: str,
+    context: str | None = None,
 ) -> None:
+    context = context or segment
     segment = _clean_candidate(segment)
     if not segment:
         return
 
     for phrase in COMPOUND_CANDIDATES:
         if phrase in segment:
-            _append_candidate(candidates, _field_type_for_candidate(phrase), phrase)
+            _append_compound_candidate(candidates, phrase, context)
 
     for acronym in re.findall(r"\b[A-Z][A-Z0-9+#.]{1,}\b", segment):
+        if acronym == "QA" and not _is_allowed_qa_context(context):
+            continue
         _append_candidate(candidates, "skill", acronym)
 
     for keyword in STANDALONE_KEYWORD_CANDIDATES:
@@ -351,6 +449,93 @@ def _append_candidates_from_segment(
 
         if prefix and prefix not in SKILL_CANDIDATES:
             _append_candidate(candidates, "competency", f"{prefix} {suffix}")
+
+
+def _append_compound_candidate(
+    candidates: list[tuple[str, str]],
+    phrase: str,
+    context: str,
+) -> None:
+    if phrase == "QA":
+        if _is_allowed_qa_context(context):
+            _append_candidate(candidates, "skill", phrase)
+        return
+
+    if phrase in {"데이터 분석", "서비스 개선"}:
+        _append_core_phrase_candidate(candidates, phrase, context)
+        return
+
+    _append_candidate(candidates, _field_type_for_candidate(phrase), phrase)
+
+
+def _append_core_phrase_candidate(
+    candidates: list[tuple[str, str]],
+    phrase: str,
+    context: str,
+) -> None:
+    field_type = "competency"
+    if not _is_allowed_core_phrase_confirmation(context, phrase):
+        field_type = _review_only_field_type(field_type)
+    _append_candidate(candidates, field_type, phrase)
+
+
+def _is_allowed_core_phrase_confirmation(context: str, phrase: str) -> bool:
+    if phrase not in context:
+        return False
+
+    trailing_text = context.split(phrase, 1)[1]
+    trailing_words = re.findall(r"[A-Za-z0-9가-힣]+", trailing_text)
+    if not trailing_words:
+        return True
+
+    first_words = trailing_words[:3]
+    if any(word in CORE_PHRASE_EXCLUDED_TRAILING_WORDS for word in first_words):
+        return False
+    if any(word in CORE_PHRASE_ALLOWED_TRAILING_WORDS for word in first_words):
+        return True
+    return False
+
+
+def _is_allowed_qa_context(text: str) -> bool:
+    if "QA" not in text:
+        return False
+
+    if _is_simple_qa_department_list(text):
+        return False
+
+    if re.search(r"QA\s*(?:에\s*대한\s*)?이해", text):
+        return False
+    if re.search(r"QA\s*(?:팀|부서|관련\s*부서)?(?:과|와)?\s*협업", text):
+        return False
+    if re.search(r"QA\s*관련\s*부서", text):
+        return False
+
+    direct_patterns = (
+        r"QA\s*(?:수행|담당|진행|경험|프로세스|업무|참여)",
+        r"(?:테스트|품질\s*검증)\s*(?:및|/|·|\(|\s)*QA",
+        r"QA\s*\)",
+    )
+    return any(re.search(pattern, text) for pattern in direct_patterns)
+
+
+def _is_simple_qa_department_list(text: str) -> bool:
+    normalized = re.sub(r"\([^)]*\)", "", text)
+    parts = [part.strip() for part in re.split(r"[,;/·\n]+", normalized) if part.strip()]
+    if len(parts) < 2 or "QA" not in parts:
+        return False
+
+    department_words = {
+        "개발",
+        "디자인",
+        "QA",
+        "기획",
+        "PM",
+        "PO",
+        "사업",
+        "운영",
+        "마케팅",
+    }
+    return all(part in department_words for part in parts)
 
 
 def _split_candidate_segments(value: str) -> list[str]:
@@ -398,11 +583,18 @@ def _trim_context_prefix(prefix: str) -> str:
     prefix = re.split(r"\s+(?:및|또는)\s+", prefix)[-1]
     words = []
     for word in prefix.split():
-        if re.search(r"(과의|와의|으로|로|에서|에게|에|의|을|를)$", word):
+        clean_word = word.strip(" .,:;")
+        if any(noisy_word in clean_word for noisy_word in NOISY_CONTEXT_PREFIX_WORDS):
             continue
-        if word in CONTEXT_WORDS or word in GENERIC_SPLIT_WORDS:
+        if re.search(r"(과의|와의|으로|로|에서|에게|에|의|을|를|과|와)$", clean_word):
             continue
-        words.append(word)
+        if (
+            clean_word in CONTEXT_WORDS
+            or clean_word in GENERIC_SPLIT_WORDS
+            or clean_word in SKILL_CANDIDATES
+        ):
+            continue
+        words.append(clean_word)
 
     if not words:
         return ""
@@ -436,6 +628,18 @@ def _append_candidate(
     key = (field_type, _normalize(candidate))
     if key not in {(item_type, _normalize(item_value)) for item_type, item_value in candidates}:
         candidates.append((field_type, candidate))
+
+
+def _review_only_field_type(field_type: str) -> str:
+    return f"{field_type}{REVIEW_ONLY_FIELD_SUFFIX}"
+
+
+def _actual_field_type(field_type: str) -> str:
+    return field_type.removesuffix(REVIEW_ONLY_FIELD_SUFFIX)
+
+
+def _allows_confirmation(field_type: str) -> bool:
+    return not field_type.endswith(REVIEW_ONLY_FIELD_SUFFIX)
 
 
 def _prefer_specific_candidates(
