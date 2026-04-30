@@ -648,6 +648,7 @@ button { font-family: inherit; }
 
 .review-items-table-actions {
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
   margin-top: 14px;
 }
@@ -673,6 +674,17 @@ button { font-family: inherit; }
 .review-items-table-actions button:disabled {
   cursor: not-allowed;
   opacity: .5;
+}
+
+.review-items-table-actions .danger-action-button {
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.review-items-table-actions .danger-action-button:hover:not(:disabled) {
+  background: #ffe4e8;
+  box-shadow: var(--shadow-xs);
 }
 
 /* ============================================================
@@ -843,6 +855,12 @@ button { font-family: inherit; }
   border-color: var(--danger-border);
   background: var(--danger-bg);
   color: var(--danger-text);
+}
+
+.status-badge-removed {
+  border-color: var(--gray-300);
+  background: var(--gray-100);
+  color: var(--gray-700);
 }
 
 /* Review items inline controls */

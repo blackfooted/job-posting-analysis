@@ -12,6 +12,8 @@ from backend.app.postings import _success
 
 router = APIRouter(prefix="/api/review-items", tags=["review-items"])
 
+REVIEW_ITEM_STATUSES = {"unconfirmed", "confirmed", "removed"}
+
 
 class ReviewItemUpdate(BaseModel):
     approved_value: str | None = None
@@ -29,10 +31,10 @@ def list_review_items(
     keyword: str | None = Query(default=None),
 ) -> dict[str, Any]:
     initialize_database()
-    if status is not None and status not in {"unconfirmed", "confirmed"}:
+    if status is not None and status not in REVIEW_ITEM_STATUSES:
         raise HTTPException(
             status_code=400,
-            detail="status must be one of: unconfirmed, confirmed",
+            detail="status must be one of: unconfirmed, confirmed, removed",
         )
     allowed_field_types = {"industry", "domain", "position", "skill", "competency"}
     if field_type is not None and field_type not in allowed_field_types:
@@ -52,6 +54,8 @@ def list_review_items(
     if status is not None:
         filter_conditions.append("AND review_items.status = ?")
         filter_params.append(status)
+    else:
+        filter_conditions.append("AND review_items.status != 'removed'")
     if field_type is not None:
         filter_conditions.append("AND review_items.field_type = ?")
         filter_params.append(field_type)
@@ -138,11 +142,13 @@ def update_review_item(
             existing["dictionary_apply"],
         )
 
-        if status not in {"unconfirmed", "confirmed"}:
+        if status not in REVIEW_ITEM_STATUSES:
             raise HTTPException(
                 status_code=400,
-                detail="status must be one of: unconfirmed, confirmed",
+                detail="status must be one of: unconfirmed, confirmed, removed",
             )
+        if status == "removed":
+            dictionary_apply = 0
         if dictionary_apply not in {0, 1}:
             raise HTTPException(
                 status_code=400,

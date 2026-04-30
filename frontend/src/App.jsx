@@ -88,6 +88,9 @@ function App() {
   const [bulkReviewItemSaveMessage, setBulkReviewItemSaveMessage] =
     useState('')
   const [bulkReviewItemSaveError, setBulkReviewItemSaveError] = useState('')
+  const [isRemovingReviewItems, setIsRemovingReviewItems] = useState(false)
+  const [reviewItemRemoveMessage, setReviewItemRemoveMessage] = useState('')
+  const [reviewItemRemoveError, setReviewItemRemoveError] = useState('')
   const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
   const [reviewItemsFieldTypeFilter, setReviewItemsFieldTypeFilter] =
     useState('')
@@ -586,6 +589,8 @@ function App() {
     setReviewItemSaveMessage('')
     setBulkReviewItemSaveMessage('')
     setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
 
     try {
       const result = await updateReviewItem(reviewItemId, payload)
@@ -619,6 +624,8 @@ function App() {
     setReviewItemSaveError('')
     setBulkReviewItemSaveMessage('')
     setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
     setSelectedReviewItemIds([])
     loadReviewItemsPage(1)
   }
@@ -628,6 +635,8 @@ function App() {
     setReviewItemSaveError('')
     setBulkReviewItemSaveMessage('')
     setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
     setSelectedReviewItemIds([])
     const resetFilters = {
       status: '',
@@ -671,6 +680,8 @@ function App() {
     setReviewItemSaveError('')
     setBulkReviewItemSaveMessage('')
     setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
     setSelectedReviewItemIds([])
   }
 
@@ -678,7 +689,8 @@ function App() {
     if (
       selectedReviewItemIds.length === 0 ||
       reviewItemsLoading ||
-      savingReviewItemId !== null
+      savingReviewItemId !== null ||
+      isRemovingReviewItems
     ) {
       return
     }
@@ -688,6 +700,8 @@ function App() {
     setReviewItemSaveMessage('')
     setBulkReviewItemSaveMessage('')
     setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
 
     let successCount = 0
     let failureCount = 0
@@ -722,6 +736,67 @@ function App() {
     }
 
     setIsBulkSavingReviewItems(false)
+  }
+
+  async function handleRemoveReviewItems() {
+    if (
+      selectedReviewItemIds.length === 0 ||
+      reviewItemsLoading ||
+      isBulkSavingReviewItems
+    ) {
+      return
+    }
+
+    const shouldRemove = window.confirm('선택한 정제 항목을 제외하시겠습니까?')
+
+    if (!shouldRemove) {
+      return
+    }
+
+    setIsRemovingReviewItems(true)
+    setReviewItemSaveError('')
+    setReviewItemSaveMessage('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
+    setReviewItemRemoveMessage('')
+    setReviewItemRemoveError('')
+
+    let successCount = 0
+    let failureCount = 0
+
+    for (const reviewItemId of selectedReviewItemIds) {
+      try {
+        const draft = reviewItemDrafts[reviewItemId] || {}
+        const approvedValue = (draft.approved_value || '').trim()
+        const result = await updateReviewItem(reviewItemId, {
+          approved_value: approvedValue === '' ? null : approvedValue,
+          status: 'removed',
+          dictionary_apply: 0,
+        })
+
+        if (result.error) {
+          failureCount += 1
+        } else {
+          successCount += 1
+        }
+      } catch {
+        failureCount += 1
+      }
+    }
+
+    await loadReviewItemsPage(reviewItemsPageInfo.page)
+
+    if (successCount > 0 && failureCount === 0) {
+      setReviewItemRemoveMessage('선택한 정제 항목을 제외했습니다.')
+    } else if (successCount > 0 && failureCount > 0) {
+      setReviewItemRemoveError(
+        `일부 정제 항목 제외에 실패했습니다. 성공 ${successCount}건 / 실패 ${failureCount}건`,
+      )
+    } else {
+      setReviewItemRemoveError('선택한 정제 항목 제외에 실패했습니다.')
+    }
+
+    setIsRemovingReviewItems(false)
   }
 
   function getReviewItemSavePayload(reviewItemId) {
@@ -1031,8 +1106,9 @@ function App() {
                   }
                 >
                   <option value="">전체</option>
-                  <option value="unconfirmed">unconfirmed</option>
-                  <option value="confirmed">confirmed</option>
+                  <option value="unconfirmed">미확인</option>
+                  <option value="confirmed">확정</option>
+                  <option value="removed">제외</option>
                 </select>
               </label>
               <label>
@@ -1131,6 +1207,18 @@ function App() {
               </p>
             )}
 
+            {reviewItemRemoveMessage && (
+              <p className="bulk-save-message is-success">
+                {reviewItemRemoveMessage}
+              </p>
+            )}
+
+            {reviewItemRemoveError && (
+              <p className="bulk-save-message is-error">
+                {reviewItemRemoveError}
+              </p>
+            )}
+
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length === 0 && <p>No review items</p>}
@@ -1147,15 +1235,31 @@ function App() {
                         selectedReviewItemIds.length === 0 ||
                         reviewItemsLoading ||
                         isBulkSavingReviewItems ||
+                        isRemovingReviewItems ||
                         savingReviewItemId !== null
                       }
                     >
                       저장
                     </button>
+                    <button
+                      type="button"
+                      className="danger-action-button"
+                      onClick={handleRemoveReviewItems}
+                      disabled={
+                        selectedReviewItemIds.length === 0 ||
+                        reviewItemsLoading ||
+                        isBulkSavingReviewItems ||
+                        isRemovingReviewItems
+                      }
+                    >
+                      제외
+                    </button>
                   </div>
                   <ReviewItemsTable
                     drafts={reviewItemDrafts}
-                    isBulkSaving={isBulkSavingReviewItems}
+                    isActionRunning={
+                      isBulkSavingReviewItems || isRemovingReviewItems
+                    }
                     items={reviewItems}
                     onDraftChange={handleReviewItemDraftChange}
                     onToggleSelection={handleToggleReviewItemSelection}
@@ -1174,6 +1278,7 @@ function App() {
                 disabled={
                   reviewItemsLoading ||
                   isBulkSavingReviewItems ||
+                  isRemovingReviewItems ||
                   isReviewItemsFirstPage
                 }
               >
@@ -1188,6 +1293,7 @@ function App() {
                 disabled={
                   reviewItemsLoading ||
                   isBulkSavingReviewItems ||
+                  isRemovingReviewItems ||
                   isReviewItemsLastPage
                 }
               >
@@ -1382,7 +1488,7 @@ function PostingForm({
 
 function ReviewItemsTable({
   drafts = {},
-  isBulkSaving,
+  isActionRunning,
   items = [],
   onDraftChange,
   onToggleSelection,
@@ -1420,7 +1526,7 @@ function ReviewItemsTable({
                     checked={isSelected}
                     aria-label="정제 항목 선택"
                     onChange={() => onToggleSelection(item.id)}
-                    disabled={isBulkSaving}
+                    disabled={isActionRunning}
                   />
                 </td>
                 <td className="text-cell">{formatValue(item.company)}</td>
@@ -1462,6 +1568,7 @@ function ReviewItemsTable({
                   >
                     <option value="unconfirmed">unconfirmed</option>
                     <option value="confirmed">confirmed</option>
+                    <option value="removed">removed</option>
                   </select>
                 </td>
                 <td>
@@ -1564,7 +1671,13 @@ function formatList(value) {
 }
 
 function formatReviewItemStatus(status) {
-  return status === 'confirmed' ? '확정' : '미확인'
+  if (status === 'confirmed') {
+    return '확정'
+  }
+  if (status === 'removed') {
+    return '제외'
+  }
+  return '미확인'
 }
 
 function formatReviewItemFieldType(fieldType) {
