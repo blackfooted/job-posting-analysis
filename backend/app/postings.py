@@ -27,6 +27,14 @@ POSTING_FIELDS = (
     "raw_text",
 )
 
+REQUIRED_POSTING_FIELDS = (
+    "company",
+    "position",
+    "duties",
+    "requirements",
+    "raw_text",
+)
+
 
 class PostingInput(BaseModel):
     company: str
@@ -190,7 +198,9 @@ def _posting_data(posting: PostingInput) -> dict[str, str]:
 
 def _validate_required_fields(posting: dict[str, str]) -> None:
     missing_fields = [
-        field for field, value in posting.items() if not value or not value.strip()
+        field
+        for field in REQUIRED_POSTING_FIELDS
+        if not posting[field] or not posting[field].strip()
     ]
     if missing_fields:
         raise HTTPException(

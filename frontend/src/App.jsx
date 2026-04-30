@@ -20,12 +20,6 @@ const postingFormValidationMessages = {
   position: '포지션을 입력하세요.',
   duties: '담당 업무를 입력하세요.',
   requirements: '자격 요건을 입력하세요.',
-  preferred: '우대 사항을 입력하세요.',
-  tools: '기술/툴을 입력하세요.',
-  experience: '경력을 입력하세요.',
-  employment_type: '고용 형태를 입력하세요.',
-  work_type: '근무 형태를 입력하세요.',
-  industry_memo: '산업 메모를 입력하세요.',
   raw_text: '원문을 입력하세요.',
 }
 
@@ -1333,12 +1327,12 @@ function PostingForm({
     ['position', '포지션', 'input'],
     ['duties', '담당 업무', 'textarea'],
     ['requirements', '자격 요건', 'textarea'],
-    ['preferred', '우대 사항', 'textarea'],
-    ['tools', '기술/툴', 'textarea'],
-    ['experience', '경력', 'input'],
-    ['employment_type', '고용 형태', 'input'],
-    ['work_type', '근무 형태', 'input'],
-    ['industry_memo', '산업 메모', 'textarea'],
+    ['preferred', '우대 사항 (선택)', 'textarea'],
+    ['tools', '기술/툴 (선택)', 'textarea'],
+    ['experience', '경력 (선택)', 'input'],
+    ['employment_type', '고용 형태 (선택)', 'input'],
+    ['work_type', '근무 형태 (선택)', 'input'],
+    ['industry_memo', '산업 메모 (선택)', 'textarea'],
     ['raw_text', '원문', 'textarea'],
   ]
 
