@@ -1156,9 +1156,7 @@ function App() {
                         savingReviewItemId !== null
                       }
                     >
-                      {isBulkSavingReviewItems
-                        ? '선택 항목 저장 중...'
-                        : '선택 항목 저장'}
+                      저장
                     </button>
                   </div>
                   <ReviewItemsTable
@@ -1166,9 +1164,7 @@ function App() {
                     isBulkSaving={isBulkSavingReviewItems}
                     items={reviewItems}
                     onDraftChange={handleReviewItemDraftChange}
-                    onSave={handleSaveReviewItem}
                     onToggleSelection={handleToggleReviewItemSelection}
-                    savingReviewItemId={savingReviewItemId}
                     selectedReviewItemIds={selectedReviewItemIds}
                   />
                 </>
@@ -1395,9 +1391,7 @@ function ReviewItemsTable({
   isBulkSaving,
   items = [],
   onDraftChange,
-  onSave,
   onToggleSelection,
-  savingReviewItemId,
   selectedReviewItemIds = [],
 }) {
   return (
@@ -1415,19 +1409,16 @@ function ReviewItemsTable({
             <th>사전 반영</th>
             <th>생성일시</th>
             <th>수정일시</th>
-            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item, index) => {
-            const isSaving = savingReviewItemId === item.id
             const draft = drafts[item.id] || createReviewItemDraft(item)
             const isSelected = selectedReviewItemIds.includes(item.id)
 
             return (
               <tr
                 key={item.id || `${item.field_type}-${item.raw_value}-${index}`}
-                className={isSaving ? 'is-saving' : undefined}
               >
                 <td className="select-column">
                   <input
@@ -1499,15 +1490,6 @@ function ReviewItemsTable({
                 </td>
                 <td className="date-cell">{formatValue(item.created_at)}</td>
                 <td className="date-cell">{formatValue(item.updated_at)}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => onSave(item.id)}
-                    disabled={isSaving || isBulkSaving}
-                  >
-                    {isSaving || isBulkSaving ? '저장 중...' : '저장'}
-                  </button>
-                </td>
               </tr>
             )
           })}

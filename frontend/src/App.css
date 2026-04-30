@@ -751,7 +751,7 @@ button { font-family: inherit; }
 
 .comparison-table  { min-width: 860px; }
 .postings-table    { min-width: 820px; }
-.review-items-table { min-width: 1320px; }
+.review-items-table { min-width: 1240px; }
 
 .review-items-table {
   table-layout: fixed;
@@ -1038,7 +1038,7 @@ button { font-family: inherit; }
 
   .comparison-table  { min-width: 780px; }
   .postings-table    { min-width: 760px; }
-  .review-items-table { min-width: 1240px; }
+  .review-items-table { min-width: 1160px; }
 }
 
 @media (max-width: 480px) {
