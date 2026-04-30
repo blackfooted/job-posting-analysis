@@ -4,7 +4,22 @@
   "\uae08\uc735",
   "\ucf58\ud150\uce20",
   "\uc758\ub8cc",
-  "\ucee4\uba38\uc2a4",
+  {
+    "name": "\ucee4\uba38\uc2a4",
+    "aliases": [
+      "\uc774\ucee4\uba38\uc2a4",
+      "\uc774\ucee4\uba38\uc2a4 \uae30\uc5c5",
+      "\ucee4\uba38\uc2a4 \uae30\uc5c5",
+      "\uc628\ub77c\uc778 \ucee4\uba38\uc2a4",
+      "\uc628\ub77c\uc778 \uc1fc\ud551\ubab0",
+      "\uc790\uc0ac\ubab0",
+      "D2C",
+      "D2C \ucee4\uba38\uc2a4",
+      "\uc1fc\ud551\ubab0",
+      "\ub9ac\ud14c\uc77c",
+      "\uc720\ud1b5"
+    ]
+  },
   "\uad50\uc721",
   "\ub9c8\ucf00\ud305"
 ]
