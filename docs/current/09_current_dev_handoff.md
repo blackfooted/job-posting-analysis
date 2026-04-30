@@ -1,0 +1,112 @@
+# Current Dev Handoff
+
+## 사용 기준
+
+새 작업을 시작할 때 가장 먼저 읽는 문서다. "현재 구현" 판단은 확인한 소스코드 기준으로 한다. 구성안과 코드가 다르면 그 차이를 이 문서에 기록한다.
+
+## 현재 구현 상태
+
+### Postings
+
+소스코드에서 확인한 현재 구현:
+
+- postings 생성/목록/상세/수정/삭제 API 존재
+- 삭제는 `is_deleted` 기반 soft delete
+- 개별 공고 분석 결과 API 존재
+- 필수 필드: `company`, `position`, `duties`, `requirements`, `raw_text`
+- 선택 필드는 빈 문자열 저장 가능
+- 수정 시 분석을 다시 수행하고 review_items를 재생성
+
+### Review Items
+
+소스코드에서 확인한 현재 구현:
+
+- review_items 목록 API는 pagination 지원
+- 목록 API는 `status`, `field_type`, `dictionary_apply`, `keyword` 필터 지원
+- status는 `unconfirmed`, `confirmed`, `removed`
+- `removed`는 hard delete가 아니라 정제 대상 제외 의미
+- 기본 목록 조회에서는 `removed` 제외
+- `dictionary_apply`는 현재 같은 `field_type` + 정규화 `raw_value` 일괄 확정 의미
+- removed 이력 기반 동일 후보 재생성 방지는 미구현
+
+### Classification / Config
+
+소스코드 기준 현재 상태:
+
+- classification phase 1 개선: 완료로 판단
+- classification phase 2 개선: 코드 반영은 보이나 실데이터 추가 검증 필요
+- Skill / Competency / Position alias 지원: 현재 config 파일에 존재
+- Industry / Domain alias 지원: 현재 config 파일에 존재
+- 필수 config 파일은 startup 시 로드됨
+- `synonym-map.json`은 필수 로드 대상이지만, 확인한 classification 흐름에서 직접 사용은 검토 필요
+
+### Dashboard
+
+소스코드에서 확인한 현재 구현:
+
+- `summary`, `charts`, `comparison` API 존재
+- frontend dashboard 페이지 존재
+- dashboard는 목록/표 기반 렌더링
+- charts endpoint에는 현재 domain distribution이 없음
+
+### AI Recommendation
+
+소스코드에서 확인한 현재 구현:
+
+- backend AI recommendation 기능 미구현
+- frontend는 AI recommendation placeholder 페이지만 존재
+
+## 현재 정책 기준
+
+- 산업 = 회사의 주된 제품/수익 모델
+- 도메인 = 제품/서비스가 다루는 시장/업무 영역
+- 현재 저장 구조 = `analysis_results.domain_category` 단일값
+- 후속 목표 구조 = 대표 도메인 1개 + 전체 도메인 N개
+- 후속 dashboard 목표 = 복수 도메인 구조 도입 후 전체 도메인 기준 집계
+- AI는 추천 전용이며 자동 확정하지 않음
+
+## 현재 데이터 정제 운영 흐름
+
+- 공고 입력 시 classification이 자동 실행된다.
+- 자동 확정값은 `analysis_results`에 저장된다.
+- 미확정 후보는 `review_items`에 생성된다.
+- 사용자는 `review_items`에서 `confirmed` 또는 `removed`로 정제한다.
+- confirmed는 현재 config 자동 반영이 아니라 `review_items` 상태값이다.
+- `dictionary_apply`는 동일 raw_value 일괄 확정 기능이다.
+- removed는 정제 대상 제외 의미이며, 향후 동일 후보 재생성 방지에 활용할 계획이다.
+
+## 구성안과 코드 사이 차이
+
+- 구성안은 `seed_data_cleaning_criteria_v3.md`를 archive/참고 문서로 취급하지만, 실제 파일은 아직 `docs/current/` 아래에 남아 있다.
+- 구성안은 구형 PRD/handoff 문서의 archive 성격을 전제하지만, 실제 파일 위치는 아직 `docs/current/`이다.
+- dashboard summary는 distinct domain count를 계산하지만, charts endpoint는 domain 분포를 아직 제공하지 않는다.
+- 현재 `dictionary_apply`는 review_items 일괄 확정 로직일 뿐이며, config 파일 write-back은 구현되어 있지 않다.
+
+## 사람이 먼저 확인할 항목
+
+- `config/*.json` 실제 값과 인코딩 상태 점검
+- config 대표값/alias inventory가 현재 정책과 맞는지 최종 확인
+- 실데이터 재분석 결과에서 산업/도메인/직무 추출 품질 확인
+
+## 다음 Codex 작업
+
+1. 1차 AI recommendation 조회 API 설계 및 구현
+   - 다른 작업과 독립적으로 시작 가능하다.
+   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 구현한다.
+   - 1차 범위는 DB 저장 없는 조회형 API를 우선한다.
+
+2. removed 이력 기반 동일 후보 재생성 방지 정책 확정 후 구현
+   - 정책 확정이 선행되어야 한다.
+   - 1번 AI recommendation 작업과 병행 가능하다.
+   - 초기 구현은 동일 `field_type + normalized raw_value` 재생성 방지까지만 검토한다.
+   - 유사 표현 제외는 후속 고도화로 둔다.
+
+3. 복수 도메인 저장 구조와 API 형태 정의
+   - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 1번 이후 진행을 권장한다.
+   - 후속 목표는 대표 도메인 1개 + 전체 도메인 N개 구조다.
+   - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
+
+주의:
+
+- config inventory 점검은 사람이 먼저 확인할 항목이지, Codex의 즉시 개발 작업이 아니다.
+- AI recommendation은 자동 확정이 아니라 사용자 검토용 추천이다.
