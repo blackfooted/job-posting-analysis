@@ -646,6 +646,35 @@ button { font-family: inherit; }
   opacity: .45;
 }
 
+.review-items-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.review-items-table-actions button {
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 14px;
+  transition: background .15s, box-shadow .15s;
+}
+
+.review-items-table-actions button:hover:not(:disabled) {
+  background: var(--brand-100);
+  box-shadow: var(--shadow-xs);
+}
+
+.review-items-table-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
 /* ============================================================
    Placeholder page (AI)
    ============================================================ */
@@ -673,6 +702,24 @@ button { font-family: inherit; }
   color: var(--success-text);
   font-size: 14px;
   font-weight: 600;
+}
+
+.bulk-save-message {
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
+.bulk-save-message.is-success {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.bulk-save-message.is-error {
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 /* ============================================================
@@ -704,7 +751,7 @@ button { font-family: inherit; }
 
 .comparison-table  { min-width: 860px; }
 .postings-table    { min-width: 820px; }
-.review-items-table { min-width: 1240px; }
+.review-items-table { min-width: 1320px; }
 
 .review-items-table {
   table-layout: fixed;
@@ -764,6 +811,11 @@ button { font-family: inherit; }
 
 .review-items-table .date-cell {
   white-space: nowrap;
+}
+
+.review-items-table .select-column {
+  text-align: center;
+  width: 58px;
 }
 
 .status-badge {
@@ -986,7 +1038,7 @@ button { font-family: inherit; }
 
   .comparison-table  { min-width: 780px; }
   .postings-table    { min-width: 760px; }
-  .review-items-table { min-width: 1160px; }
+  .review-items-table { min-width: 1240px; }
 }
 
 @media (max-width: 480px) {

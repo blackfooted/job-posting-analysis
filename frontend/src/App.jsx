@@ -88,6 +88,12 @@ function App() {
   const [savingReviewItemId, setSavingReviewItemId] = useState(null)
   const [reviewItemSaveError, setReviewItemSaveError] = useState('')
   const [reviewItemSaveMessage, setReviewItemSaveMessage] = useState('')
+  const [selectedReviewItemIds, setSelectedReviewItemIds] = useState([])
+  const [reviewItemDrafts, setReviewItemDrafts] = useState({})
+  const [isBulkSavingReviewItems, setIsBulkSavingReviewItems] = useState(false)
+  const [bulkReviewItemSaveMessage, setBulkReviewItemSaveMessage] =
+    useState('')
+  const [bulkReviewItemSaveError, setBulkReviewItemSaveError] = useState('')
   const [reviewItemsStatusFilter, setReviewItemsStatusFilter] = useState('')
   const [reviewItemsFieldTypeFilter, setReviewItemsFieldTypeFilter] =
     useState('')
@@ -553,7 +559,10 @@ function App() {
         return
       }
 
-      setReviewItems(result.data?.items || [])
+      const nextReviewItems = result.data?.items || []
+      setReviewItems(nextReviewItems)
+      setReviewItemDrafts(createReviewItemDrafts(nextReviewItems))
+      setSelectedReviewItemIds([])
       setReviewItemsPageInfo({
         page: result.data?.page || page,
         size: result.data?.size || reviewItemsPageSize,
@@ -572,27 +581,20 @@ function App() {
     }
   }
 
-  async function handleSaveReviewItem(reviewItemId, event) {
-    const row = event.currentTarget.closest('tr')
-    const approvedValue = row
-      .querySelector('[name="approved_value"]')
-      .value.trim()
-    const status = row.querySelector('[name="status"]').value
-    const dictionaryApply = row.querySelector('[name="dictionary_apply"]')
-      .checked
-      ? 1
-      : 0
+  async function handleSaveReviewItem(reviewItemId) {
+    if (isBulkSavingReviewItems) {
+      return
+    }
 
+    const payload = getReviewItemSavePayload(reviewItemId)
     setSavingReviewItemId(reviewItemId)
     setReviewItemSaveError('')
     setReviewItemSaveMessage('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
 
     try {
-      const result = await updateReviewItem(reviewItemId, {
-        approved_value: approvedValue === '' ? null : approvedValue,
-        status,
-        dictionary_apply: dictionaryApply,
-      })
+      const result = await updateReviewItem(reviewItemId, payload)
 
       if (result.error) {
         setReviewItemSaveMessage('')
@@ -620,11 +622,19 @@ function App() {
 
   function handleSearchReviewItems() {
     setReviewItemSaveMessage('')
+    setReviewItemSaveError('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
+    setSelectedReviewItemIds([])
     loadReviewItemsPage(1)
   }
 
   function handleResetReviewItemFilters() {
     setReviewItemSaveMessage('')
+    setReviewItemSaveError('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
+    setSelectedReviewItemIds([])
     const resetFilters = {
       status: '',
       fieldType: '',
@@ -637,6 +647,98 @@ function App() {
     setReviewItemsDictionaryApplyFilter('')
     setReviewItemsKeywordFilter('')
     loadReviewItemsPage(1, () => true, resetFilters)
+  }
+
+  function handleReviewItemFilterChange(setFilterValue, value) {
+    clearReviewItemListMessages()
+    setFilterValue(value)
+  }
+
+  function handleReviewItemDraftChange(reviewItemId, fieldName, value) {
+    setReviewItemDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [reviewItemId]: {
+        ...currentDrafts[reviewItemId],
+        [fieldName]: value,
+      },
+    }))
+  }
+
+  function handleToggleReviewItemSelection(reviewItemId) {
+    setSelectedReviewItemIds((currentIds) =>
+      currentIds.includes(reviewItemId)
+        ? currentIds.filter((id) => id !== reviewItemId)
+        : [...currentIds, reviewItemId],
+    )
+  }
+
+  function clearReviewItemListMessages() {
+    setReviewItemSaveMessage('')
+    setReviewItemSaveError('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
+    setSelectedReviewItemIds([])
+  }
+
+  async function handleBulkSaveReviewItems() {
+    if (
+      selectedReviewItemIds.length === 0 ||
+      reviewItemsLoading ||
+      savingReviewItemId !== null
+    ) {
+      return
+    }
+
+    setIsBulkSavingReviewItems(true)
+    setReviewItemSaveError('')
+    setReviewItemSaveMessage('')
+    setBulkReviewItemSaveMessage('')
+    setBulkReviewItemSaveError('')
+
+    let successCount = 0
+    let failureCount = 0
+
+    for (const reviewItemId of selectedReviewItemIds) {
+      try {
+        const result = await updateReviewItem(
+          reviewItemId,
+          getReviewItemSavePayload(reviewItemId),
+        )
+
+        if (result.error) {
+          failureCount += 1
+        } else {
+          successCount += 1
+        }
+      } catch {
+        failureCount += 1
+      }
+    }
+
+    await loadReviewItemsPage(reviewItemsPageInfo.page)
+
+    if (successCount > 0 && failureCount === 0) {
+      setBulkReviewItemSaveMessage('선택한 정제 항목이 저장되었습니다.')
+    } else if (successCount > 0 && failureCount > 0) {
+      setBulkReviewItemSaveError(
+        `일부 정제 항목 저장에 실패했습니다. 성공 ${successCount}건 / 실패 ${failureCount}건`,
+      )
+    } else {
+      setBulkReviewItemSaveError('선택한 정제 항목 저장에 실패했습니다.')
+    }
+
+    setIsBulkSavingReviewItems(false)
+  }
+
+  function getReviewItemSavePayload(reviewItemId) {
+    const draft = reviewItemDrafts[reviewItemId] || {}
+    const approvedValue = (draft.approved_value || '').trim()
+
+    return {
+      approved_value: approvedValue === '' ? null : approvedValue,
+      status: draft.status || 'unconfirmed',
+      dictionary_apply: draft.dictionary_apply ? 1 : 0,
+    }
   }
 
   const navigationItems = [
@@ -928,7 +1030,10 @@ function App() {
                 <select
                   value={reviewItemsStatusFilter}
                   onChange={(event) =>
-                    setReviewItemsStatusFilter(event.target.value)
+                    handleReviewItemFilterChange(
+                      setReviewItemsStatusFilter,
+                      event.target.value,
+                    )
                   }
                 >
                   <option value="">전체</option>
@@ -941,7 +1046,10 @@ function App() {
                 <select
                   value={reviewItemsFieldTypeFilter}
                   onChange={(event) =>
-                    setReviewItemsFieldTypeFilter(event.target.value)
+                    handleReviewItemFilterChange(
+                      setReviewItemsFieldTypeFilter,
+                      event.target.value,
+                    )
                   }
                 >
                   <option value="">전체</option>
@@ -957,7 +1065,10 @@ function App() {
                 <select
                   value={reviewItemsDictionaryApplyFilter}
                   onChange={(event) =>
-                    setReviewItemsDictionaryApplyFilter(event.target.value)
+                    handleReviewItemFilterChange(
+                      setReviewItemsDictionaryApplyFilter,
+                      event.target.value,
+                    )
                   }
                 >
                   <option value="">전체</option>
@@ -971,7 +1082,10 @@ function App() {
                   type="search"
                   value={reviewItemsKeywordFilter}
                   onChange={(event) =>
-                    setReviewItemsKeywordFilter(event.target.value)
+                    handleReviewItemFilterChange(
+                      setReviewItemsKeywordFilter,
+                      event.target.value,
+                    )
                   }
                   placeholder="raw_value 또는 approved_value 검색"
                 />
@@ -1011,6 +1125,18 @@ function App() {
               <p className="success-message">{reviewItemSaveMessage}</p>
             )}
 
+            {bulkReviewItemSaveMessage && (
+              <p className="bulk-save-message is-success">
+                {bulkReviewItemSaveMessage}
+              </p>
+            )}
+
+            {bulkReviewItemSaveError && (
+              <p className="bulk-save-message is-error">
+                {bulkReviewItemSaveError}
+              </p>
+            )}
+
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length === 0 && <p>No review items</p>}
@@ -1018,31 +1144,62 @@ function App() {
             {!reviewItemsLoading &&
               !reviewItemsError &&
               reviewItems.length > 0 && (
-                <ReviewItemsTable
-                  items={reviewItems}
-                  onSave={handleSaveReviewItem}
-                  savingReviewItemId={savingReviewItemId}
-                />
+                <>
+                  <div className="review-items-table-actions">
+                    <button
+                      type="button"
+                      onClick={handleBulkSaveReviewItems}
+                      disabled={
+                        selectedReviewItemIds.length === 0 ||
+                        reviewItemsLoading ||
+                        isBulkSavingReviewItems ||
+                        savingReviewItemId !== null
+                      }
+                    >
+                      {isBulkSavingReviewItems
+                        ? '선택 항목 저장 중...'
+                        : '선택 항목 저장'}
+                    </button>
+                  </div>
+                  <ReviewItemsTable
+                    drafts={reviewItemDrafts}
+                    isBulkSaving={isBulkSavingReviewItems}
+                    items={reviewItems}
+                    onDraftChange={handleReviewItemDraftChange}
+                    onSave={handleSaveReviewItem}
+                    onToggleSelection={handleToggleReviewItemSelection}
+                    savingReviewItemId={savingReviewItemId}
+                    selectedReviewItemIds={selectedReviewItemIds}
+                  />
+                </>
               )}
 
             <div className="review-items-pagination">
               <button
                 type="button"
                 onClick={() => {
-                  setReviewItemSaveMessage('')
+                  clearReviewItemListMessages()
                   loadReviewItemsPage(reviewItemsPageInfo.page - 1)
                 }}
-                disabled={reviewItemsLoading || isReviewItemsFirstPage}
+                disabled={
+                  reviewItemsLoading ||
+                  isBulkSavingReviewItems ||
+                  isReviewItemsFirstPage
+                }
               >
                 이전
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setReviewItemSaveMessage('')
+                  clearReviewItemListMessages()
                   loadReviewItemsPage(reviewItemsPageInfo.page + 1)
                 }}
-                disabled={reviewItemsLoading || isReviewItemsLastPage}
+                disabled={
+                  reviewItemsLoading ||
+                  isBulkSavingReviewItems ||
+                  isReviewItemsLastPage
+                }
               >
                 다음
               </button>
@@ -1233,36 +1390,57 @@ function PostingForm({
   )
 }
 
-function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
+function ReviewItemsTable({
+  drafts = {},
+  isBulkSaving,
+  items = [],
+  onDraftChange,
+  onSave,
+  onToggleSelection,
+  savingReviewItemId,
+  selectedReviewItemIds = [],
+}) {
   return (
     <div className="review-items-table-wrap">
       <table className="review-items-table">
         <thead>
           <tr>
-            <th>company</th>
-            <th>position</th>
-            <th>field_type</th>
-            <th>raw_value</th>
-            <th>approved_value</th>
-            <th>status</th>
-            <th>dictionary_apply</th>
-            <th>created_at</th>
-            <th>updated_at</th>
-            <th>action</th>
+            <th className="select-column">선택</th>
+            <th>회사명</th>
+            <th>포지션</th>
+            <th>분류</th>
+            <th>원문 표현</th>
+            <th>대표값</th>
+            <th>상태</th>
+            <th>사전 반영</th>
+            <th>생성일시</th>
+            <th>수정일시</th>
+            <th>작업</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item, index) => {
             const isSaving = savingReviewItemId === item.id
+            const draft = drafts[item.id] || createReviewItemDraft(item)
+            const isSelected = selectedReviewItemIds.includes(item.id)
 
             return (
               <tr
                 key={item.id || `${item.field_type}-${item.raw_value}-${index}`}
                 className={isSaving ? 'is-saving' : undefined}
               >
+                <td className="select-column">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    aria-label="정제 항목 선택"
+                    onChange={() => onToggleSelection(item.id)}
+                    disabled={isBulkSaving}
+                  />
+                </td>
                 <td className="text-cell">{formatValue(item.company)}</td>
                 <td className="text-cell">{formatValue(item.position)}</td>
-                <td>{formatValue(item.field_type)}</td>
+                <td>{formatReviewItemFieldType(item.field_type)}</td>
                 <td className="text-cell long-text-cell">
                   {formatValue(item.raw_value)}
                 </td>
@@ -1270,8 +1448,15 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
                   <input
                     type="text"
                     name="approved_value"
-                    defaultValue={item.approved_value || ''}
+                    value={draft.approved_value}
                     aria-label="approved_value"
+                    onChange={(event) =>
+                      onDraftChange(
+                        item.id,
+                        'approved_value',
+                        event.target.value,
+                      )
+                    }
                   />
                 </td>
                 <td>
@@ -1284,8 +1469,11 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
                   </span>
                   <select
                     name="status"
-                    defaultValue={item.status || 'unconfirmed'}
+                    value={draft.status}
                     aria-label="status"
+                    onChange={(event) =>
+                      onDraftChange(item.id, 'status', event.target.value)
+                    }
                   >
                     <option value="unconfirmed">unconfirmed</option>
                     <option value="confirmed">confirmed</option>
@@ -1296,8 +1484,15 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
                     <input
                       type="checkbox"
                       name="dictionary_apply"
-                      defaultChecked={item.dictionary_apply === 1}
+                      checked={draft.dictionary_apply}
                       aria-label="dictionary_apply"
+                      onChange={(event) =>
+                        onDraftChange(
+                          item.id,
+                          'dictionary_apply',
+                          event.target.checked,
+                        )
+                      }
                     />
                     <span>사전 반영</span>
                   </label>
@@ -1307,10 +1502,10 @@ function ReviewItemsTable({ items = [], onSave, savingReviewItemId }) {
                 <td>
                   <button
                     type="button"
-                    onClick={(event) => onSave(item.id, event)}
-                    disabled={isSaving}
+                    onClick={() => onSave(item.id)}
+                    disabled={isSaving || isBulkSaving}
                   >
-                    {isSaving ? '저장 중...' : '저장'}
+                    {isSaving || isBulkSaving ? '저장 중...' : '저장'}
                   </button>
                 </td>
               </tr>
@@ -1394,6 +1589,33 @@ function formatList(value) {
 
 function formatReviewItemStatus(status) {
   return status === 'confirmed' ? '확정' : '미확인'
+}
+
+function formatReviewItemFieldType(fieldType) {
+  const fieldTypeLabels = {
+    industry: '산업',
+    domain: '도메인',
+    position: '직무',
+    skill: '기술/툴',
+    competency: '역량',
+  }
+
+  return fieldTypeLabels[fieldType] || formatValue(fieldType)
+}
+
+function createReviewItemDrafts(items = []) {
+  return items.reduce((drafts, item) => {
+    drafts[item.id] = createReviewItemDraft(item)
+    return drafts
+  }, {})
+}
+
+function createReviewItemDraft(item) {
+  return {
+    approved_value: item.approved_value || '',
+    status: item.status || 'unconfirmed',
+    dictionary_apply: item.dictionary_apply === 1,
+  }
 }
 
 function _postingToForm(posting, initialPostingForm) {
