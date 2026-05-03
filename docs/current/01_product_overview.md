@@ -32,6 +32,8 @@ MVP 기준 목표는 1명의 운영자가 채용공고를 누적 저장하면서
 - JSON config 기반 규칙형 classification
 - `review_items` 목록, 필터, pagination
 - `review_items` 수정, 확정, 제외 처리
+- `review_items` 선택 항목 일괄 저장
+- 정제 대상 제외 처리(`status=removed`)
 - `dashboard` summary/charts/comparison API
 - React 단일 화면 구조와 `dashboard`, `postings`, `reviewItems`, `aiRecommendations` 화면 전환
 

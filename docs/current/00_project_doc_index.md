@@ -37,3 +37,46 @@ Codex 작업을 시작할 때는 전체 문서를 읽기보다, 작업 범위에
 - archive 문서를 현재 정책의 1차 기준으로 사용하지 않는다.
 - 코드와 문서가 다르면 "현재 구현" 판단은 코드 기준으로 한다.
 - 코드와 구성안 사이 차이는 `09_current_dev_handoff.md` 또는 해당 기능 spec에 기록한다.
+
+## Frontend 작업 기준
+
+- frontend 작업 시에는 현재 `frontend/src/App.jsx`와 `frontend/src/App.css`를 함께 확인한다.
+- frontend 상태 관리와 컴포넌트 구조는 문서보다 실제 코드 기준으로 확인한다.
+- review_items 화면의 선택 상태, draft 상태, bulk 저장 메시지 등 UI state는 `App.jsx` 구현을 기준으로 판단한다.
+- frontend API client를 수정해야 하는 작업인지 아닌지를 지시문에 명확히 구분한다.
+
+## Codex 지시문 작성 기준
+
+Codex 작업 지시문에는 아래 항목을 포함한다.
+
+- 작업명
+- 기준 문서
+- 수정 허용 파일
+- 수정 금지 파일
+- 구현 기준
+- 검증 방법
+- 작업 완료 후 요약 항목
+- 자동 push / merge 금지
+
+작성 원칙:
+
+- 구현 기준은 번호 목록으로 작성한다.
+- 수정 범위와 수정 금지 범위를 명확히 분리한다.
+- backend/frontend/config/docs 수정 여부를 작업 완료 요약에 포함한다.
+- sandbox에서 frontend build가 `spawn EPERM`으로 실패하면, 무제한 재실행하지 말고 로컬 PowerShell 재검증 필요로 기록한다.
+
+## 기능 변경 시 수정 대상 문서
+
+이 표는 문서 현행화 누락을 막기 위한 기준이다. 실제 변경 범위가 작으면 해당 문서 중 관련 부분만 최소 수정한다.
+
+| 변경 영역 | 수정 대상 문서 |
+|---|---|
+| postings API/정책 | `03_postings_feature_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| review_items API/정책 | `04_review_items_feature_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| classification 로직/config | `05_classification_and_config_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| dashboard API/집계 기준 | `06_dashboard_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| AI recommendation | `07_ai_recommendation_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| DB 스키마 변경 | `02_architecture_current_state.md`와 연관 기능 spec |
+| 복수 도메인 구조 도입 | `02_architecture_current_state.md`, `03_postings_feature_spec.md`, `05_classification_and_config_spec.md`, `06_dashboard_spec.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
+| 로드맵 변경 | `08_future_roadmap.md`, `09_current_dev_handoff.md` |
+| 문서 우선순위/운영 규칙 변경 | `00_project_doc_index.md` |

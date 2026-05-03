@@ -103,7 +103,6 @@ review_items 검증 로직과 classification 출력 기준으로 확인한 현�
 주의:
 
 - classification phase 2는 코드 반영 상태이나, 실공고 기준 추가 검증이 필요하다.
-- 실데이터에서 발견되는 누락/오추출은 phase 3 후보로 기록한다.
 - 실테스트에서 추가 누락/오추출이 발견되면 phase 3 후보로 `09_current_dev_handoff.md`에 기록한다.
 - phase 2는 코드 반영 상태이나, 실데이터 검증 결과에 따라 phase 3 개선 범위를 별도로 정의한다.
 
