@@ -87,22 +87,28 @@ hard delete가 아니므로, 불필요하거나 잘못 추출된 후보를 추�
 - `status=removed` 필터로 조회 가능
 - removed 항목은 `unconfirmed_count`에서 제외
 - removed 저장 시 `dictionary_apply=0`으로 강제
+- classification 저장 단계에서 removed 이력 기반 동일 후보 재생성 방지
+- 기준은 동일 `field_type + normalized raw_value`
+- normalized raw_value는 공백 제거 기준
+- 살아있는 posting에 연결된 removed 이력이 하나라도 있으면 동일 후보를 새 `unconfirmed` review_item으로 생성하지 않음
+- 삭제된 posting에만 연결된 removed 이력은 재생성 방지 기준에서 제외
 
 후속 계획:
 
-- removed 이력을 classification 단계에서 참고한다.
-- 동일 `field_type + normalized raw_value` 후보가 다시 생성되면 `review_items`에 재생성하지 않는 방향을 검토한다.
+- 유사 표현 제외 정책을 별도로 검토한다.
+- confirmed 이력을 향후 classification에 반영할지 정책 결정
 
 예:
 
 1. 사용자가 `경험한 우대합니다. 분석`을 removed 처리한다.
-2. 다음 공고에서 동일 후보가 다시 추출된다.
-3. 후속 PHASE C에서는 해당 후보를 `review_items`에 생성하지 않도록 한다.
+2. 살아있는 공고에서 다음 분석 때 동일 `field_type + normalized raw_value` 후보가 다시 추출된다.
+3. 해당 후보는 `review_items`에 새로 생성하지 않는다.
 
 주의:
 
 - 유사 표현 제외는 후속 고도화 범위다.
-- 초기 PHASE C는 동일 표현 제외만 대상으로 한다.
+- 현재 구현은 동일 normalized raw_value 제외만 대상으로 한다.
+- confirmed 이력 재사용은 이번 범위가 아니다.
 - 의미 있는 후보를 실수로 제거하면 다음 분석에서 누락될 수 있으므로, removed 처리는 신중하게 사용한다.
 
 ## unconfirmed_count 동기화
@@ -121,7 +127,6 @@ hard delete가 아니므로, 불필요하거나 잘못 추출된 후보를 추�
 
 ## 후속 계획
 
-- `removed` 이력 기반 동일 후보 재생성 방지
 - 확정 review 이력을 향후 classification에 반영할지 정책 결정
 - 필요 시 removed 항목 복구 흐름 추가
 - 향후 config 반영 도구와 `dictionary_apply` 의미를 분리할지 검토

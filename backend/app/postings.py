@@ -215,7 +215,12 @@ def _save_classification(
     posting: dict[str, str],
 ) -> None:
     analysis = analyze_posting(posting)
+    review_items = _filter_removed_review_item_drafts(
+        connection,
+        analysis.review_items,
+    )
     analysis_values = analysis_to_db_values(analysis)
+    analysis_values["unconfirmed_count"] = len(review_items)
 
     connection.execute(
         """
@@ -260,9 +265,50 @@ def _save_classification(
         """,
         [
             (posting_id, review_item.field_type, review_item.raw_value)
-            for review_item in analysis.review_items
+            for review_item in review_items
         ],
     )
+
+
+def _filter_removed_review_item_drafts(
+    connection: sqlite3.Connection,
+    review_item_drafts: list[Any],
+) -> list[Any]:
+    removed_review_item_keys = _get_removed_review_item_keys(connection)
+    return [
+        review_item
+        for review_item in review_item_drafts
+        if (
+            review_item.field_type,
+            _normalize_review_raw_value(review_item.raw_value),
+        )
+        not in removed_review_item_keys
+    ]
+
+
+def _get_removed_review_item_keys(
+    connection: sqlite3.Connection,
+) -> set[tuple[str, str]]:
+    rows = connection.execute(
+        """
+        SELECT review_items.field_type,
+               review_items.raw_value
+        FROM review_items AS review_items
+        INNER JOIN postings AS postings
+          ON postings.id = review_items.posting_id
+        WHERE review_items.status = 'removed'
+          AND postings.is_deleted = 0
+        """
+    ).fetchall()
+
+    return {
+        (row["field_type"], _normalize_review_raw_value(row["raw_value"]))
+        for row in rows
+    }
+
+
+def _normalize_review_raw_value(value: str) -> str:
+    return "".join(str(value).split())
 
 
 def _fetch_posting(

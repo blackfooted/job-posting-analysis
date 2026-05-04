@@ -117,7 +117,8 @@ review_items 검증 로직과 classification 출력 기준으로 확인한 현�
 5. `position` 필드에서 exact-or-alias 방식으로 position 매칭을 시도한다.
 6. `tools`를 분리해 skill dictionary contains 매칭을 시도한다.
 7. 여러 텍스트 필드에서 패턴 추출로 skill, competency, review item 후보를 생성한다.
-8. category 값, 추출 배열, review item 초안을 저장한다.
+8. review item 저장 전 removed 이력과 동일한 후보를 제외한다.
+9. category 값, 추출 배열, 필터링된 review item 초안을 저장한다.
 
 ## 현재 코드가 사용하는 소스 필드
 
@@ -145,7 +146,11 @@ review_items 검증 로직과 classification 출력 기준으로 확인한 현�
 - position은 `position` 필드에서 exact-or-alias 방식으로 매칭한다.
 - `tools` 기반 skill 추출은 contains-style alias 매칭을 사용한다.
 - 추가 skill/competency 후보는 정규화된 라인 단위 패턴 추출로 생성한다.
-- `analysis_results.unconfirmed_count`는 분석 시 생성된 review item 수를 기준으로 저장된다.
+- `review_items` insert 전 살아있는 posting에 연결된 removed 이력을 확인한다.
+- 동일 `field_type + normalized raw_value` removed 이력이 있으면 신규 review item 후보를 생성하지 않는다.
+- 삭제된 posting에만 연결된 removed 이력은 재생성 방지 기준에서 제외한다.
+- removed 이력으로 제외된 후보는 `analysis_results.unconfirmed_count`에도 포함하지 않는다.
+- `analysis_results.unconfirmed_count`는 최종 insert 대상 review item 수를 기준으로 저장된다.
 
 ## 현재 config 파일
 
@@ -219,3 +224,4 @@ config 반영 원칙:
 - 별도 도메인 테이블 구조 정의
 - config 유지보수 방식을 문서화
 - 확정 review 결과를 향후 config 또는 classification에 연결할지 정책 결정
+- 유사 표현 기반 removed 후보 제외 정책 검토

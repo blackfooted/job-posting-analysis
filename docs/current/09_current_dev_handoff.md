@@ -27,7 +27,11 @@
 - `removed`는 hard delete가 아니라 정제 대상 제외 의미
 - 기본 목록 조회에서는 `removed` 제외
 - `dictionary_apply`는 현재 같은 `field_type` + 정규화 `raw_value` 일괄 확정 의미
-- removed 이력 기반 동일 후보 재생성 방지는 미구현
+- removed 이력 기반 동일 후보 재생성 방지 구현
+- 기준은 동일 `field_type + normalized raw_value`
+- 살아있는 posting에 연결된 removed 이력이 하나라도 있으면 동일 후보를 새 `unconfirmed` review_item으로 생성하지 않음
+- 삭제된 posting에만 연결된 removed 이력은 재생성 방지 기준에서 제외
+- 유사 표현 제외와 confirmed 이력 재사용은 미구현
 
 ### Classification / Config
 
@@ -89,7 +93,7 @@
 - 사용자는 `review_items`에서 `confirmed` 또는 `removed`로 정제한다.
 - confirmed는 현재 config 자동 반영이 아니라 `review_items` 상태값이다.
 - `dictionary_apply`는 동일 raw_value 일괄 확정 기능이다.
-- removed는 정제 대상 제외 의미이며, 향후 동일 후보 재생성 방지에 활용할 계획이다.
+- removed는 정제 대상 제외 의미이며, 동일 `field_type + normalized raw_value` 후보 재생성 방지에 활용된다.
 
 ## 구성안과 코드 사이 차이
 
@@ -134,6 +138,17 @@ http://127.0.0.1:8000/docs
 - 공고 선택 변경 시 이전 추천 결과와 error 상태가 초기화되는지 확인
 - dashboard, postings, review_items 기존 화면 정상 표시 확인
 
+## Removed Review Item 재생성 방지 검증 방법
+
+검증 항목:
+
+- removed 이력이 없는 후보는 기존처럼 `unconfirmed` review_item으로 생성되는지 확인
+- 살아있는 posting에 연결된 동일 `field_type + normalized raw_value` removed 이력이 있으면 새 후보가 생성되지 않는지 확인
+- 공백만 다른 동일 후보도 normalized raw_value 기준으로 생성되지 않는지 확인
+- field_type이 다르면 같은 raw_value라도 생성 가능한지 확인
+- 삭제된 posting에만 연결된 removed 이력은 재생성 방지 기준에서 제외되는지 확인
+- removed 이력으로 제외된 후보가 `analysis_results.unconfirmed_count`에 포함되지 않는지 확인
+
 ## 다음 Codex 작업
 
 1. AI recommendation 실제 OpenAI 연동
@@ -142,11 +157,10 @@ http://127.0.0.1:8000/docs
    - DB 저장 없는 조회형 API 원칙은 유지한 뒤 저장/반영 정책은 별도 단계에서 결정한다.
    - frontend는 실제 OpenAI 연동 이후에도 사용자 버튼 트리거 원칙을 유지한다.
 
-2. removed 이력 기반 동일 후보 재생성 방지 정책 확정 후 구현
-   - 정책 확정이 선행되어야 한다.
-   - 1번 AI recommendation 작업과 병행 가능하다.
-   - 초기 구현은 동일 `field_type + normalized raw_value` 재생성 방지까지만 검토한다.
+2. removed 이력 기반 후보 제외 고도화
+   - 현재 구현은 동일 `field_type + normalized raw_value` 기준만 적용한다.
    - 유사 표현 제외는 후속 고도화로 둔다.
+   - confirmed 이력 재사용은 별도 정책 결정 후 검토한다.
 
 3. AI recommendation 추천 결과 저장/반영 정책 결정
    - 추천 결과를 review_items에 반영할지 여부와 저장 범위를 별도 정책으로 정의한다.
