@@ -107,6 +107,8 @@
 - `config/*.json` 실제 값과 인코딩 상태 점검
 - config 대표값/alias inventory가 현재 정책과 맞는지 최종 확인
 - 실데이터 재분석 결과에서 산업/도메인/직무 추출 품질 확인
+- 실데이터 classification 품질 검토 문서: `docs/current/classification_real_data_review.md`
+- config JSON 직접 수정은 아직 하지 않음
 
 ## AI Recommendation 검증 방법
 
@@ -170,6 +172,11 @@ http://127.0.0.1:8000/docs
    - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 실제 구조 확정 이후 진행을 권장한다.
    - 후속 목표는 대표 도메인 1개 + 전체 도메인 N개 구조다.
    - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
+
+5. 실데이터 classification 품질 검토와 config 반영
+   - 실제 공고 분석 결과를 `docs/current/classification_real_data_review.md`에 누적한다.
+   - confirm 후보를 검토한 뒤 별도 config 반영 작업을 진행한다.
+   - 반복 오추출은 classification phase 3 후보로 기록한다.
 
 주의:
 
