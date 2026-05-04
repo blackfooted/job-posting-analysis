@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend.app.ai_recommendations import router as ai_recommendations_router
 from backend.app.config_loader import ConfigLoadError, load_all_configs
 from backend.app.dashboard import router as dashboard_router
 from backend.app.database import initialize_database
@@ -68,3 +69,4 @@ def config_exception_handler(
 app.include_router(postings_router)
 app.include_router(review_items_router)
 app.include_router(dashboard_router)
+app.include_router(ai_recommendations_router)

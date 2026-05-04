@@ -53,7 +53,18 @@
 
 소스코드에서 확인한 현재 구현:
 
-- backend AI recommendation 기능 미구현
+- backend AI recommendation API 1차 Mock 구현 존재
+- endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
+- 저장된 공고를 `posting_id`로 조회한 뒤 Mock recommendation JSON 반환
+- 공고가 없거나 삭제된 경우 `POSTING_NOT_FOUND` 404 반환
+- OpenAI API 호출 없음
+- OpenAI SDK 추가 없음
+- OpenAI 결제/API key 없이 Swagger 테스트 가능
+- DB 저장 없음
+- `analysis_results` 수정 없음
+- `review_items` 생성/수정 없음
+- `domain_categories`는 1차 응답에서 제외
+- 추천 생성 로직은 `backend/app/ai_recommendations.py`에 격리
 - frontend는 AI recommendation placeholder 페이지만 존재
 
 ## 현재 정책 기준
@@ -88,12 +99,36 @@
 - config 대표값/alias inventory가 현재 정책과 맞는지 최종 확인
 - 실데이터 재분석 결과에서 산업/도메인/직무 추출 품질 확인
 
+## AI Recommendation 검증 방법
+
+PowerShell 기준:
+
+```powershell
+.\.venv\Scripts\activate
+python -m uvicorn backend.app.main:app --reload
+```
+
+Swagger:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+검증 항목:
+
+- `GET /api/ai-recommendations/postings/{posting_id}` endpoint 노출 확인
+- 정상 posting_id 호출 시 HTTP 200, `meta.mode = "mock"`, `meta.saved = false`, `meta.model = null` 확인
+- 응답에 `industry_category`, `primary_domain_category`, `position_category`, `skills`, `competencies`, `review_item_candidates` 포함 확인
+- 응답에 `domain_categories`가 없는지 확인
+- 없는 posting_id 또는 삭제된 posting_id 호출 시 HTTP 404, `error.code = "POSTING_NOT_FOUND"` 확인
+- API key 없이 정상 posting_id 호출이 가능한지 확인
+
 ## 다음 Codex 작업
 
-1. 1차 AI recommendation 조회 API 설계 및 구현
-   - 다른 작업과 독립적으로 시작 가능하다.
-   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 구현한다.
-   - 1차 범위는 DB 저장 없는 조회형 API를 우선한다.
+1. AI recommendation 실제 OpenAI 연동
+   - OpenAI API 결제/API key 설정 후 Mock 추천 함수를 실제 `gpt-4o-mini` 호출로 교체한다.
+   - 다른 backend 모듈이 OpenAI SDK에 직접 의존하지 않도록 `ai_recommendations.py` 내부에 provider 로직을 유지한다.
+   - DB 저장 없는 조회형 API 원칙은 유지한 뒤 저장/반영 정책은 별도 단계에서 결정한다.
 
 2. removed 이력 기반 동일 후보 재생성 방지 정책 확정 후 구현
    - 정책 확정이 선행되어야 한다.
@@ -101,8 +136,12 @@
    - 초기 구현은 동일 `field_type + normalized raw_value` 재생성 방지까지만 검토한다.
    - 유사 표현 제외는 후속 고도화로 둔다.
 
-3. 복수 도메인 저장 구조와 API 형태 정의
-   - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 1번 이후 진행을 권장한다.
+3. AI recommendation frontend 연결
+   - 사용자 트리거와 추천 결과 표시를 frontend에 연결한다.
+   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 표시한다.
+
+4. 복수 도메인 저장 구조와 API 형태 정의
+   - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 실제 구조 확정 이후 진행을 권장한다.
    - 후속 목표는 대표 도메인 1개 + 전체 도메인 N개 구조다.
    - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
 
