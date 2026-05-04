@@ -62,6 +62,7 @@
 
 소스코드에서 확인한 현재 구현:
 
+- 현재 AI Recommendation은 Phase AI-1 수준 완료
 - backend AI recommendation API 1차 Mock 구현 존재
 - endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
 - 저장된 공고를 `posting_id`로 조회한 뒤 Mock recommendation JSON 반환
@@ -80,6 +81,26 @@
 - 공고 선택 후 `AI 추천 조회` 버튼을 눌렀을 때만 AI 추천 API 호출
 - 공고 선택 변경 시 이전 추천 결과와 error 상태 초기화
 - 추천 결과는 화면 표시용이며 DB 저장/자동 확정/review_items 반영 없음
+
+다음 작업은 Phase AI-1B다.
+
+- `AI_RECOMMENDATION_MODE` 기반 `mock`/`openai` mode 분기 추가
+- 기본 mode는 `mock`
+- `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API 호출
+- openai mode에서만 `OPENAI_API_KEY` 필요
+- `OPENAI_MODEL` 기본값은 `gpt-4o-mini`
+- endpoint와 응답 구조는 유지
+- Mock mode는 유지
+
+Phase AI-1B에서도 아래는 제외한다.
+
+- review_items 반영
+- analysis_results 갱신
+- config 수정
+- `domain_categories` 추가
+- dictionary_candidates 연동
+
+Phase AI-3/AI-4는 dictionary_candidates 구조 완료 후 검토한다.
 
 ## 현재 정책 기준
 
@@ -256,11 +277,17 @@ http://127.0.0.1:8000/docs
 
 ## 다음 Codex 작업
 
-1. AI recommendation 실제 OpenAI 연동
-   - OpenAI API 결제/API key 설정 후 Mock 추천 함수를 실제 `gpt-4o-mini` 호출로 교체한다.
-   - 다른 backend 모듈이 OpenAI SDK에 직접 의존하지 않도록 `ai_recommendations.py` 내부에 provider 로직을 유지한다.
-   - DB 저장 없는 조회형 API 원칙은 유지한 뒤 저장/반영 정책은 별도 단계에서 결정한다.
-   - frontend는 실제 OpenAI 연동 이후에도 사용자 버튼 트리거 원칙을 유지한다.
+1. AI Recommendation Phase AI-1B backend 구현
+   - `backend/app/ai_recommendations.py`에 mode 분기를 추가한다.
+   - `AI_RECOMMENDATION_MODE=mock`이면 기존 Mock 응답을 유지한다.
+   - `AI_RECOMMENDATION_MODE=openai`이면 OpenAI API를 호출한다.
+   - `OPENAI_MODEL` 기본값은 `gpt-4o-mini`로 둔다.
+   - `OPENAI_API_KEY`는 openai mode에서만 필수다.
+   - endpoint `GET /api/ai-recommendations/postings/{posting_id}`와 응답 구조는 유지한다.
+   - DB 저장 없는 조회형 API 원칙을 유지한다.
+   - review_items 반영, analysis_results 갱신, config 수정, domain_categories 추가, dictionary_candidates 연동은 제외한다.
+   - `.env.example` 및 `requirements.txt`는 구현 단계에서 수정한다.
+   - frontend는 원칙적으로 수정하지 않는다.
 
 2. removed 이력 기반 후보 제외 고도화
    - 현재 구현은 동일 `field_type + normalized raw_value` 기준만 적용한다.
