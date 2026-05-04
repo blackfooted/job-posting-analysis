@@ -145,6 +145,14 @@
     ]
   },
   {
+    "name": "ERP",
+    "aliases": []
+  },
+  {
+    "name": "WMS",
+    "aliases": []
+  },
+  {
     "name": "CRM",
     "aliases": [
       "CRM 시스템",

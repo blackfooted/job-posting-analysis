@@ -182,6 +182,32 @@
 3. 보류 후보는 industry/domain/position/복수 도메인 정책 확정 후 별도 phase에서 반영한다.
 4. 제외 또는 phase 3 후보는 config에 넣지 않고 classification 추출 로직 개선 또는 stopword/filter 정책으로 별도 처리한다.
 
+## Phase 2 안전 후보 config 반영 상태
+
+- Phase 2 안전 후보 일부를 config JSON에 반영했다.
+- 반영한 config 파일:
+  - `config/skill-dictionary.json`
+  - `config/competency-dictionary.json`
+- skill 반영:
+  - `ERP` 대표값 추가
+  - `WMS` 대표값 추가
+  - `프롬프트 엔지니어링`은 기존 대표값이 이미 있어 중복 추가하지 않음
+- competency 반영:
+  - `FAQ`를 `문서화` alias로 추가
+  - `VOC`를 `VOC 설계` alias로 추가
+  - `운영 가이드`를 `문서화` alias로 추가
+  - `서비스 운영` 대표값 추가
+- 이번 단계에서 `config/industry-categories.json`, `config/domain-categories.json`, `config/position-categories.json`, `config/synonym-map.json`은 수정하지 않았다.
+- Pandas는 Python alias로 둘지 독립 skill로 둘지 정책 결정이 필요해 이번 단계에서 보류했다.
+- config 변경 후 기존 공고는 재분석이 필요하다.
+
+다음 작업 후보:
+
+1. 기존 공고 재분석 후 skill/competency 추출 개선 여부 확인
+2. Pandas 처리 정책 결정
+3. industry/domain 보류 후보 정책 검토
+4. IA/IATA 등 오추출 후보는 classification phase 3에서 필터/맥락 조건 개선
+
 ## AI Recommendation 검증 방법
 
 PowerShell 기준:
@@ -247,6 +273,8 @@ http://127.0.0.1:8000/docs
 
 5. 실데이터 classification 품질 검토와 config 반영
    - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
+   - phase 2 안전 후보 일부는 `config/skill-dictionary.json`과 `config/competency-dictionary.json`에 반영되었다.
+   - phase 2 안전 후보 config 변경 후 기존 공고는 재분석이 필요하다.
    - phase 2 진입 전 교차 검토 결과는 이 문서의 `Phase 2 진입 전 교차 검토 결과`와 `docs/current/classification_real_data_review.md`를 기준으로 확인한다.
    - phase 2 config 후보는 `docs/current/classification_real_data_review.md`의 `Phase 2 후보 분류` 기준에 따라 안전 반영 후보 / 보류 후보 / 제외 또는 phase 3 코드 개선 후보로 분리되어 있다.
    - 안전 반영 후보 중 `add_representative` 또는 `add_alias`만 다음 config 반영 대상으로 검토한다.

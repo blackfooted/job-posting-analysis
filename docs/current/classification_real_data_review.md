@@ -292,6 +292,14 @@
 | 2026-05-04 | phase 1 | skill-dictionary.json | RAG | RAG | added representative | 안전 후보 우선 반영 |
 | 2026-05-04 | phase 1 | competency-dictionary.json | 협업 | 원활한 커뮤니케이션 | added alias | 안전 후보 우선 반영 |
 | 2026-05-04 | phase 1 | competency-dictionary.json | 요구사항 분석 | 요구사항 수집 분석 | skipped | 기존 alias가 이미 존재해 중복 추가하지 않음 |
+| 2026-05-04 | phase 2 safe | skill-dictionary.json | ERP | ERP | added representative | 명시적 skill 안전 후보 |
+| 2026-05-04 | phase 2 safe | skill-dictionary.json | WMS | WMS | added representative | 명시적 skill 안전 후보 |
+| 2026-05-04 | phase 2 safe | skill-dictionary.json | 프롬프트 엔지니어링 | 프롬프트 엔지니어링 | skipped | 기존 대표값이 이미 존재해 중복 추가하지 않음 |
+| 2026-05-04 | phase 2 safe | skill-dictionary.json | Pandas | Pandas | skipped | Python alias 또는 독립 skill 여부 정책 확인 필요 |
+| 2026-05-04 | phase 2 safe | competency-dictionary.json | 문서화 | FAQ | added alias | 운영 산출물/문서화 안전 후보 |
+| 2026-05-04 | phase 2 safe | competency-dictionary.json | VOC 설계 | VOC | added alias | 고객 의견/VOC 업무 안전 후보 |
+| 2026-05-04 | phase 2 safe | competency-dictionary.json | 문서화 | 운영 가이드 | added alias | 운영 산출물/문서화 안전 후보 |
+| 2026-05-04 | phase 2 safe | competency-dictionary.json | 서비스 운영 | 서비스 운영 | added representative | 서비스 운영 및 품질 유지 competency 안전 후보 |
 
 ## Config 반영 후 재분석 검증
 
