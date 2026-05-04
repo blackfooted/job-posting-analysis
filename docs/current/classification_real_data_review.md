@@ -218,6 +218,66 @@
 | IATA | 제외 | 기관명/인증명으로 skill 반영 제외 |
 | IA | 맥락 조건 강화 | 누아 공고에서는 오추출 가능성이 있으나 일반 skill로는 유효할 수 있어 삭제 대상 아님 |
 
+## Phase 2 후보 분류
+
+이번 섹션은 Phase 2 config 반영 전 후보를 분류하기 위한 작업 메모다. 이 단계에서는 config JSON을 수정하지 않는다.
+
+### 안전 반영 후보
+
+| no | candidate | field_type | target_config | proposed_representative | action | reason | note |
+|---:|---|---|---|---|---|---|---|
+| 1 | ERP | skill | skill-dictionary.json | ERP | add_representative | 원문에 시스템/업무 도구 맥락으로 명시되고 회사명/제품명이 아님 | 바티에이아이 skill 후보 |
+| 2 | WMS | skill | skill-dictionary.json | WMS | add_representative | 물류/재고 시스템 약어로 의미가 명확하고 반복 정제 비용을 줄일 수 있음 | 바티에이아이 skill 후보 |
+| 3 | Pandas | skill | skill-dictionary.json | Pandas | needs_check | Python/Pandas 경험으로 원문에 명시되어 skill 후보로 타당함 | Python 하위 라이브러리 alias로 둘지 독립 skill 대표값으로 둘지 확인 필요 |
+| 4 | 프롬프트 엔지니어링 | skill | skill-dictionary.json | 프롬프트 엔지니어링 | add_representative | LLM/AI 도구 활용 역량으로 의미가 명확함 | 바티에이아이 skill 후보 |
+| 5 | FAQ | competency | competency-dictionary.json | 운영 문서화 | needs_check | 슈퍼진 원문에 운영 산출물로 명시됨 | skill/산출물로 둘지 competency alias로 둘지 정책 확인 필요 |
+| 6 | VOC | competency | competency-dictionary.json | VOC 분석 | needs_check | 고객 의견/운영 개선 맥락의 반복 가능한 업무 역량 후보 | 고객 요구사항 분석으로 매핑할지 별도 대표값을 둘지 확인 필요 |
+| 7 | 와이어프레임 | skill | skill-dictionary.json | 와이어프레임 | needs_check | 서비스기획 산출물로 의미가 명확하고 원문에 명시됨 | 기존 config 존재 여부 확인 후 add_representative 또는 already_exists 처리 |
+| 8 | 정책 수립 | competency | competency-dictionary.json | 정책 수립 | needs_check | 서비스 정책 수립 업무가 명확함 | 기존 config 존재 여부 확인 후 add_alias 또는 already_exists 처리 |
+| 9 | 운영 가이드 | competency | competency-dictionary.json | 운영 정책 수립 | needs_check | 운영 가이드 작성/정리 산출물이 명확함 | 문서화 대표값으로 둘지 운영 정책 수립 alias로 둘지 확인 필요 |
+| 10 | 서비스 운영 | competency | competency-dictionary.json | 서비스 운영 | needs_check | 서비스 운영 및 품질 유지 문맥이 명확함 | 프로세스 관리와 별도 대표값 중 선택 필요 |
+| 11 | 문서화 | competency | competency-dictionary.json | 문서화 | needs_check | 기술 기획 문서 작성 역량으로 의미가 명확함 | 기존 config 존재 여부 확인 후 add_alias 또는 already_exists 처리 |
+| 12 | 데이터 분석 | competency | competency-dictionary.json | 데이터 분석 | needs_check | 커머스 데이터 분석 업무 맥락이 명확함 | 기존 config 존재 여부 확인 후 add_alias 또는 already_exists 처리 |
+| 13 | 시스템 설계 | competency | competency-dictionary.json | 시스템 설계 | needs_check | 데이터 흐름/솔루션 설계 업무 맥락이 명확함 | 기존 config 존재 여부 확인 후 add_alias 또는 already_exists 처리 |
+| 14 | 요구사항 분석 | competency | competency-dictionary.json | 요구사항 분석 | already_exists | 누아 confirmed 이력 및 phase 1 skipped 이력에서 기존 alias 존재가 확인됨 | 추가 alias가 필요한 표현만 별도 검토 |
+| 15 | 협업/커뮤니케이션 | competency | competency-dictionary.json | 협업 | already_exists | phase 1에서 협업 alias가 반영되었고 여러 공고에서 반복되는 역량임 | 슈퍼진 표현을 추가 alias로 넣을지는 별도 확인 |
+
+### 보류 후보
+
+| no | candidate | field_type | possible_representative | hold_reason | decision_needed | note |
+|---:|---|---|---|---|---|---|
+| 1 | SaaS | domain | SaaS | 세나/바티에이아이 모두에서 domain 후보이나 현재 저장 구조가 단일 domain_category라 복수 도메인 정책과 연결됨 | 대표 도메인 1개 + 전체 도메인 N개 구조 확정 후 반영 여부 결정 | industry가 아니라 domain 후보로 우선 관리 |
+| 2 | 개인건강관리 서비스 | domain | 헬스케어 | 세나 원문에서는 타당하지만 제품/서비스 설명문에 가까워 alias 범위가 넓어질 수 있음 | 헬스케어 domain alias로 둘지, 공고별 설명문으로만 둘지 결정 | 제품명인 오름차트/클레와 구분 필요 |
+| 3 | 게임 / 콘텐츠 | industry/domain | 게임, 콘텐츠 | 슈퍼진에는 타당하지만 산업과 도메인 양쪽 후보이며 복수 도메인 구조와 연결됨 | industry 대표값, primary domain, additional domain 분리 정책 결정 | 게임 개발사와 소셜 콘텐츠 서비스 성격을 함께 반영할지 검토 |
+| 4 | 여행 / 항공권 유통 / 예약 플랫폼 | domain | 여행 | 누아에는 타당하지만 항공권 유통/예약 플랫폼을 여행 alias로 둘지 정책 결정 필요 | 여행 domain alias 범위와 항공/예약 플랫폼 세부 alias 정책 결정 | IATA 기관명/인증명 제외 정책과 별도로 검토 |
+| 5 | 이커머스 / SaaS | domain | 이커머스, SaaS | 바티에이아이에는 두 도메인이 모두 타당하나 현재 단일 domain 구조에서는 우선순위 결정이 필요함 | primary domain과 additional domain 기준 결정 | 커머스 데이터 솔루션 문맥 |
+| 6 | 정산 | domain | 이커머스 | 커머스 정산 문맥에서는 타당하지만 금융/회계/운영 문맥 오탐 위험이 큼 | 단독 alias 반영 여부와 문맥 조건 필요 여부 결정 | 3순위 보류 |
+| 7 | 커머스 데이터 솔루션 - 기술 기획자 | position | 서비스 기획 또는 프로덕트 기획 | 특정 공고명에 가까워 일반 position alias로 쓰기 어려움 | 기술 기획자를 서비스 기획으로 볼지 프로덕트 기획으로 볼지 정책 결정 | position_category null 후속 검토 대상 |
+| 8 | IATA | domain | 여행 또는 항공 | 항공/여행 특수용어처럼 보일 수 있으나 현재 원문에서는 기관명/인증명 맥락임 | 도메인 특수용어로 관리하지 않을지, 기관명 필터로만 관리할지 결정 | skill config에는 반영 제외 |
+
+### 제외 또는 Phase 3 코드 개선 후보
+
+| no | candidate | observed_as | issue_type | suggested_action | reason | note |
+|---:|---|---|---|---|---|---|
+| 1 | 네이버 | partner/company name | partner_name | exclude_from_config | 파트너사 고유명사로 classification config에 넣을 대상이 아님 | 세나 원문 |
+| 2 | 오름차트 | product name | product_name | exclude_from_config | 제품 고유명사 | 세나 원문 |
+| 3 | 클레 | product name | product_name | exclude_from_config | 제품 고유명사 | 세나 원문 |
+| 4 | Bati CIS | product name | product_name | exclude_from_config | 제품 고유명사 | 바티에이아이 원문 |
+| 5 | COSRX | customer name | customer_name | exclude_from_config | 고객사 고유명사 | 바티에이아이 원문 |
+| 6 | 파마리서치 | customer name | customer_name | exclude_from_config | 고객사 고유명사 | 바티에이아이 원문 |
+| 7 | IATA | skill acronym | organization_name | add_stopword_or_filter | 국제항공운송협회 약어이며 기관명/인증명 맥락으로 등장 | skill/config 반영 제외. 대문자 약어 기관명 필터 후보 |
+| 8 | IA | extracted skill | acronym_false_positive | strengthen_context_rule | 누아 공고에서는 직무 맥락 근거가 약한 오추출 가능성이 높음 | Information Architecture 자체는 유효 skill일 수 있으므로 삭제가 아니라 맥락 조건 강화 |
+| 9 | SBA | skill acronym | organization_name | add_stopword_or_filter | 투자/기관명 맥락으로 skill 가치가 낮음 | config 반영 금지 |
+| 10 | NEST | skill acronym | program_or_award_name | add_stopword_or_filter | 지원사업/선정 이력 약어로 보임 | config 반영 금지 |
+| 11 | DATA | skill acronym | acronym_false_positive | strengthen_context_rule | DATA-Stars 선정 이력 일부로 추출된 약어 | 대문자 약어 추출 조건 개선 후보 |
+| 12 | ETC | skill | too_generic | add_stopword_or_filter | 기타 항목 라벨로 skill 가치가 없음 | config 반영 금지 |
+| 13 | 상품 | domain | too_generic | phase3_extraction_fix | 상품기획 문맥의 일반어가 domain 후보로 분리됨 | domain 과추출 개선 후보 |
+| 14 | 함께 설계 | competency | broken_phrase | phase3_extraction_fix | 문장 일부가 잘린 표현 | removed 처리 또는 phase 3 후보 |
+| 15 | 점 도출 | competency | broken_phrase | phase3_extraction_fix | 단어 일부가 잘린 문장 찌꺼기 | removed 처리 후보 |
+| 16 | 하여 개선 | competency | broken_phrase | phase3_extraction_fix | 조사/어미가 포함된 불완전 표현 | phase 3 추출 개선 후보 |
+| 17 | 수 있는 커뮤니케이션 | competency | broken_phrase | phase3_extraction_fix | 문장 일부가 잘린 표현 | phase 3 추출 개선 후보 |
+| 18 | 정보통신 기획 | competency | extraction_rule_issue | phase3_extraction_fix | 과학기술정보통신부 문맥에서 잘린 표현 | 기관명/부처명 맥락 필터 후보 |
+
 ## Config 반영 이력
 
 | date | phase | config_file | representative | alias_or_value | action | note |

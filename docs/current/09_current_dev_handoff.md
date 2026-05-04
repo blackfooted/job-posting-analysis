@@ -168,6 +168,20 @@
 - 슈퍼진 누락 항목은 config 후보와 classification phase 3 후보로 나누어 분류한다.
 - industry/domain alias는 오탐 위험을 검토한 뒤 별도 phase로 진행한다.
 
+## Phase 2 classification/config 후보 분류 상태
+
+- Phase 2 진입 전 후보를 안전 반영 후보 / 보류 후보 / 제외 또는 phase 3 코드 개선 후보로 분류했다.
+- 문서 위치: `docs/current/classification_real_data_review.md`의 `Phase 2 후보 분류`.
+- 이번 단계에서는 후보 분류만 완료했고 config JSON은 수정하지 않았다.
+- backend/frontend/DB 수정도 없다.
+
+다음 작업 기준:
+
+1. 안전 반영 후보 중 `add_representative` 또는 `add_alias` 항목만 config JSON 반영 대상으로 검토한다.
+2. `needs_check` 항목은 대표값 정책과 기존 config 존재 여부를 확인한 뒤 반영한다.
+3. 보류 후보는 industry/domain/position/복수 도메인 정책 확정 후 별도 phase에서 반영한다.
+4. 제외 또는 phase 3 후보는 config에 넣지 않고 classification 추출 로직 개선 또는 stopword/filter 정책으로 별도 처리한다.
+
 ## AI Recommendation 검증 방법
 
 PowerShell 기준:
@@ -234,7 +248,9 @@ http://127.0.0.1:8000/docs
 5. 실데이터 classification 품질 검토와 config 반영
    - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
    - phase 2 진입 전 교차 검토 결과는 이 문서의 `Phase 2 진입 전 교차 검토 결과`와 `docs/current/classification_real_data_review.md`를 기준으로 확인한다.
-   - phase 2 config 후보는 안전 후보 / 보류 후보 / 제외 후보로 분리한다.
+   - phase 2 config 후보는 `docs/current/classification_real_data_review.md`의 `Phase 2 후보 분류` 기준에 따라 안전 반영 후보 / 보류 후보 / 제외 또는 phase 3 코드 개선 후보로 분리되어 있다.
+   - 안전 반영 후보 중 `add_representative` 또는 `add_alias`만 다음 config 반영 대상으로 검토한다.
+   - `needs_check` 항목은 대표값 정책과 기존 config 존재 여부를 먼저 확인한다.
    - IA 오추출 여부와 추출 맥락 조건 강화를 검토한다.
    - IATA 같은 기관명/인증명 약어는 skill 후보에서 제외하는 필터링을 검토한다.
    - 슈퍼진 누락 항목은 classification phase 3 후보 또는 config 후보로 분류한다.
