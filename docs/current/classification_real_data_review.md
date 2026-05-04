@@ -156,3 +156,18 @@
 - hold 상태 후보 추가 검토
 - remove 상태 후보가 반복되면 removed 처리 또는 classification phase 3 개선 후보로 기록
 - 복수 도메인 구조 도입 전까지 primary_domain 기준을 별도 관리
+
+## Config 반영 이력
+
+| date | phase | config_file | representative | alias_or_value | action | note |
+|---|---|---|---|---|---|---|
+| 2026-05-04 | phase 1 | position-categories.json | 서비스 기획 | 서비스 기획 주니어 | added alias | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | position-categories.json | 서비스 기획 | 웹서비스 기획자 | added alias | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | position-categories.json | 서비스 기획 | 글로벌 서비스 기획/운영 | added alias | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | skill-dictionary.json | EMR | EMR | added representative | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | skill-dictionary.json | HIS | HIS | added representative | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | skill-dictionary.json | OCS | OCS | added representative | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | skill-dictionary.json | AWS | AWS | added representative | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | skill-dictionary.json | RAG | RAG | added representative | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | competency-dictionary.json | 협업 | 원활한 커뮤니케이션 | added alias | 안전 후보 우선 반영 |
+| 2026-05-04 | phase 1 | competency-dictionary.json | 요구사항 분석 | 요구사항 수집 분석 | skipped | 기존 alias가 이미 존재해 중복 추가하지 않음 |

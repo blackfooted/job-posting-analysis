@@ -245,5 +245,25 @@
       "고객 교육 자료",
       "문서화"
     ]
+  },
+  {
+    "name": "EMR",
+    "aliases": []
+  },
+  {
+    "name": "HIS",
+    "aliases": []
+  },
+  {
+    "name": "OCS",
+    "aliases": []
+  },
+  {
+    "name": "AWS",
+    "aliases": []
+  },
+  {
+    "name": "RAG",
+    "aliases": []
   }
 ]

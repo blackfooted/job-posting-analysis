@@ -40,6 +40,10 @@
 - classification phase 1 개선: 완료로 판단
 - classification phase 2 개선: 코드 반영은 보이나 실데이터 추가 검증 필요
 - Skill / Competency / Position alias 지원: 현재 config 파일에 존재
+- config 안전 반영 phase 1 완료
+- phase 1 반영 파일: `config/position-categories.json`, `config/skill-dictionary.json`, `config/competency-dictionary.json`
+- phase 1에서 industry/domain config는 보류
+- config 변경 후 기존 공고는 재분석이 필요
 - Industry / Domain alias 지원: 현재 config 파일에 존재
 - 필수 config 파일은 startup 시 로드됨
 - `synonym-map.json`은 필수 로드 대상이지만, 확인한 classification 흐름에서 직접 사용은 검토 필요
@@ -175,10 +179,11 @@ http://127.0.0.1:8000/docs
    - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
 
 5. 실데이터 classification 품질 검토와 config 반영
-   - `docs/current/classification_real_data_review.md`의 confirm 후보를 검토한 뒤 별도 config 반영 작업을 진행한다.
+   - config 안전 반영 phase 1 결과를 기준으로 기존 공고를 재분석해 `analysis_results`와 `review_items` 개선 여부를 확인한다.
+   - 보류한 industry/domain alias 정책을 검토한다.
    - hold/question 후보는 추가 공고 사례를 보고 대표값 또는 정책을 결정한다.
    - 반복 오추출은 classification phase 3 후보로 기록한다.
-   - config 반영 후 기존 공고는 재분석해 누락/오추출 개선 여부를 확인한다.
+   - 다음 config 반영 전 `docs/current/classification_real_data_review.md`의 confirm 후보와 보류 사유를 재확인한다.
 
 주의:
 
