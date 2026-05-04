@@ -62,14 +62,17 @@
 
 소스코드에서 확인한 현재 구현:
 
-- 현재 AI Recommendation은 Phase AI-1 수준 완료
+- 현재 AI Recommendation은 Phase AI-1 완료 및 Phase AI-1B backend mode 분기 구현 상태
 - backend AI recommendation API 1차 Mock 구현 존재
 - endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
 - 저장된 공고를 `posting_id`로 조회한 뒤 Mock recommendation JSON 반환
 - 공고가 없거나 삭제된 경우 `POSTING_NOT_FOUND` 404 반환
-- OpenAI API 호출 없음
-- OpenAI SDK 추가 없음
-- OpenAI 결제/API key 없이 Swagger 테스트 가능
+- 기본 mode는 mock이며 OpenAI 결제/API key 없이 Swagger 테스트 가능
+- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI API 호출 경로 존재
+- OpenAI SDK import는 openai mode 호출 시점에만 수행
+- OpenAI SDK 의존성은 `backend/requirements.txt`의 `openai>=1.0.0` 기준으로 관리
+- openai mode 실제 호출 검증은 `OPENAI_API_KEY` 설정 후 가능
+- `review_item_candidates.field_type`이 허용값이 아니면 해당 candidate는 최종 응답에서 제외
 - DB 저장 없음
 - `analysis_results` 수정 없음
 - `review_items` 생성/수정 없음
@@ -82,9 +85,9 @@
 - 공고 선택 변경 시 이전 추천 결과와 error 상태 초기화
 - 추천 결과는 화면 표시용이며 DB 저장/자동 확정/review_items 반영 없음
 
-다음 작업은 Phase AI-1B다.
+Phase AI-1B backend 구현 기준:
 
-- `AI_RECOMMENDATION_MODE` 기반 `mock`/`openai` mode 분기 추가
+- `AI_RECOMMENDATION_MODE` 기반 `mock`/`openai` mode 분기 추가 완료
 - 기본 mode는 `mock`
 - `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API 호출
 - openai mode에서만 `OPENAI_API_KEY` 필요
@@ -277,16 +280,15 @@ http://127.0.0.1:8000/docs
 
 ## 다음 Codex 작업
 
-1. AI Recommendation Phase AI-1B backend 구현
-   - `backend/app/ai_recommendations.py`에 mode 분기를 추가한다.
-   - `AI_RECOMMENDATION_MODE=mock`이면 기존 Mock 응답을 유지한다.
-   - `AI_RECOMMENDATION_MODE=openai`이면 OpenAI API를 호출한다.
-   - `OPENAI_MODEL` 기본값은 `gpt-4o-mini`로 둔다.
-   - `OPENAI_API_KEY`는 openai mode에서만 필수다.
+1. AI Recommendation Phase AI-1B 검증 및 의존성 정리
+   - `AI_RECOMMENDATION_MODE=mock`에서 기존 Mock 응답이 유지되는지 확인한다.
+   - `AI_RECOMMENDATION_MODE`가 허용값 외 값이면 `AI_CONFIG_INVALID`가 반환되는지 확인한다.
+   - `AI_RECOMMENDATION_MODE=openai`이고 `OPENAI_API_KEY`가 없으면 `AI_CONFIG_MISSING`이 반환되는지 확인한다.
+   - `OPENAI_API_KEY` 설정 후 `AI_RECOMMENDATION_MODE=openai` 실제 호출을 검증한다.
+   - `OPENAI_MODEL` 기본값은 `gpt-4o-mini`로 유지한다.
    - endpoint `GET /api/ai-recommendations/postings/{posting_id}`와 응답 구조는 유지한다.
    - DB 저장 없는 조회형 API 원칙을 유지한다.
    - review_items 반영, analysis_results 갱신, config 수정, domain_categories 추가, dictionary_candidates 연동은 제외한다.
-   - `.env.example` 및 `requirements.txt`는 구현 단계에서 수정한다.
    - frontend는 원칙적으로 수정하지 않는다.
 
 2. removed 이력 기반 후보 제외 고도화

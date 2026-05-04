@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -36,6 +38,12 @@ POSTING_PROMPT_FIELDS = (
     "industry_memo",
     "raw_text",
 )
+AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
+OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
+OPENAI_MODEL_ENV = "OPENAI_MODEL"
+DEFAULT_AI_RECOMMENDATION_MODE = "mock"
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+AI_RECOMMENDATION_MODES = {"mock", "openai"}
 
 
 class AIRecommendationParseError(Exception):
@@ -57,9 +65,58 @@ def get_ai_recommendation_for_posting(posting_id: int) -> Any:
             ),
         )
 
+    mode = _get_ai_recommendation_mode()
+    if mode not in AI_RECOMMENDATION_MODES:
+        return JSONResponse(
+            status_code=500,
+            content=_error_response(
+                "AI_CONFIG_INVALID",
+                "AI_RECOMMENDATION_MODE 값은 mock 또는 openai여야 합니다.",
+            ),
+        )
+
+    model = None
+    raw_recommendation: dict[str, Any]
+    if mode == "mock":
+        raw_recommendation = _get_mock_recommendation(posting)
+    else:
+        api_key = os.getenv(OPENAI_API_KEY_ENV, "").strip()
+        if not api_key:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_CONFIG_MISSING",
+                    "openai mode에서는 OPENAI_API_KEY가 필요합니다.",
+                ),
+            )
+
+        model = os.getenv(OPENAI_MODEL_ENV, "").strip() or DEFAULT_OPENAI_MODEL
+        try:
+            raw_recommendation = _get_openai_recommendation(
+                posting=posting,
+                api_key=api_key,
+                model=model,
+            )
+        except AIRecommendationParseError:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RESPONSE_PARSE_FAILED",
+                    "AI 추천 응답을 JSON으로 해석할 수 없습니다.",
+                ),
+            )
+        except Exception:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RECOMMENDATION_FAILED",
+                    "OpenAI 추천 호출에 실패했습니다.",
+                ),
+            )
+
     try:
         recommendation = _normalize_recommendation_response(
-            _get_mock_recommendation(posting),
+            raw_recommendation,
         )
     except AIRecommendationParseError:
         return JSONResponse(
@@ -79,8 +136,8 @@ def get_ai_recommendation_for_posting(posting_id: int) -> Any:
             },
             "recommendation": recommendation,
             "meta": {
-                "mode": "mock",
-                "model": None,
+                "mode": mode,
+                "model": model,
                 "saved": False,
                 "generated_at": _current_kst_isoformat(),
             },
@@ -136,6 +193,11 @@ def _build_ai_prompt(posting: dict[str, Any]) -> str:
     )
 
 
+def _get_ai_recommendation_mode() -> str:
+    mode = os.getenv(AI_RECOMMENDATION_MODE_ENV, "").strip().lower()
+    return mode or DEFAULT_AI_RECOMMENDATION_MODE
+
+
 def _get_mock_recommendation(posting: dict[str, Any]) -> dict[str, Any]:
     del posting
     return {
@@ -180,6 +242,58 @@ def _get_mock_recommendation(posting: dict[str, Any]) -> dict[str, Any]:
             ],
         }
     }
+
+
+def _get_openai_recommendation(
+    *,
+    posting: dict[str, Any],
+    api_key: str,
+    model: str,
+) -> dict[str, Any]:
+    try:
+        from openai import OpenAI
+    except ImportError as exc:
+        raise RuntimeError("OpenAI SDK is not installed.") from exc
+
+    client = OpenAI(api_key=api_key)
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You return only valid JSON for a job posting "
+                    "recommendation API. Do not include markdown."
+                ),
+            },
+            {
+                "role": "user",
+                "content": _build_ai_prompt(posting),
+            },
+        ],
+        response_format={"type": "json_object"},
+    )
+
+    content = _extract_openai_message_content(response)
+    try:
+        parsed = json.loads(content)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise AIRecommendationParseError() from exc
+
+    if not isinstance(parsed, dict):
+        raise AIRecommendationParseError()
+    return parsed
+
+
+def _extract_openai_message_content(response: Any) -> str:
+    try:
+        content = response.choices[0].message.content
+    except (AttributeError, IndexError, TypeError) as exc:
+        raise AIRecommendationParseError() from exc
+
+    if not isinstance(content, str) or not content.strip():
+        raise AIRecommendationParseError()
+    return content
 
 
 def _normalize_recommendation_response(raw_response: dict[str, Any]) -> dict[str, Any]:
@@ -264,7 +378,7 @@ def _normalize_review_item_candidates(raw_items: Any) -> list[dict[str, Any]]:
 
         field_type = item.get("field_type")
         if field_type not in REVIEW_ITEM_FIELD_TYPES:
-            field_type = None
+            continue
 
         normalized_items.append(
             {

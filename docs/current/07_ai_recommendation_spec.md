@@ -16,9 +16,16 @@
 
 ### Phase AI-1B — 다음 구현 범위
 
-다음 구현 범위:
+구현 상태:
 
-- Mock recommendation 호출을 실제 OpenAI 호출로 교체할 수 있는 mode 분기 추가
+- backend mode 분기 구현 완료
+- `AI_RECOMMENDATION_MODE=mock` 기본 동작 유지
+- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI 호출 경로 추가
+- OpenAI 응답 JSON parse 및 normalize/검증 경로 추가
+
+구현 범위:
+
+- Mock recommendation 호출을 실제 OpenAI 호출로 교체할 수 있는 mode 분기
 - 기존 endpoint 유지
 - 기존 frontend 표시 구조 유지
 - OpenAI API key가 설정되고 mode가 `openai`일 때만 실제 호출
@@ -48,11 +55,13 @@
 확인한 소스코드 기준 현재 구현:
 
 - backend AI recommendation API 1차 Mock 구현이 있다.
+- Phase AI-1B backend mode 분기가 구현되어 있다.
 - `backend/app/main.py`에 AI router가 등록되어 있다.
 - endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
-- 현재 단계는 실제 OpenAI API 호출 없이 Mock recommendation 응답으로 Swagger 검증하는 단계다.
-- OpenAI SDK는 사용하지 않는다.
-- OpenAI 결제/API key 없이 Swagger에서 테스트 가능하다.
+- 기본 mode는 Mock recommendation 응답으로 Swagger 검증하는 단계다.
+- `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API 호출을 시도한다.
+- OpenAI SDK import는 openai mode 호출 시점에만 수행한다.
+- Mock mode는 OpenAI 결제/API key 없이 Swagger에서 테스트 가능하다.
 - 추천 생성 로직은 `backend/app/ai_recommendations.py`에 격리되어 있다.
 - frontend AI recommendation 화면에서 Mock API 조회가 가능하다.
 - AI 추천 관리 화면 진입 시 공고 목록이 비어 있으면 기존 postings 조회로 목록을 로드한다.
@@ -122,7 +131,7 @@ AI 작업도 현재 정책 기준을 그대로 따라야 한다.
 
 ## 후속 단계
 
-- Phase AI-1B: 환경변수 기반 `mock`/`openai` mode 분기 추가 및 실제 OpenAI 호출 지원
+- Phase AI-1B: backend mode 분기 구현 완료. 실제 OpenAI SDK 의존성 설치 및 key 설정 후 openai mode 검증 필요
 - Phase AI-2: 실제 OpenAI 연동 결과의 UI 표시 점검
 - Phase AI-3: dictionary_candidates 구조 완료 후 AI 추천 결과 선택 반영 검토
 - Phase AI-4: 개별 review_item 단위 추천 고도화
@@ -184,6 +193,11 @@ gpt-4o-mini
 - `AI_RECOMMENDATION_MODE`
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL`
+
+의존성:
+
+- OpenAI SDK는 `backend/requirements.txt`에서 관리한다.
+- 기준 버전은 `openai>=1.0.0`이다.
 
 기본값:
 
@@ -269,6 +283,7 @@ OpenAI 응답은 그대로 신뢰하지 않고 normalize/검증한다.
 배열 필드 보정:
 
 - 배열 필드가 없거나 배열이 아니면 빈 배열로 보정한다.
+- `review_item_candidates.field_type`이 허용값이 아니면 해당 candidate는 최종 응답에서 제외한다.
 
 객체 필드 보정:
 
