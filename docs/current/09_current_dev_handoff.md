@@ -42,6 +42,7 @@
 - Skill / Competency / Position alias 지원: 현재 config 파일에 존재
 - config 안전 반영 phase 1 완료
 - phase 1 반영 파일: `config/position-categories.json`, `config/skill-dictionary.json`, `config/competency-dictionary.json`
+- phase 1 반영 후 사용자 직접 재분석 검증 일부 완료: `posting_id=14` 세나, `posting_id=17` 바티에이아이 모두 phase 1 반영 대상 기준 pass
 - phase 1에서 industry/domain config는 보류
 - config 변경 후 기존 공고는 재분석이 필요
 - Industry / Domain alias 지원: 현재 config 파일에 존재
@@ -113,7 +114,7 @@
 - 실데이터 재분석 결과에서 산업/도메인/직무 추출 품질 확인
 - 실데이터 classification 품질 검토 문서: `docs/current/classification_real_data_review.md`
 - 현재 로컬 DB 기준 1차 검토 후보가 `classification_real_data_review.md`에 누적됨
-- config JSON 직접 수정은 아직 하지 않음
+- config 안전 반영 phase 1 결과와 재분석 검증 결과가 `classification_real_data_review.md`에 기록됨
 
 ## AI Recommendation 검증 방법
 
@@ -179,7 +180,8 @@ http://127.0.0.1:8000/docs
    - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
 
 5. 실데이터 classification 품질 검토와 config 반영
-   - config 안전 반영 phase 1 결과를 기준으로 기존 공고를 재분석해 `analysis_results`와 `review_items` 개선 여부를 확인한다.
+   - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
+   - 아직 재분석하지 않은 기존 공고는 필요 시 같은 기준으로 `analysis_results`와 `review_items` 개선 여부를 확인한다.
    - 보류한 industry/domain alias 정책을 검토한다.
    - hold/question 후보는 추가 공고 사례를 보고 대표값 또는 정책을 결정한다.
    - 반복 오추출은 classification phase 3 후보로 기록한다.

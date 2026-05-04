@@ -171,3 +171,10 @@
 | 2026-05-04 | phase 1 | skill-dictionary.json | RAG | RAG | added representative | 안전 후보 우선 반영 |
 | 2026-05-04 | phase 1 | competency-dictionary.json | 협업 | 원활한 커뮤니케이션 | added alias | 안전 후보 우선 반영 |
 | 2026-05-04 | phase 1 | competency-dictionary.json | 요구사항 분석 | 요구사항 수집 분석 | skipped | 기존 alias가 이미 존재해 중복 추가하지 않음 |
+
+## Config 반영 후 재분석 검증
+
+| no | posting | reanalyzed | expected_change | actual_result | status | note |
+|---:|---|---|---|---|---|---|
+| 1 | 세나 / 서비스 기획 주니어 (`posting_id=14`) | yes | phase 1 반영 대상 기준: `position_category=서비스 기획`, `EMR/HIS/OCS` skill 추출, `협업` competency 추출, 관련 unconfirmed 후보 감소 | 재분석 후 `domain_category=헬스케어`, `position_category=서비스 기획`, `extracted_skills=UX/UI, 스토리보드, 와이어프레임, OCS, EMR, HIS`, `extracted_competencies=협업`, `unconfirmed_count=22` 확인 | pass | config alias phase 1 반영 대상 기준 pass. `industry_category`는 null로 남아 phase 1에서 보류한 industry 정책 후속 검토 필요 |
+| 2 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 (`posting_id=17`) | yes | phase 1 반영 대상 기준: `AWS/RAG` skill 추출 | 사용자 직접 재분석 검증에서 config alias phase 1 반영 대상 기준 pass로 확인 | pass | industry/domain 및 `position_category`는 이번 phase 1 보류 영역이므로 후속 정책 검토 대상 |
