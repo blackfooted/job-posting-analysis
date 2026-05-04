@@ -29,6 +29,26 @@
 
 | no | source_posting | field_type | raw_value | suggested_value | status | reason | config_target | note |
 |---:|---|---|---|---|---|---|---|---|
+| 1 | 세나 / 서비스 기획 주니어 | position | 서비스 기획 주니어 | 서비스 기획 | confirm | 직무 대표값이 명확하고 주니어 수식어만 붙은 표현 | position-categories.json | alias 후보 |
+| 2 | 누아 / 웹서비스 기획자 | position | 웹서비스 기획자 | 서비스 기획 | confirm | 웹서비스 기획 직무 표현이며 기존 서비스 기획 계열로 묶을 수 있음 | position-categories.json | 기존 approved_value는 웹기획자이나 대표값 정합성 재검토 필요 |
+| 3 | 세나 / 서비스 기획 주니어 | competency | 원활한 커뮤니케이션 | 협업 | confirm | 협업/커뮤니케이션 역량 표현으로 반복 가능성이 높음 | competency-dictionary.json | 협업 alias 후보 |
+| 4 | 누아 / 웹서비스 기획자 | competency | 요구사항 수집 분석 | 요구사항 분석 | confirm | 요구사항 분석 대표값으로 명확히 매핑 가능 | competency-dictionary.json | 현재 confirmed 이력 존재 |
+| 5 | 세나 / 서비스 기획 주니어 | skill | EMR | EMR | confirm | 병원정보시스템 관련 명시적 시스템/약어 | skill-dictionary.json | HIS/OCS와 함께 의료 도메인 툴 후보 |
+| 6 | 세나 / 서비스 기획 주니어 | skill | HIS | HIS | confirm | 병원정보시스템 관련 명시적 시스템/약어 | skill-dictionary.json | EMR/OCS와 함께 검토 |
+| 7 | 세나 / 서비스 기획 주니어 | skill | OCS | OCS | confirm | 병원정보시스템 관련 명시적 시스템/약어 | skill-dictionary.json | EMR/HIS와 함께 검토 |
+| 8 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | AWS | AWS | confirm | 명시적 클라우드 기술 스택 | skill-dictionary.json | 하위 AWS 서비스와 대표값 분리 여부 검토 |
+| 9 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | RAG | RAG | confirm | LLM/AI 시스템 관련 명시적 기술 | skill-dictionary.json | AI/LLM 기술 alias 후보 |
+| 10 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | domain | 정산 | 이커머스 | confirm | 이커머스 정산/재고 솔루션 맥락의 도메인 표현 | domain-categories.json | 단독 정산을 이커머스 alias로 둘지 검토 |
+| 11 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | Cursor | AI툴활용 | confirm | 명시적 AI 코딩 도구 | skill-dictionary.json | 현재 config에 alias가 있어 재분석 후보일 수 있음 |
+| 12 | 누아 / 웹서비스 기획자 | skill | IATA | IATA | hold | 항공 유통 표준/기관 성격이 있어 skill로 둘지 애매함 | skill-dictionary.json | 여행/항공 도메인 전용 후보 |
+| 13 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | competency | 데이터 흐름 | 시스템 설계 | hold | 데이터 흐름 이해/설계 역량으로 보이나 대표값 확정 필요 | competency-dictionary.json | 데이터 파이프라인/시스템 설계 중 선택 필요 |
+| 14 | 슈퍼진 / 글로벌 서비스 기획/운영 | competency | 서비스 운영 | 프로세스 관리 | hold | 의미는 있으나 서비스 운영을 별도 역량으로 둘지 정책 필요 | competency-dictionary.json | 운영/프로세스 관리 대표값 검토 |
+| 15 | 슈퍼진 / 글로벌 서비스 기획/운영 | domain | 상품 |  | remove | 게임/서비스 공고에서 상품 단어만 도메인으로 분리된 과추출 |  | classification phase 3 후보 |
+| 16 | 슈퍼진 / 글로벌 서비스 기획/운영 | domain | 결제 |  | question | 유료 결제 모델 맥락이나 도메인으로 확정할지 정책 필요 | domain-categories.json | 복수 도메인 구조와 연결해 검토 |
+| 17 | 누아 / 웹서비스 기획자 | skill | SBA |  | remove | 투자/기관명 맥락으로 skill 가치 낮음 |  | config 반영 금지 |
+| 18 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | NEST |  | remove | 지원사업/선정 이력 약어로 skill 가치 낮음 |  | config 반영 금지 |
+| 19 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | IDE |  | remove | 너무 넓은 일반 개발환경 표현 |  | config 반영 금지 |
+| 20 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | competency | 함께 설계 |  | remove | 문장 일부가 잘린 표현 |  | removed 처리 또는 phase 3 후보 |
 
 ## field_type 기준
 
@@ -54,16 +74,36 @@
 
 | no | posting | expected_value | field_type | evidence | note |
 |---:|---|---|---|---|---|
+| 1 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | IT | industry | Commerce Intelligence Solution, AI 도구, 데이터 파이프라인, API, LLM 중심 솔루션 기업 | analysis_results.industry_category가 null |
+| 2 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | SaaS | domain | B2B SaaS, 자동화 솔루션, CIS 솔루션 설계 | analysis_results.domain_category가 null |
+| 3 | 슈퍼진 / 글로벌 서비스 기획/운영 | 게임 | industry | 글로벌 소셜 콘텐츠 & 게임 개발사, 인스턴트 게임 플랫폼 | analysis_results.industry_category가 null |
+| 4 | 슈퍼진 / 글로벌 서비스 기획/운영 | 게임 | domain | 페이스북 인스턴트 게임, 신규 게임 출시 | analysis_results.domain_category가 null |
+| 5 | 세나 / 서비스 기획 주니어 | 의료 | industry | 디지털 헬스케어 플랫폼, 전자의무기록, 병원정보시스템 | analysis_results.industry_category가 null |
+| 6 | 세나 / 서비스 기획 주니어 | 헬스케어 | domain | 오름차트, 클레, 건강관리, 의료 생태계 | analysis_results.domain_category가 null |
+| 7 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | Python | skill | tools 필드에 python, preferred에 Python/Pandas 경험 | 현재 review_items에는 unconfirmed로 남아 있어 재분석 필요 |
+| 8 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | SQL | skill | tools 필드에 sql, requirements에 SQL 활용 능력 | 현재 review_items에는 unconfirmed로 남아 있어 재분석 필요 |
 
 ### 오추출 후보
 
 | no | posting | raw_value | field_type | reason | suggested_action |
 |---:|---|---|---|---|---|
+| 1 | 세나 / 서비스 기획 주니어 | 점 도출 | competency | 단어 일부가 잘린 문장 찌꺼기 | removed 처리 후보 |
+| 2 | 세나 / 서비스 기획 주니어 | 하여 개선 | competency | 조사/어미가 포함된 불완전 표현 | classification phase 3 개선 후보 |
+| 3 | 세나 / 서비스 기획 주니어 | 다양한 도출 | competency | 너무 넓고 의미가 불명확한 표현 | config 반영 금지 |
+| 4 | 슈퍼진 / 글로벌 서비스 기획/운영 | 수 있는 커뮤니케이션 | competency | 문장 일부가 잘린 표현 | classification phase 3 개선 후보 |
+| 5 | 슈퍼진 / 글로벌 서비스 기획/운영 | 상품 | domain | 상품기획 문맥의 일반어가 domain 후보로 분리됨 | classification phase 3 개선 후보 |
+| 6 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | ETC | skill | 기타 항목 라벨로 skill 가치 없음 | config 반영 금지 |
+| 7 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | DATA | skill | DATA-Stars 선정 이력 일부로 추출된 약어 | config 반영 금지 |
+| 8 | 누아 / 웹서비스 기획자 | 정보통신 기획 | competency | 과학기술정보통신부 문맥에서 잘린 표현 | classification phase 3 개선 후보 |
 
 ### 복수 도메인 후보
 
 | no | posting | primary_domain | additional_domains | reason | note |
 |---:|---|---|---|---|---|
+| 1 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | SaaS | 이커머스, 데이터 분석 | B2B SaaS 성격의 커머스 데이터/정산/재고 솔루션 | 현재 단일 domain_category는 null |
+| 2 | 세나 / 서비스 기획 주니어 | 헬스케어 | SaaS, 의료 | 클라우드 SaaS EMR과 개인 건강관리 앱이 함께 등장 | 현재 단일 domain_category는 null |
+| 3 | 슈퍼진 / 글로벌 서비스 기획/운영 | 게임 | 콘텐츠, AI | 게임 개발사이면서 소셜 콘텐츠와 생성형 AI 신규 서비스가 함께 등장 | 현재 단일 domain_category는 null |
+| 4 | 누아 / 웹서비스 기획자 | 여행 | AI | 여행 서비스/항공 유통이 주 도메인이고 AI 기술이 핵심 차별점으로 등장 | 현재 단일 domain_category는 여행 |
 
 ## config 반영 후보 요약
 
@@ -71,26 +111,44 @@
 
 | representative | alias_candidate | status | note |
 |---|---|---|---|
+| IT | Commerce Intelligence Solution | confirm | 바티에이아이 산업 분류 누락 보강 후보 |
+| 게임 | 글로벌 소셜 콘텐츠 & 게임 개발사 | confirm | 슈퍼진 산업 분류 누락 보강 후보 |
+| 의료 | 디지털 헬스케어 플랫폼 | confirm | 세나 산업 분류 누락 보강 후보 |
 
 ### domain-categories.json
 
 | representative | alias_candidate | status | note |
 |---|---|---|---|
+| SaaS | B2B SaaS | confirm | 바티에이아이 preferred 문맥 |
+| 이커머스 | 정산 | confirm | 커머스 정산/재고 데이터 솔루션 문맥 |
+| 헬스케어 | 개인건강관리 서비스 | confirm | 세나 클레 서비스 문맥 |
+| 게임 | 글로벌 게임 | confirm | 슈퍼진 게임 도메인 누락 보강 후보 |
 
 ### position-categories.json
 
 | representative | alias_candidate | status | note |
 |---|---|---|---|
+| 서비스 기획 | 서비스 기획 주니어 | confirm | 세나 confirmed review 이력 |
+| 서비스 기획 | 웹서비스 기획자 | confirm | 누아 confirmed review 이력 기반, 대표값 재검토 필요 |
+| 서비스 기획 | 글로벌 서비스 기획/운영 | confirm | 슈퍼진 unconfirmed position 후보 |
+| 서비스 기획 | 커머스 데이터 솔루션 - 기술 기획자 | confirm | 바티에이아이 unconfirmed position 후보 |
 
 ### skill-dictionary.json
 
 | representative | alias_candidate | status | note |
 |---|---|---|---|
+| EMR | EMR | confirm | 의료/병원정보시스템 관련 명시적 시스템 |
+| HIS | HIS | confirm | 의료/병원정보시스템 관련 명시적 시스템 |
+| OCS | OCS | confirm | 의료/병원정보시스템 관련 명시적 시스템 |
+| AWS | AWS | confirm | 바티에이아이 기술 스택 |
+| RAG | RAG | confirm | 바티에이아이 AI/LLM 기술 스택 |
 
 ### competency-dictionary.json
 
 | representative | alias_candidate | status | note |
 |---|---|---|---|
+| 협업 | 원활한 커뮤니케이션 | confirm | 세나 confirmed review 이력 |
+| 요구사항 분석 | 요구사항 수집 분석 | confirm | 누아 confirmed review 이력 |
 
 ## 다음 작업 후보
 

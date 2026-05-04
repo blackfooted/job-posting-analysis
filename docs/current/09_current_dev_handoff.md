@@ -108,6 +108,7 @@
 - config 대표값/alias inventory가 현재 정책과 맞는지 최종 확인
 - 실데이터 재분석 결과에서 산업/도메인/직무 추출 품질 확인
 - 실데이터 classification 품질 검토 문서: `docs/current/classification_real_data_review.md`
+- 현재 로컬 DB 기준 1차 검토 후보가 `classification_real_data_review.md`에 누적됨
 - config JSON 직접 수정은 아직 하지 않음
 
 ## AI Recommendation 검증 방법
@@ -174,9 +175,10 @@ http://127.0.0.1:8000/docs
    - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
 
 5. 실데이터 classification 품질 검토와 config 반영
-   - 실제 공고 분석 결과를 `docs/current/classification_real_data_review.md`에 누적한다.
-   - confirm 후보를 검토한 뒤 별도 config 반영 작업을 진행한다.
+   - `docs/current/classification_real_data_review.md`의 confirm 후보를 검토한 뒤 별도 config 반영 작업을 진행한다.
+   - hold/question 후보는 추가 공고 사례를 보고 대표값 또는 정책을 결정한다.
    - 반복 오추출은 classification phase 3 후보로 기록한다.
+   - config 반영 후 기존 공고는 재분석해 누락/오추출 개선 여부를 확인한다.
 
 주의:
 
