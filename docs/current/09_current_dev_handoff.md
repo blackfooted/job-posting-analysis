@@ -200,6 +200,11 @@
 - 이번 단계에서 `config/industry-categories.json`, `config/domain-categories.json`, `config/position-categories.json`, `config/synonym-map.json`은 수정하지 않았다.
 - Pandas는 Python alias로 둘지 독립 skill로 둘지 정책 결정이 필요해 이번 단계에서 보류했다.
 - config 변경 후 기존 공고는 재분석이 필요하다.
+- 사용자가 직접 수행한 phase 2 safe config 재분석 검증 결과:
+  - `posting_id=16` 슈퍼진 / 글로벌 서비스 기획/운영: partial
+  - `posting_id=17` 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자: pass
+- 슈퍼진은 재분석 후 `서비스 운영` competency가 추가 추출되고 `unconfirmed_count`가 27에서 26으로 감소했으나, industry/domain null과 FAQ/VOC/운영 가이드 등 누락 후보가 남아 partial 유지.
+- 바티에이아이는 phase 2 safe config 반영 후 사용자 직접 검증 기준 pass로 기록되었다.
 
 다음 작업 후보:
 
@@ -274,7 +279,7 @@ http://127.0.0.1:8000/docs
 5. 실데이터 classification 품질 검토와 config 반영
    - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
    - phase 2 안전 후보 일부는 `config/skill-dictionary.json`과 `config/competency-dictionary.json`에 반영되었다.
-   - phase 2 안전 후보 config 변경 후 기존 공고는 재분석이 필요하다.
+   - phase 2 안전 후보 config 변경 후 사용자 직접 재분석 검증이 일부 완료되었다. `posting_id=16` 슈퍼진은 partial, `posting_id=17` 바티에이아이는 pass로 기록되었다.
    - phase 2 진입 전 교차 검토 결과는 이 문서의 `Phase 2 진입 전 교차 검토 결과`와 `docs/current/classification_real_data_review.md`를 기준으로 확인한다.
    - phase 2 config 후보는 `docs/current/classification_real_data_review.md`의 `Phase 2 후보 분류` 기준에 따라 안전 반영 후보 / 보류 후보 / 제외 또는 phase 3 코드 개선 후보로 분리되어 있다.
    - 안전 반영 후보 중 `add_representative` 또는 `add_alias`만 다음 config 반영 대상으로 검토한다.
