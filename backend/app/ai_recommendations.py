@@ -42,7 +42,7 @@ AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
 DEFAULT_AI_RECOMMENDATION_MODE = "mock"
-DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 AI_RECOMMENDATION_MODES = {"mock", "openai"}
 
 
@@ -274,15 +274,7 @@ def _get_openai_recommendation(
         response_format={"type": "json_object"},
     )
 
-    content = _extract_openai_message_content(response)
-    try:
-        parsed = json.loads(content)
-    except (TypeError, json.JSONDecodeError) as exc:
-        raise AIRecommendationParseError() from exc
-
-    if not isinstance(parsed, dict):
-        raise AIRecommendationParseError()
-    return parsed
+    return _parse_openai_json_content(_extract_openai_message_content(response))
 
 
 def _extract_openai_message_content(response: Any) -> str:
@@ -294,6 +286,90 @@ def _extract_openai_message_content(response: Any) -> str:
     if not isinstance(content, str) or not content.strip():
         raise AIRecommendationParseError()
     return content
+
+
+def _parse_openai_json_content(content: str) -> dict[str, Any]:
+    cleaned_content = _strip_code_fence(content.strip())
+    parse_candidates = [
+        cleaned_content,
+        _extract_first_json_object(cleaned_content),
+    ]
+
+    for candidate in parse_candidates:
+        if candidate is None:
+            continue
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return _ensure_recommendation_wrapper(parsed)
+
+    raise AIRecommendationParseError()
+
+
+def _ensure_recommendation_wrapper(parsed: dict[str, Any]) -> dict[str, Any]:
+    recommendation = parsed.get("recommendation")
+    if isinstance(recommendation, dict):
+        return parsed
+
+    required_fields = (
+        "industry_category",
+        "primary_domain_category",
+        "position_category",
+    )
+    if all(isinstance(parsed.get(field), dict) for field in required_fields):
+        return {"recommendation": parsed}
+
+    raise AIRecommendationParseError()
+
+
+def _strip_code_fence(content: str) -> str:
+    if not content.startswith("```"):
+        return content
+
+    lines = content.splitlines()
+    if len(lines) < 2:
+        return content
+
+    first_line = lines[0].strip().lower()
+    last_line = lines[-1].strip()
+    if first_line in {"```", "```json"} and last_line == "```":
+        return "\n".join(lines[1:-1]).strip()
+
+    return content
+
+
+def _extract_first_json_object(content: str) -> str | None:
+    start = content.find("{")
+    if start == -1:
+        return None
+
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(content)):
+        char = content[index]
+
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return content[start : index + 1]
+
+    return None
 
 
 def _normalize_recommendation_response(raw_response: dict[str, Any]) -> dict[str, Any]:

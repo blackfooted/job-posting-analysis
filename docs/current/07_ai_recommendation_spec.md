@@ -172,7 +172,7 @@ mock
 - `AI_RECOMMENDATION_MODE=openai`이면 실제 OpenAI API를 호출한다.
 - `AI_RECOMMENDATION_MODE` 값이 `mock`/`openai` 외 값이면 `AI_CONFIG_INVALID` 오류를 반환한다.
 - `openai` mode에서 `OPENAI_API_KEY`가 없으면 `AI_CONFIG_MISSING` 오류를 반환한다.
-- `openai` mode에서 `OPENAI_MODEL`이 없으면 `gpt-4o-mini`를 기본값으로 사용한다.
+- `openai` mode에서 `OPENAI_MODEL`이 없으면 `gpt-5.4-nano`를 기본값으로 사용한다.
 
 ## OpenAI 설정 정책
 
@@ -185,7 +185,7 @@ OpenAI
 기본 model:
 
 ```text
-gpt-4o-mini
+gpt-5.4-nano
 ```
 
 환경변수:
@@ -202,7 +202,7 @@ gpt-4o-mini
 기본값:
 
 - `AI_RECOMMENDATION_MODE=mock`
-- `OPENAI_MODEL=gpt-4o-mini`
+- `OPENAI_MODEL=gpt-5.4-nano`
 
 주의:
 
@@ -265,7 +265,13 @@ Phase AI-1B에서도 현재 응답 구조를 유지한다.
 
 ## AI 응답 JSON 검증 정책
 
-OpenAI 응답은 그대로 신뢰하지 않고 normalize/검증한다.
+OpenAI 응답은 그대로 신뢰하지 않고 parse 안정화와 normalize/검증을 수행한다.
+
+파싱 보정:
+
+- 응답이 ```json code fence로 감싸져 있으면 fence를 제거한 뒤 JSON parse를 시도한다.
+- 응답 앞뒤에 설명 문장이 붙어 있으면 첫 번째 JSON object를 추출해 JSON parse를 시도한다.
+- 최상위 `recommendation` 키가 없더라도 `industry_category`, `primary_domain_category`, `position_category` 세 필드가 모두 object이면 `recommendation`으로 감싸서 보정한다.
 
 최소 필수 구조:
 
