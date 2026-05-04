@@ -21,6 +21,7 @@
 - backend mode 분기 구현 완료
 - `AI_RECOMMENDATION_MODE=mock` 기본 동작 유지
 - `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI 호출 경로 추가
+- OpenAI 호출은 Responses API와 `text.format` json_schema Structured Outputs를 사용
 - OpenAI 응답 JSON parse 및 normalize/검증 경로 추가
 
 구현 범위:
@@ -265,7 +266,15 @@ Phase AI-1B에서도 현재 응답 구조를 유지한다.
 
 ## AI 응답 JSON 검증 정책
 
-OpenAI 응답은 그대로 신뢰하지 않고 parse 안정화와 normalize/검증을 수행한다.
+OpenAI 응답은 Responses API + `text.format` json_schema Structured Outputs로 recommendation 구조를 강제한다. 그래도 응답은 그대로 신뢰하지 않고 parse 안정화와 normalize/검증을 수행한다.
+
+Structured Outputs:
+
+- schema name은 `ai_recommendation_response`다.
+- 최상위 object는 `recommendation`을 필수로 요구한다.
+- `recommendation` 안에는 `industry_category`, `primary_domain_category`, `position_category`, `skills`, `competencies`, `review_item_candidates`를 필수로 요구한다.
+- `domain_categories`는 schema에 포함하지 않는다.
+- 가능한 범위에서 `additionalProperties=false`, `strict=true`를 사용한다.
 
 파싱 보정:
 

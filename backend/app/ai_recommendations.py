@@ -44,6 +44,87 @@ OPENAI_MODEL_ENV = "OPENAI_MODEL"
 DEFAULT_AI_RECOMMENDATION_MODE = "mock"
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 AI_RECOMMENDATION_MODES = {"mock", "openai"}
+AI_RECOMMENDATION_RESPONSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["recommendation"],
+    "properties": {
+        "recommendation": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "industry_category",
+                "primary_domain_category",
+                "position_category",
+                "skills",
+                "competencies",
+                "review_item_candidates",
+            ],
+            "properties": {
+                "industry_category": {"$ref": "#/$defs/category_item"},
+                "primary_domain_category": {"$ref": "#/$defs/category_item"},
+                "position_category": {"$ref": "#/$defs/category_item"},
+                "skills": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/category_item"},
+                },
+                "competencies": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/category_item"},
+                },
+                "review_item_candidates": {
+                    "type": "array",
+                    "items": {"$ref": "#/$defs/review_item_candidate"},
+                },
+            },
+        }
+    },
+    "$defs": {
+        "category_item": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["value", "confidence", "reason"],
+            "properties": {
+                "value": {"type": ["string", "null"]},
+                "confidence": {
+                    "type": "string",
+                    "enum": ["high", "medium", "low"],
+                },
+                "reason": {"type": "string"},
+            },
+        },
+        "review_item_candidate": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "field_type",
+                "raw_value",
+                "suggested_value",
+                "confidence",
+                "reason",
+            ],
+            "properties": {
+                "field_type": {
+                    "type": "string",
+                    "enum": [
+                        "industry",
+                        "domain",
+                        "position",
+                        "skill",
+                        "competency",
+                    ],
+                },
+                "raw_value": {"type": ["string", "null"]},
+                "suggested_value": {"type": ["string", "null"]},
+                "confidence": {
+                    "type": "string",
+                    "enum": ["high", "medium", "low"],
+                },
+                "reason": {"type": "string"},
+            },
+        },
+    },
+}
 
 
 class AIRecommendationParseError(Exception):
@@ -256,9 +337,9 @@ def _get_openai_recommendation(
         raise RuntimeError("OpenAI SDK is not installed.") from exc
 
     client = OpenAI(api_key=api_key)
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model=model,
-        messages=[
+        input=[
             {
                 "role": "system",
                 "content": (
@@ -271,21 +352,48 @@ def _get_openai_recommendation(
                 "content": _build_ai_prompt(posting),
             },
         ],
-        response_format={"type": "json_object"},
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "ai_recommendation_response",
+                "schema": AI_RECOMMENDATION_RESPONSE_SCHEMA,
+                "strict": True,
+            },
+        },
     )
 
-    return _parse_openai_json_content(_extract_openai_message_content(response))
+    return _parse_openai_json_content(_extract_openai_response_text(response))
 
 
-def _extract_openai_message_content(response: Any) -> str:
-    try:
-        content = response.choices[0].message.content
-    except (AttributeError, IndexError, TypeError) as exc:
-        raise AIRecommendationParseError() from exc
+def _extract_openai_response_text(response: Any) -> str:
+    output_text = getattr(response, "output_text", None)
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text
 
-    if not isinstance(content, str) or not content.strip():
+    output = getattr(response, "output", None)
+    if not isinstance(output, list):
+        raise AIRecommendationParseError()
+
+    text_parts = []
+    for output_item in output:
+        content_items = _read_output_attribute(output_item, "content")
+        if not isinstance(content_items, list):
+            continue
+        for content_item in content_items:
+            text = _read_output_attribute(content_item, "text")
+            if isinstance(text, str):
+                text_parts.append(text)
+
+    content = "".join(text_parts).strip()
+    if not content:
         raise AIRecommendationParseError()
     return content
+
+
+def _read_output_attribute(item: Any, key: str) -> Any:
+    if isinstance(item, dict):
+        return item.get(key)
+    return getattr(item, key, None)
 
 
 def _parse_openai_json_content(content: str) -> dict[str, Any]:

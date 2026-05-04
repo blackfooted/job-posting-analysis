@@ -90,6 +90,7 @@ Phase AI-1B backend 구현 기준:
 - `AI_RECOMMENDATION_MODE` 기반 `mock`/`openai` mode 분기 추가 완료
 - 기본 mode는 `mock`
 - `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API 호출
+- OpenAI mode는 Responses API + `text.format` json_schema Structured Outputs로 recommendation 구조를 강제
 - openai mode에서만 `OPENAI_API_KEY` 필요
 - `OPENAI_MODEL` 기본값은 `gpt-5.4-nano`
 - OpenAI 응답이 code fence로 감싸지거나 앞뒤 설명 문장을 포함해도 JSON object를 추출해 parse하도록 보강됨
@@ -286,8 +287,9 @@ http://127.0.0.1:8000/docs
    - `AI_RECOMMENDATION_MODE=mock`에서 기존 Mock 응답이 유지되는지 확인한다.
    - `AI_RECOMMENDATION_MODE`가 허용값 외 값이면 `AI_CONFIG_INVALID`가 반환되는지 확인한다.
    - `AI_RECOMMENDATION_MODE=openai`이고 `OPENAI_API_KEY`가 없으면 `AI_CONFIG_MISSING`이 반환되는지 확인한다.
-   - `OPENAI_API_KEY` 설정 후 `AI_RECOMMENDATION_MODE=openai` 실제 호출을 검증한다.
+   - `OPENAI_API_KEY` 설정 후 `AI_RECOMMENDATION_MODE=openai` 실제 호출을 사용자 로컬에서 재검증한다.
    - `OPENAI_MODEL` 기본값은 `gpt-5.4-nano`로 유지한다.
+   - OpenAI 응답 구조는 Responses API + Structured Outputs schema로 강제한다.
    - endpoint `GET /api/ai-recommendations/postings/{posting_id}`와 응답 구조는 유지한다.
    - DB 저장 없는 조회형 API 원칙을 유지한다.
    - review_items 반영, analysis_results 갱신, config 수정, domain_categories 추가, dictionary_candidates 연동은 제외한다.
