@@ -116,6 +116,58 @@
 - 현재 로컬 DB 기준 1차 검토 후보가 `classification_real_data_review.md`에 누적됨
 - config 안전 반영 phase 1 결과와 재분석 검증 결과가 `classification_real_data_review.md`에 기록됨
 
+## Phase 2 진입 전 교차 검토 결과
+
+### 누아 / 웹서비스 기획자
+
+- phase 1 반영 대상 기준 pass 판단은 유지한다.
+- 여행 산업/도메인, 서비스 기획, 요구사항 분석, 정책 수립은 원문과 부합한다.
+- `IA`는 이번 공고에서 직무 수행 맥락 근거가 약해 오추출 가능성이 있다.
+- `IA`는 Information Architecture로 일반 서비스기획 skill일 수 있으므로 config에서 삭제할 대상이 아니라 추출 맥락 조건 강화 대상이다.
+- `IATA`는 국제항공운송협회(International Air Transport Association) 약어이며, 누아 원문에서는 회사 소개/인증 기관명 맥락으로 등장한다.
+- `IATA`는 채용 직무 수행 skill이나 competency가 아니므로 skill/config 반영 제외 후보로 본다.
+- phase 3에서는 `IATA` 같은 기관명/인증명 약어가 skill로 추출되지 않도록 대문자 약어 추출 필터링을 검토한다.
+- `IA` 오추출 원인은 `IATA`에서 `IA`가 잘렸을 가능성과 `IATA`와 무관한 대문자 약어 또는 IA 패턴 별도 매칭 가능성을 모두 열어 두고 확인한다.
+
+### 슈퍼진 / 글로벌 서비스 기획/운영
+
+- partial 판단은 유지한다.
+- `position_category=서비스 기획`, `UX/UI`, `기능 정의`는 원문과 부합한다.
+- 와이어프레임, FAQ, VOC, 정책 수립, 운영 가이드, 서비스 운영, 프로젝트 리딩/런칭 주도, 협업/커뮤니케이션이 누락 후보로 남아 있다.
+- 원문에는 서비스 품질 유지, 서비스 개발 및 런칭 주도 맥락도 명확하므로 competency/skill 후보로 후속 분류가 필요하다.
+- 산업/도메인은 원문상 게임/콘텐츠 성격이 명확하지만 null로 남아 있으므로 게임/콘텐츠 industry/domain alias 보강이 필요하다.
+
+### 세나 / 서비스 기획 주니어
+
+- phase 1 반영 대상 기준 pass 판단은 유지한다.
+- EMR/HIS/OCS, 서비스 기획, 협업은 정상 반영되었다.
+- 재분석 결과 `domain_category=헬스케어`, `position_category=서비스 기획`, `extracted_skills=UX/UI, 스토리보드, 와이어프레임, OCS, EMR, HIS`, `extracted_competencies=협업`이 확인되었다.
+- `industry_category`는 null로 남아 의료 industry alias 검토가 필요하다.
+- 원문에 `클라우드 SaaS EMR`이 명시되어 있으므로 SaaS는 추가 domain 후보로 검토한다.
+- `개인건강관리 서비스`는 헬스케어 domain alias 후보로 검토한다.
+- `네이버`는 파트너사 고유명사, `오름차트`와 `클레`는 제품 고유명사이므로 config 반영 제외 후보로 둔다.
+
+### 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자
+
+- phase 1 반영 대상 기준 pass 판단은 유지한다.
+- AWS/RAG는 정상 반영되었고, Python, SQL, ERD, AI툴활용 등 skill 추출 품질도 개선되었다.
+- 재분석 결과 `extracted_skills`에 Python, LLM, SQL, API, AI툴활용, ChatGPT, ERD, HTML/CSS, AWS, RAG, Jira, Slack이 포함되었다.
+- `extracted_competencies`에는 기능 정의, 비즈니스 분석이 포함되었고, `unconfirmed_count`는 62에서 53으로 감소했다.
+- industry/domain/position은 null로 남아 후속 정책 검토가 필요하다.
+- ERP, WMS, Pandas, 프롬프트 엔지니어링은 skill 후보로 둔다.
+- `정산`은 이커머스 domain alias 후보이나 문맥 의존성과 오탐 위험이 있어 3순위 보류 항목으로 둔다.
+- `Bati CIS`는 제품 고유명사, `COSRX`와 `파마리서치`는 고객사 고유명사이므로 config 반영 제외 후보로 둔다.
+
+### Phase 2 후보 분리 기준
+
+- 안전 후보: 원문 직무 수행 맥락이 명확하고 기존 대표값과 충돌하지 않는 skill/competency/domain alias.
+- 보류 후보: 특정 공고에서는 타당하지만 단독 alias로 반영하면 오탐 위험이 있는 항목. 예: `정산 → 이커머스`.
+- 제외 후보: 파트너사, 고객사, 제품명, 기관명, 인증명처럼 classification config에 넣으면 안 되는 고유명사.
+- IA 오추출 여부와 추출 맥락 조건 강화는 phase 3 classification rule 후보로 검토한다.
+- IATA 같은 기관명/인증명 약어는 skill 후보에서 제외하는 필터링을 검토한다.
+- 슈퍼진 누락 항목은 config 후보와 classification phase 3 후보로 나누어 분류한다.
+- industry/domain alias는 오탐 위험을 검토한 뒤 별도 phase로 진행한다.
+
 ## AI Recommendation 검증 방법
 
 PowerShell 기준:
@@ -181,6 +233,12 @@ http://127.0.0.1:8000/docs
 
 5. 실데이터 classification 품질 검토와 config 반영
    - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
+   - phase 2 진입 전 교차 검토 결과는 이 문서의 `Phase 2 진입 전 교차 검토 결과`와 `docs/current/classification_real_data_review.md`를 기준으로 확인한다.
+   - phase 2 config 후보는 안전 후보 / 보류 후보 / 제외 후보로 분리한다.
+   - IA 오추출 여부와 추출 맥락 조건 강화를 검토한다.
+   - IATA 같은 기관명/인증명 약어는 skill 후보에서 제외하는 필터링을 검토한다.
+   - 슈퍼진 누락 항목은 classification phase 3 후보 또는 config 후보로 분류한다.
+   - industry/domain alias는 오탐 위험을 검토한 뒤 별도 phase로 진행한다.
    - 아직 재분석하지 않은 기존 공고는 필요 시 같은 기준으로 `analysis_results`와 `review_items` 개선 여부를 확인한다.
    - 보류한 industry/domain alias 정책을 검토한다.
    - hold/question 후보는 추가 공고 사례를 보고 대표값 또는 정책을 결정한다.

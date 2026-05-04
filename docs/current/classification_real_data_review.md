@@ -38,9 +38,9 @@
 | 7 | 세나 / 서비스 기획 주니어 | skill | OCS | OCS | confirm | 병원정보시스템 관련 명시적 시스템/약어 | skill-dictionary.json | EMR/HIS와 함께 검토 |
 | 8 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | AWS | AWS | confirm | 명시적 클라우드 기술 스택 | skill-dictionary.json | 하위 AWS 서비스와 대표값 분리 여부 검토 |
 | 9 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | RAG | RAG | confirm | LLM/AI 시스템 관련 명시적 기술 | skill-dictionary.json | AI/LLM 기술 alias 후보 |
-| 10 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | domain | 정산 | 이커머스 | confirm | 이커머스 정산/재고 솔루션 맥락의 도메인 표현 | domain-categories.json | 단독 정산을 이커머스 alias로 둘지 검토 |
+| 10 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | domain | 정산 | 이커머스 | hold | 이커머스 정산/재고 솔루션 맥락에서는 후보가 될 수 있으나 단독 alias 반영 시 오탐 위험이 있음 | domain-categories.json | 문맥 의존성이 있어 3순위 보류 |
 | 11 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | skill | Cursor | AI툴활용 | confirm | 명시적 AI 코딩 도구 | skill-dictionary.json | 현재 config에 alias가 있어 재분석 후보일 수 있음 |
-| 12 | 누아 / 웹서비스 기획자 | skill | IATA | IATA | hold | 항공 유통 표준/기관 성격이 있어 skill로 둘지 애매함 | skill-dictionary.json | 여행/항공 도메인 전용 후보 |
+| 12 | 누아 / 웹서비스 기획자 | skill | IATA |  | remove | 국제항공운송협회(International Air Transport Association) 약어이며 회사 소개/인증 기관명 맥락으로 등장함 |  | skill/config 반영 제외 후보. phase 3에서 대문자 약어 자동 추출 시 기관명/인증명 맥락 필터링 후보 |
 | 13 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | competency | 데이터 흐름 | 시스템 설계 | hold | 데이터 흐름 이해/설계 역량으로 보이나 대표값 확정 필요 | competency-dictionary.json | 데이터 파이프라인/시스템 설계 중 선택 필요 |
 | 14 | 슈퍼진 / 글로벌 서비스 기획/운영 | competency | 서비스 운영 | 프로세스 관리 | hold | 의미는 있으나 서비스 운영을 별도 역량으로 둘지 정책 필요 | competency-dictionary.json | 운영/프로세스 관리 대표값 검토 |
 | 15 | 슈퍼진 / 글로벌 서비스 기획/운영 | domain | 상품 |  | remove | 게임/서비스 공고에서 상품 단어만 도메인으로 분리된 과추출 |  | classification phase 3 후보 |
@@ -82,6 +82,31 @@
 | 6 | 세나 / 서비스 기획 주니어 | 헬스케어 | domain | 오름차트, 클레, 건강관리, 의료 생태계 | analysis_results.domain_category가 null |
 | 7 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | Python | skill | tools 필드에 python, preferred에 Python/Pandas 경험 | 현재 review_items에는 unconfirmed로 남아 있어 재분석 필요 |
 | 8 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | SQL | skill | tools 필드에 sql, requirements에 SQL 활용 능력 | 현재 review_items에는 unconfirmed로 남아 있어 재분석 필요 |
+| 9 | 누아 / 웹서비스 기획자 | 항공권 유통 / 예약 플랫폼 / 여행 서비스 기획 | domain | 여행 산업, 항공 유통, 예약/발권 서비스 기획 맥락 | phase 2 domain alias 후보. IATA는 기관명/인증명으로 별도 제외 |
+| 10 | 누아 / 웹서비스 기획자 | IA 추출 맥락 조건 강화 | skill | IA는 Information Architecture로 서비스기획 skill일 수 있으나, 이번 공고에서는 직무 수행 맥락 근거가 약함 | IA 자체 삭제가 아니라 추출 문맥 조건 강화 필요. IATA에서 IA가 잘렸는지 또는 별도 대문자 약어/IA 패턴 매칭인지 확인 필요 |
+| 11 | 슈퍼진 / 글로벌 서비스 기획/운영 | 와이어프레임 | skill | 원문상 와이어프레임 작성/기획 산출물 맥락 | phase 2 또는 phase 3 후보 |
+| 12 | 슈퍼진 / 글로벌 서비스 기획/운영 | FAQ | skill | FAQ 작성/운영 문맥 | phase 2 또는 phase 3 후보 |
+| 13 | 슈퍼진 / 글로벌 서비스 기획/운영 | VOC | skill | 사용자 의견/VOC 관리 문맥 | phase 2 또는 phase 3 후보 |
+| 14 | 슈퍼진 / 글로벌 서비스 기획/운영 | 정책 수립 | competency | 서비스 정책 수립 문맥 | phase 2 또는 phase 3 후보 |
+| 15 | 슈퍼진 / 글로벌 서비스 기획/운영 | 운영 가이드 | competency | 운영 가이드 작성/정리 문맥 | phase 2 또는 phase 3 후보 |
+| 16 | 슈퍼진 / 글로벌 서비스 기획/운영 | 서비스 운영 | competency | 서비스 운영 및 품질 유지 문맥 | phase 2 또는 phase 3 후보 |
+| 17 | 슈퍼진 / 글로벌 서비스 기획/운영 | 프로젝트 리딩 / 서비스 개발·런칭 주도 | competency | 서비스 개발 및 런칭 주도 문맥 | phase 2 또는 phase 3 후보 |
+| 18 | 슈퍼진 / 글로벌 서비스 기획/운영 | 협업/커뮤니케이션 | competency | 협업 및 커뮤니케이션 역량 문맥 | phase 2 또는 phase 3 후보 |
+| 19 | 슈퍼진 / 글로벌 서비스 기획/운영 | 게임 / 콘텐츠 | industry/domain | 글로벌 소셜 콘텐츠와 게임 개발사 성격이 명확함 | industry/domain alias 보강 후보 |
+| 20 | 세나 / 서비스 기획 주니어 | SaaS | domain | 클라우드 SaaS EMR 명시 | 추가 domain 후보 |
+| 21 | 세나 / 서비스 기획 주니어 | 개인건강관리 서비스 | domain | 개인건강관리 서비스 문맥 | 헬스케어 domain alias 후보 |
+| 22 | 세나 / 서비스 기획 주니어 | 요구사항 분석 | competency | 서비스 요구사항 분석 문맥 | phase 2 또는 phase 3 후보 |
+| 23 | 세나 / 서비스 기획 주니어 | UX 설계 | competency | UX/UI, 화면 설계, 사용자 경험 개선 문맥 | phase 2 또는 phase 3 후보 |
+| 24 | 세나 / 서비스 기획 주니어 | 서비스 개선 | competency | 서비스 개선 업무 문맥 | phase 2 또는 phase 3 후보 |
+| 25 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | ERP | skill | 커머스/운영 시스템 문맥 | phase 2 skill 후보 |
+| 26 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | WMS | skill | 물류/재고 시스템 문맥 | phase 2 skill 후보 |
+| 27 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | Pandas | skill | Python/Pandas 경험 문맥 | phase 2 skill 후보 |
+| 28 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 프롬프트 엔지니어링 | skill | LLM/AI 도구 활용 문맥 | phase 2 skill 후보 |
+| 29 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 시스템 설계 | competency | 데이터 흐름/솔루션 설계 문맥 | phase 2 또는 phase 3 후보 |
+| 30 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 문서화 | competency | 기술 기획 문서 작성 문맥 | phase 2 또는 phase 3 후보 |
+| 31 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 데이터 분석 | competency | 커머스 데이터 분석 문맥 | phase 2 또는 phase 3 후보 |
+| 32 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 요구사항 분석 | competency | 고객/비즈니스 요구사항 분석 문맥 | phase 2 또는 phase 3 후보 |
+| 33 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 이커머스 / SaaS | domain | 커머스 데이터 솔루션, B2B SaaS 문맥 | domain alias 후보 |
 
 ### 오추출 후보
 
@@ -95,6 +120,14 @@
 | 6 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | ETC | skill | 기타 항목 라벨로 skill 가치 없음 | config 반영 금지 |
 | 7 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | DATA | skill | DATA-Stars 선정 이력 일부로 추출된 약어 | config 반영 금지 |
 | 8 | 누아 / 웹서비스 기획자 | 정보통신 기획 | competency | 과학기술정보통신부 문맥에서 잘린 표현 | classification phase 3 개선 후보 |
+| 9 | 누아 / 웹서비스 기획자 | IA | skill | 이번 공고에서는 직무 수행 맥락 근거가 약해 오추출 가능성이 높음. 단, IA는 Information Architecture로 일반 서비스기획 skill일 수 있음 | config에서 삭제하지 말고 추출 맥락 조건 강화 검토. IATA에서 IA가 잘렸는지 또는 별도 대문자 약어/IA 패턴 매칭인지 확인 필요 |
+| 10 | 누아 / 웹서비스 기획자 | IATA | skill | 국제항공운송협회 약어이며 기관명/인증명 맥락으로 등장 | skill/config 반영 제외 후보. 기관명/인증명 필터링 후보 |
+| 11 | 세나 / 서비스 기획 주니어 | 네이버 | company/proper_noun | 파트너사 고유명사 | config 반영 제외 후보 |
+| 12 | 세나 / 서비스 기획 주니어 | 오름차트 | product/proper_noun | 제품 고유명사 | config 반영 제외 후보 |
+| 13 | 세나 / 서비스 기획 주니어 | 클레 | product/proper_noun | 제품 고유명사 | config 반영 제외 후보 |
+| 14 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | Bati CIS | product/proper_noun | 제품 고유명사 | config 반영 제외 후보 |
+| 15 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | COSRX | customer/proper_noun | 고객사 고유명사 | config 반영 제외 후보 |
+| 16 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 | 파마리서치 | customer/proper_noun | 고객사 고유명사 | config 반영 제외 후보 |
 
 ### 복수 도메인 후보
 
@@ -120,7 +153,7 @@
 | representative | alias_candidate | status | note |
 |---|---|---|---|
 | SaaS | B2B SaaS | confirm | 바티에이아이 preferred 문맥 |
-| 이커머스 | 정산 | confirm | 커머스 정산/재고 데이터 솔루션 문맥 |
+| 이커머스 | 정산 | hold | 커머스 정산/재고 데이터 솔루션 문맥에서는 후보이나 문맥 의존성이 있어 3순위 보류 |
 | 헬스케어 | 개인건강관리 서비스 | confirm | 세나 클레 서비스 문맥 |
 | 게임 | 글로벌 게임 | confirm | 슈퍼진 게임 도메인 누락 보강 후보 |
 
@@ -156,6 +189,34 @@
 - hold 상태 후보 추가 검토
 - remove 상태 후보가 반복되면 removed 처리 또는 classification phase 3 개선 후보로 기록
 - 복수 도메인 구조 도입 전까지 primary_domain 기준을 별도 관리
+- phase 2 config 후보는 안전 후보 / 보류 후보 / 제외 후보로 구분해서 검토
+
+### phase 2 검토 후보
+
+| category | candidate | note |
+|---|---|---|
+| skill | ERP | 바티에이아이 원문 기준 skill 후보 |
+| skill | WMS | 바티에이아이 원문 기준 skill 후보 |
+| skill | Pandas | 바티에이아이 원문 기준 skill 후보 |
+| skill | 프롬프트 엔지니어링 | 바티에이아이 원문 기준 skill 후보 |
+| domain | SaaS | 세나/바티에이아이 추가 domain 후보 |
+| domain | 개인건강관리 서비스 → 헬스케어 | 세나 domain alias 후보 |
+| industry/domain | 게임/콘텐츠 | 슈퍼진 industry/domain alias 후보 |
+| skill/competency | 와이어프레임, FAQ, VOC, 정책 수립, 운영 가이드 | 슈퍼진 누락 후보 |
+| classification rule | IA 추출 맥락 조건 강화 | IA는 일반 서비스기획 skill일 수 있으나 누아 공고에서는 오추출 가능성이 높음 |
+| classification rule | IATA 기관명/인증명 필터링 | IATA는 국제항공운송협회 약어로 skill 반영 제외 후보 |
+
+### 보류 또는 제외 후보
+
+| candidate | decision | note |
+|---|---|---|
+| 정산 → 이커머스 | 보류 | 문맥 의존성이 있어 3순위 보류. 단독 alias 반영 시 오탐 위험 검토 필요 |
+| 네이버 | 제외 | 파트너사 고유명사 |
+| 오름차트, 클레 | 제외 | 제품 고유명사 |
+| Bati CIS | 제외 | 제품 고유명사 |
+| COSRX, 파마리서치 | 제외 | 고객사 고유명사 |
+| IATA | 제외 | 기관명/인증명으로 skill 반영 제외 |
+| IA | 맥락 조건 강화 | 누아 공고에서는 오추출 가능성이 있으나 일반 skill로는 유효할 수 있어 삭제 대상 아님 |
 
 ## Config 반영 이력
 
@@ -176,5 +237,7 @@
 
 | no | posting | reanalyzed | expected_change | actual_result | status | note |
 |---:|---|---|---|---|---|---|
-| 1 | 세나 / 서비스 기획 주니어 (`posting_id=14`) | yes | phase 1 반영 대상 기준: `position_category=서비스 기획`, `EMR/HIS/OCS` skill 추출, `협업` competency 추출, 관련 unconfirmed 후보 감소 | 재분석 후 `domain_category=헬스케어`, `position_category=서비스 기획`, `extracted_skills=UX/UI, 스토리보드, 와이어프레임, OCS, EMR, HIS`, `extracted_competencies=협업`, `unconfirmed_count=22` 확인 | pass | config alias phase 1 반영 대상 기준 pass. `industry_category`는 null로 남아 phase 1에서 보류한 industry 정책 후속 검토 필요 |
-| 2 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 (`posting_id=17`) | yes | phase 1 반영 대상 기준: `AWS/RAG` skill 추출 | 사용자 직접 재분석 검증에서 config alias phase 1 반영 대상 기준 pass로 확인 | pass | industry/domain 및 `position_category`는 이번 phase 1 보류 영역이므로 후속 정책 검토 대상 |
+| 1 | 누아 / 웹서비스 기획자 | yes | phase 1 반영 대상 기준: `position_category=서비스 기획`, 요구사항 분석 등 기존 안전 후보 유지 | 여행 산업/도메인, 서비스 기획, 요구사항 분석, 정책 수립은 원문과 부합. `extracted_skills=["IA"]` 확인 | pass | phase 1 반영 대상 기준 pass. 다만 `IA`는 이번 공고에서 직무 맥락 근거가 약해 오추출 가능성이 높음. `IATA`는 국제항공운송협회 약어로 회사 소개/인증 기관명 맥락이므로 config 반영 제외 후보. IA는 일반적으로 서비스기획 skill일 수 있으므로 제거가 아니라 추출 맥락 조건 강화 필요. `IATA`에서 `IA`가 잘렸는지 또는 별도 대문자 약어/IA 패턴 매칭인지 확인 필요 |
+| 2 | 슈퍼진 / 글로벌 서비스 기획/운영 | yes | phase 1 반영 대상 기준: `position_category=서비스 기획`, 일부 기획 관련 후보 개선 | `position_category=서비스 기획`, `UX/UI`, `기능 정의`는 원문과 부합하나 industry/domain은 null | partial | partial 유지. 원문에는 와이어프레임, FAQ, VOC, 정책 수립, 운영 가이드, 서비스 운영, 서비스 품질 유지, 서비스 개발 및 런칭 주도, 프로젝트 리딩, 협업/커뮤니케이션이 명확하나 추출되지 않음. 게임/콘텐츠 industry/domain alias와 competency/skill 후보를 phase 2에서 함께 검토 필요 |
+| 3 | 세나 / 서비스 기획 주니어 (`posting_id=14`) | yes | phase 1 반영 대상 기준: `position_category=서비스 기획`, `EMR/HIS/OCS` skill 추출, `협업` competency 추출, 관련 unconfirmed 후보 감소 | 재분석 후 `domain_category=헬스케어`, `position_category=서비스 기획`, `extracted_skills=UX/UI, 스토리보드, 와이어프레임, OCS, EMR, HIS`, `extracted_competencies=협업`, `unconfirmed_count=22` 확인 | pass | config alias phase 1 반영 대상 기준 pass. 전체 classification 기준에서는 `industry_category`가 null이므로 의료 industry alias 보강 필요. `클라우드 SaaS EMR`이 명시되어 SaaS는 추가 domain 후보. `개인건강관리 서비스`는 헬스케어 domain alias 후보. `네이버`는 파트너사, `오름차트`와 `클레`는 제품 고유명사로 config 반영 제외 후보 |
+| 4 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 (`posting_id=17`) | yes | phase 1 반영 대상 기준: `AWS/RAG` skill 추출 | `extracted_skills`에 Python, LLM, SQL, API, AI툴활용, ChatGPT, ERD, HTML/CSS, AWS, RAG, Jira, Slack 포함. `extracted_competencies`에 기능 정의, 비즈니스 분석 포함. `unconfirmed_count` 62 → 53 감소. industry/domain/position은 null | pass | phase 1 반영 대상인 AWS/RAG는 정상 반영되었고 Python, SQL, ERD, AI툴활용 등 skill 추출 품질도 개선됨. 전체 classification 기준에서는 industry/domain/position null 후속 검토 필요. ERP, WMS, Pandas, 프롬프트 엔지니어링은 skill 후보. `Bati CIS`는 제품, `COSRX`, `파마리서치`는 고객사 고유명사로 제외 후보. `정산`은 이커머스 domain alias 후보이나 오탐 위험이 있어 3순위 보류 |
