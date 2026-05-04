@@ -11,7 +11,10 @@
 - OpenAI SDK는 사용하지 않는다.
 - OpenAI 결제/API key 없이 Swagger에서 테스트 가능하다.
 - 추천 생성 로직은 `backend/app/ai_recommendations.py`에 격리되어 있다.
-- `frontend/src/App.jsx`에는 `aiRecommendations` 메뉴가 있지만, 현재 페이지는 placeholder만 있다.
+- frontend AI recommendation 화면에서 Mock API 조회가 가능하다.
+- AI 추천 관리 화면 진입 시 공고 목록이 비어 있으면 기존 postings 조회로 목록을 로드한다.
+- 사용자가 공고를 선택하고 `AI 추천 조회` 버튼을 눌렀을 때만 AI 추천 API를 호출한다.
+- 공고 선택 변경 시 이전 추천 결과와 error 상태를 초기화한다.
 
 ## 제품 원칙
 
@@ -35,7 +38,7 @@
 - `analysis_results` 수정 없음
 - `review_items` 생성/수정 없음
 - config 수정 없음
-- frontend 연결 없음
+- frontend는 Mock API 결과를 화면 표시용으로 조회
 - 공고 저장/수정 시 자동 호출 없음
 
 ## 1차 Mock 응답 구조
@@ -61,6 +64,8 @@
 - `domain_categories`는 1차 응답에서 제외한다.
 - 복수 도메인 구조는 후속 DB 구조 결정 이후 검토한다.
 - 현재 Mock 응답은 실제 AI 판단 결과가 아니라 API 구조 검증용 고정 데이터다.
+- frontend는 `domain_categories`를 표시하지 않는다.
+- 추천 결과는 화면 표시용이며 DB에 저장하지 않는다.
 
 ## AI가 따라야 할 분류 정책
 
@@ -75,6 +80,6 @@ AI 작업도 현재 정책 기준을 그대로 따라야 한다.
 ## 후속 단계
 
 - Phase AI-1B: OpenAI 결제/API key 설정 후 실제 `gpt-4o-mini` 호출로 교체
-- Phase AI-2: UI 트리거와 조회 결과 표시
+- Phase AI-2: 실제 OpenAI 연동 결과의 UI 표시 점검
 - Phase AI-3: 선택적으로 AI 추천을 review_items에 반영
 - Phase AI-4: 개별 review_item 단위 추천 고도화

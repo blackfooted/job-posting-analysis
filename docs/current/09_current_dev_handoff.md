@@ -65,7 +65,12 @@
 - `review_items` 생성/수정 없음
 - `domain_categories`는 1차 응답에서 제외
 - 추천 생성 로직은 `backend/app/ai_recommendations.py`에 격리
-- frontend는 AI recommendation placeholder 페이지만 존재
+- frontend AI recommendation 화면은 Mock API 조회와 결과 표시를 지원
+- frontend 연결 파일: `frontend/src/App.jsx`, `frontend/src/App.css`, `frontend/src/api/aiRecommendationsApi.js`
+- AI 추천 관리 화면 진입 시 공고 목록이 비어 있으면 기존 postings 조회로 목록을 로드
+- 공고 선택 후 `AI 추천 조회` 버튼을 눌렀을 때만 AI 추천 API 호출
+- 공고 선택 변경 시 이전 추천 결과와 error 상태 초기화
+- 추천 결과는 화면 표시용이며 DB 저장/자동 확정/review_items 반영 없음
 
 ## 현재 정책 기준
 
@@ -122,6 +127,12 @@ http://127.0.0.1:8000/docs
 - 응답에 `domain_categories`가 없는지 확인
 - 없는 posting_id 또는 삭제된 posting_id 호출 시 HTTP 404, `error.code = "POSTING_NOT_FOUND"` 확인
 - API key 없이 정상 posting_id 호출이 가능한지 확인
+- frontend 실행 후 `AI 추천 관리` 화면 진입 확인
+- 공고 선택 전 `AI 추천 조회` 버튼 비활성화 확인
+- 공고 선택 후 버튼 클릭 시에만 AI 추천 API가 호출되는지 Network 탭에서 확인
+- 추천 결과, skills, competencies, review item candidates, meta 표시 확인
+- 공고 선택 변경 시 이전 추천 결과와 error 상태가 초기화되는지 확인
+- dashboard, postings, review_items 기존 화면 정상 표시 확인
 
 ## 다음 Codex 작업
 
@@ -129,6 +140,7 @@ http://127.0.0.1:8000/docs
    - OpenAI API 결제/API key 설정 후 Mock 추천 함수를 실제 `gpt-4o-mini` 호출로 교체한다.
    - 다른 backend 모듈이 OpenAI SDK에 직접 의존하지 않도록 `ai_recommendations.py` 내부에 provider 로직을 유지한다.
    - DB 저장 없는 조회형 API 원칙은 유지한 뒤 저장/반영 정책은 별도 단계에서 결정한다.
+   - frontend는 실제 OpenAI 연동 이후에도 사용자 버튼 트리거 원칙을 유지한다.
 
 2. removed 이력 기반 동일 후보 재생성 방지 정책 확정 후 구현
    - 정책 확정이 선행되어야 한다.
@@ -136,9 +148,9 @@ http://127.0.0.1:8000/docs
    - 초기 구현은 동일 `field_type + normalized raw_value` 재생성 방지까지만 검토한다.
    - 유사 표현 제외는 후속 고도화로 둔다.
 
-3. AI recommendation frontend 연결
-   - 사용자 트리거와 추천 결과 표시를 frontend에 연결한다.
-   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 표시한다.
+3. AI recommendation 추천 결과 저장/반영 정책 결정
+   - 추천 결과를 review_items에 반영할지 여부와 저장 범위를 별도 정책으로 정의한다.
+   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 유지한다.
 
 4. 복수 도메인 저장 구조와 API 형태 정의
    - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 실제 구조 확정 이후 진행을 권장한다.

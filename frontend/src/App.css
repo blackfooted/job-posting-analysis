@@ -702,6 +702,161 @@ button { font-family: inherit; }
 }
 
 /* ============================================================
+   AI recommendations page
+   ============================================================ */
+.ai-recommendations {
+  width: min(100%, 1120px);
+}
+
+.ai-recommendations h1 {
+  color: var(--gray-900);
+  font-size: 22px;
+}
+
+.ai-recommendation-notice,
+.ai-recommendation-controls,
+.ai-recommendation-source,
+.ai-recommendation-meta,
+.ai-recommendation-list {
+  margin-top: 18px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  padding: 16px 18px;
+}
+
+.ai-recommendation-notice {
+  display: grid;
+  gap: 4px;
+  color: var(--gray-700);
+  font-size: 14px;
+}
+
+.ai-recommendation-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ai-recommendation-controls label {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 4px;
+  text-align: left;
+}
+
+.ai-recommendation-controls span {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-recommendation-controls select {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+}
+
+.ai-recommendation-controls select:focus {
+  outline: none;
+  border-color: var(--brand-400);
+  box-shadow: 0 0 0 3px var(--brand-100);
+}
+
+.ai-recommendation-controls button {
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 14px;
+}
+
+.ai-recommendation-controls button:hover:not(:disabled) {
+  background: var(--brand-100);
+  box-shadow: var(--shadow-xs);
+}
+
+.ai-recommendation-controls button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.ai-recommendation-result {
+  margin-top: 22px;
+}
+
+.ai-recommendation-source h2,
+.ai-recommendation-meta h2,
+.ai-recommendation-list h2 {
+  color: var(--gray-700);
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.ai-recommendation-card-grid,
+.ai-recommendation-item-list,
+.ai-review-candidate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ai-recommendation-card,
+.ai-review-candidate {
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  padding: 16px;
+  text-align: left;
+}
+
+.ai-recommendation-card h3 {
+  color: var(--brand-700);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.ai-recommendation-detail-list,
+.ai-meta-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-recommendation-detail-list div,
+.ai-meta-list div {
+  display: grid;
+  grid-template-columns: minmax(96px, 140px) 1fr;
+  gap: 10px;
+}
+
+.ai-recommendation-detail-list dt,
+.ai-meta-list dt {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-recommendation-detail-list dd,
+.ai-meta-list dd {
+  color: var(--gray-700);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
    Error & message
    ============================================================ */
 .error {

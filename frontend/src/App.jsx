@@ -5,6 +5,7 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
+import { fetchAiRecommendation } from './api/aiRecommendationsApi'
 import {
   createPosting,
   deletePosting,
@@ -97,6 +98,11 @@ function App() {
   const [reviewItemsDictionaryApplyFilter, setReviewItemsDictionaryApplyFilter] =
     useState('')
   const [reviewItemsKeywordFilter, setReviewItemsKeywordFilter] = useState('')
+  const [selectedAiPostingId, setSelectedAiPostingId] = useState('')
+  const [aiRecommendation, setAiRecommendation] = useState(null)
+  const [aiRecommendationLoading, setAiRecommendationLoading] = useState(false)
+  const [aiRecommendationError, setAiRecommendationError] = useState('')
+  const [aiPostingsLoadRequested, setAiPostingsLoadRequested] = useState(false)
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -244,6 +250,20 @@ function App() {
       document.body.style.overflow = originalOverflow
     }
   }, [isNavigationOpen])
+
+  useEffect(() => {
+    if (
+      activePage !== 'aiRecommendations' ||
+      postingsLoading ||
+      postings.length > 0 ||
+      aiPostingsLoadRequested
+    ) {
+      return
+    }
+
+    setAiPostingsLoadRequested(true)
+    loadPostings()
+  }, [activePage, postings.length, postingsLoading, aiPostingsLoadRequested])
 
   async function handleViewPostingDetail(postingId) {
     setSelectedPosting(null)
@@ -810,6 +830,43 @@ function App() {
     }
   }
 
+  function handleAiPostingChange(event) {
+    setSelectedAiPostingId(event.target.value)
+    setAiRecommendation(null)
+    setAiRecommendationError('')
+    setAiRecommendationLoading(false)
+  }
+
+  async function handleFetchAiRecommendation() {
+    if (!selectedAiPostingId || aiRecommendationLoading) {
+      return
+    }
+
+    setAiRecommendationLoading(true)
+    setAiRecommendationError('')
+
+    try {
+      const result = await fetchAiRecommendation(selectedAiPostingId)
+
+      if (result.error) {
+        setAiRecommendation(null)
+        setAiRecommendationError(
+          result.error.message || 'AI 추천 결과를 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setAiRecommendation(result.data || null)
+    } catch (requestError) {
+      setAiRecommendation(null)
+      setAiRecommendationError(
+        requestError.message || 'AI 추천 결과를 불러오지 못했습니다.',
+      )
+    } finally {
+      setAiRecommendationLoading(false)
+    }
+  }
+
   const navigationItems = [
     { id: 'dashboard', label: '대시보드' },
     { id: 'postings', label: '개별 공고 분석' },
@@ -1305,15 +1362,246 @@ function App() {
 
         {activePage === 'aiRecommendations' && (
           <section
-            className="placeholder-page"
+            className="ai-recommendations"
             aria-label="AI recommendation management"
           >
             <h1>AI 추천 관리</h1>
-            <p>AI 추천 관리는 후속 단계에서 제공됩니다.</p>
+            <div className="ai-recommendation-notice">
+              <p>현재 AI 추천 기능은 Mock 응답 기반 테스트 단계입니다.</p>
+              <p>
+                추천 결과는 실제 AI 판단 결과가 아니며, 자동 확정되거나
+                DB에 저장되지 않습니다.
+              </p>
+              <p>
+                공고를 선택한 뒤 버튼을 눌렀을 때만 추천 결과를 조회합니다.
+              </p>
+            </div>
+
+            <div className="ai-recommendation-controls">
+              <label>
+                <span>공고 선택</span>
+                <select
+                  value={selectedAiPostingId}
+                  onChange={handleAiPostingChange}
+                  disabled={postingsLoading || postings.length === 0}
+                >
+                  <option value="">공고를 선택하세요</option>
+                  {postings.map((posting) => (
+                    <option key={posting.id} value={posting.id}>
+                      {posting.company} / {posting.position}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={handleFetchAiRecommendation}
+                disabled={!selectedAiPostingId || aiRecommendationLoading}
+              >
+                AI 추천 조회
+              </button>
+            </div>
+
+            {postingsLoading && <p>공고 목록을 불러오는 중입니다.</p>}
+
+            {!postingsLoading && postingsError && (
+              <p className="error">{postingsError}</p>
+            )}
+
+            {!postingsLoading &&
+              !postingsError &&
+              postings.length === 0 && <p>추천을 조회할 공고가 없습니다.</p>}
+
+            {aiRecommendationLoading && (
+              <p>AI 추천 결과를 불러오는 중입니다.</p>
+            )}
+
+            {!aiRecommendationLoading && aiRecommendationError && (
+              <p className="error">{aiRecommendationError}</p>
+            )}
+
+            {!aiRecommendationLoading &&
+              !aiRecommendationError &&
+              !aiRecommendation && (
+                <p>공고를 선택한 뒤 AI 추천 조회 버튼을 눌러주세요.</p>
+              )}
+
+            {!aiRecommendationLoading &&
+              !aiRecommendationError &&
+              aiRecommendation && (
+                <AiRecommendationResult result={aiRecommendation} />
+              )}
           </section>
         )}
       </main>
     </div>
+  )
+}
+
+function AiRecommendationResult({ result }) {
+  const recommendation = result?.recommendation || {}
+
+  return (
+    <div className="ai-recommendation-result">
+      <div className="ai-recommendation-source">
+        <h2>추천 대상 공고</h2>
+        <dl className="ai-meta-list">
+          <div>
+            <dt>회사명</dt>
+            <dd>{formatValue(result?.source?.company)}</dd>
+          </div>
+          <div>
+            <dt>포지션</dt>
+            <dd>{formatValue(result?.source?.position)}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="ai-recommendation-card-grid">
+        <AiRecommendationCard
+          title="산업 추천"
+          item={recommendation.industry_category}
+        />
+        <AiRecommendationCard
+          title="대표 도메인 추천"
+          item={recommendation.primary_domain_category}
+        />
+        <AiRecommendationCard
+          title="직무 추천"
+          item={recommendation.position_category}
+        />
+      </div>
+
+      <AiRecommendationList
+        title="Skills"
+        items={recommendation.skills}
+      />
+      <AiRecommendationList
+        title="Competencies"
+        items={recommendation.competencies}
+      />
+      <AiReviewCandidateList
+        items={recommendation.review_item_candidates}
+      />
+      <AiRecommendationMeta meta={result?.meta} />
+    </div>
+  )
+}
+
+function AiRecommendationCard({ title, item = {} }) {
+  const normalizedItem = item || {}
+
+  return (
+    <article className="ai-recommendation-card">
+      <h3>{title}</h3>
+      <dl className="ai-recommendation-detail-list">
+        <div>
+          <dt>value</dt>
+          <dd>{formatValue(normalizedItem.value)}</dd>
+        </div>
+        <div>
+          <dt>confidence</dt>
+          <dd>{formatValue(normalizedItem.confidence)}</dd>
+        </div>
+        <div>
+          <dt>reason</dt>
+          <dd>{formatValue(normalizedItem.reason)}</dd>
+        </div>
+      </dl>
+    </article>
+  )
+}
+
+function AiRecommendationList({ title, items = [] }) {
+  return (
+    <section className="ai-recommendation-list">
+      <h2>{title}</h2>
+      {items.length === 0 ? (
+        <p>No recommendation</p>
+      ) : (
+        <div className="ai-recommendation-item-list">
+          {items.map((item, index) => (
+            <AiRecommendationCard
+              key={`${title}-${item.value || index}`}
+              title={formatValue(item.value)}
+              item={item}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function AiReviewCandidateList({ items = [] }) {
+  return (
+    <section className="ai-recommendation-list">
+      <h2>Review Item Candidates</h2>
+      {items.length === 0 ? (
+        <p>No candidates</p>
+      ) : (
+        <div className="ai-review-candidate-list">
+          {items.map((item, index) => (
+            <article
+              className="ai-review-candidate"
+              key={`${item.field_type}-${item.raw_value}-${index}`}
+            >
+              <dl className="ai-recommendation-detail-list">
+                <div>
+                  <dt>field_type</dt>
+                  <dd>{formatValue(item.field_type)}</dd>
+                </div>
+                <div>
+                  <dt>raw_value</dt>
+                  <dd>{formatValue(item.raw_value)}</dd>
+                </div>
+                <div>
+                  <dt>suggested_value</dt>
+                  <dd>{formatValue(item.suggested_value)}</dd>
+                </div>
+                <div>
+                  <dt>confidence</dt>
+                  <dd>{formatValue(item.confidence)}</dd>
+                </div>
+                <div>
+                  <dt>reason</dt>
+                  <dd>{formatValue(item.reason)}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function AiRecommendationMeta({ meta = {} }) {
+  const savedValue =
+    meta.saved === null || meta.saved === undefined ? null : String(meta.saved)
+
+  return (
+    <section className="ai-recommendation-meta">
+      <h2>Meta</h2>
+      <dl className="ai-meta-list">
+        <div>
+          <dt>mode</dt>
+          <dd>{formatValue(meta.mode)}</dd>
+        </div>
+        <div>
+          <dt>saved</dt>
+          <dd>{formatValue(savedValue)}</dd>
+        </div>
+        <div>
+          <dt>model</dt>
+          <dd>{formatValue(meta.model)}</dd>
+        </div>
+        <div>
+          <dt>generated_at</dt>
+          <dd>{formatValue(meta.generated_at)}</dd>
+        </div>
+      </dl>
+    </section>
   )
 }
 
