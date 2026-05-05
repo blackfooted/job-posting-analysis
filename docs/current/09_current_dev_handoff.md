@@ -109,6 +109,10 @@ Phase AI-1B backend 구현 기준:
 - prompt에는 이미 `skills` 또는 `competencies`에 포함한 개념을 `review_item_candidates`에 중복하지 말고 긴 문장형 후보를 제외하라는 지시가 포함되어 있다.
 - Streaming은 현재 구현 범위가 아니며, Responses API + Structured Outputs JSON 완성 응답 구조를 유지한다. Streaming은 후속 UX 개선 후보로만 둔다.
 - OpenAI 실제 재검증은 API key가 설정된 사용자 로컬 환경에서 수행해야 한다.
+- `AI_RESPONSE_PARSE_FAILED` 원인 확인용 제한 debug 로그가 있다.
+- debug 로그는 `AI_RECOMMENDATION_DEBUG=1`일 때만 출력되며 기본 비활성화다.
+- debug 로그는 response 구조 요약, 추출 raw text 길이/빈 문자열 여부/JSON 시작·종료 여부/앞 200자 preview, parse 실패 위치 정보를 출력한다.
+- OpenAI API key, request payload, full raw response는 로그나 API 응답에 포함하지 않는다.
 - endpoint와 응답 구조는 유지
 - Mock mode는 유지
 

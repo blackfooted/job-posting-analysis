@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -40,6 +41,8 @@ POSTING_PROMPT_FIELDS = (
 )
 RAW_TEXT_PREVIEW_MAX_LENGTH = 500
 AI_RECOMMENDATION_MAX_OUTPUT_TOKENS = 900
+AI_RECOMMENDATION_DEBUG_ENV = "AI_RECOMMENDATION_DEBUG"
+AI_RECOMMENDATION_DEBUG_PREVIEW_LENGTH = 200
 AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
@@ -452,7 +455,10 @@ def _get_openai_recommendation(
         max_output_tokens=AI_RECOMMENDATION_MAX_OUTPUT_TOKENS,
     )
 
-    return _parse_openai_json_content(_extract_openai_response_text(response))
+    _debug_ai_response_structure(response)
+    raw_text = _extract_openai_response_text(response)
+    _debug_ai_response_text(raw_text)
+    return _parse_openai_json_content(raw_text)
 
 
 def _extract_openai_response_text(response: Any) -> str:
@@ -476,6 +482,7 @@ def _extract_openai_response_text(response: Any) -> str:
 
     content = "".join(text_parts).strip()
     if not content:
+        _debug_ai_response_text(content)
         raise AIRecommendationParseError()
     return content
 
@@ -498,12 +505,93 @@ def _parse_openai_json_content(content: str) -> dict[str, Any]:
             continue
         try:
             parsed = json.loads(candidate)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
+            _debug_ai_parse_failure(content, candidate, exc)
             continue
         if isinstance(parsed, dict):
             return _ensure_recommendation_wrapper(parsed)
 
+    _debug_ai_parse_failure(content, None, None)
     raise AIRecommendationParseError()
+
+
+def _is_ai_recommendation_debug_enabled() -> bool:
+    return os.getenv(AI_RECOMMENDATION_DEBUG_ENV, "").strip() == "1"
+
+
+def _debug_ai_log(message: str) -> None:
+    if _is_ai_recommendation_debug_enabled():
+        print(f"AI_RECOMMENDATION_DEBUG {message}", file=sys.stderr)
+
+
+def _debug_ai_response_text(raw_text: str) -> None:
+    if not _is_ai_recommendation_debug_enabled():
+        return
+
+    stripped_text = raw_text.strip()
+    preview = stripped_text[:AI_RECOMMENDATION_DEBUG_PREVIEW_LENGTH].replace(
+        "\n",
+        "\\n",
+    )
+    _debug_ai_log(f"raw_text_length={len(raw_text)}")
+    _debug_ai_log(f"raw_text_empty={str(not bool(stripped_text)).lower()}")
+    _debug_ai_log(
+        f"raw_text_startswith_json={str(stripped_text.startswith('{')).lower()}"
+    )
+    _debug_ai_log(
+        f"raw_text_endswith_json={str(stripped_text.endswith('}')).lower()}"
+    )
+    _debug_ai_log(f"raw_text_preview={preview}")
+
+
+def _debug_ai_response_structure(response: Any) -> None:
+    if not _is_ai_recommendation_debug_enabled():
+        return
+
+    output = getattr(response, "output", None)
+    output_count = len(output) if isinstance(output, list) else None
+    output_text = getattr(response, "output_text", None)
+    _debug_ai_log(f"response_type={type(response).__name__}")
+    _debug_ai_log(f"has_output_text={str(isinstance(output_text, str)).lower()}")
+    _debug_ai_log(f"output_type={type(output).__name__}")
+    _debug_ai_log(f"output_count={output_count}")
+
+    if not isinstance(output, list):
+        return
+
+    for index, output_item in enumerate(output[:3]):
+        content_items = _read_output_attribute(output_item, "content")
+        content_count = len(content_items) if isinstance(content_items, list) else None
+        _debug_ai_log(
+            "output_item_"
+            f"{index}_type={type(output_item).__name__} "
+            f"content_type={type(content_items).__name__} "
+            f"content_count={content_count}"
+        )
+
+
+def _debug_ai_parse_failure(
+    raw_text: str,
+    candidate: str | None,
+    error: json.JSONDecodeError | None,
+) -> None:
+    if not _is_ai_recommendation_debug_enabled():
+        return
+
+    stripped_text = raw_text.strip()
+    stripped_candidate = candidate.strip() if isinstance(candidate, str) else ""
+    _debug_ai_log(f"parse_raw_text_length={len(raw_text)}")
+    _debug_ai_log(f"parse_first_json_index={stripped_text.find('{')}")
+    _debug_ai_log(f"parse_last_json_index={stripped_text.rfind('}')}")
+    _debug_ai_log(f"parse_candidate_present={str(candidate is not None).lower()}")
+    _debug_ai_log(f"parse_candidate_length={len(candidate) if candidate else 0}")
+    _debug_ai_log(
+        "parse_candidate_endswith_json="
+        f"{str(stripped_candidate.endswith('}')).lower()}"
+    )
+    if error is not None:
+        _debug_ai_log(f"parse_error_position={error.pos}")
+        _debug_ai_log(f"parse_error_message={error.msg}")
 
 
 def _ensure_recommendation_wrapper(parsed: dict[str, Any]) -> dict[str, Any]:

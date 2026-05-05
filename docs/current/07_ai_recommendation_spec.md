@@ -185,6 +185,19 @@ OpenAI 출력 JSON 생성 시간을 줄이기 위해 출력 길이도 1차 제�
 
 Streaming 응답은 계속 후속 UX 개선 후보로 유지한다.
 
+### AI response debug logging 정책
+
+`AI_RESPONSE_PARSE_FAILED` 원인 확인을 위해 제한적 debug logging을 제공한다.
+
+- `AI_RECOMMENDATION_DEBUG=1`일 때만 debug 로그를 출력한다.
+- 기본값은 비활성화이며, 미설정 또는 `1` 외 값에서는 debug 로그를 출력하지 않는다.
+- `.env.example`은 수정하지 않는다.
+- OpenAI API key, request payload, full raw response는 로그로 출력하지 않는다.
+- API 응답에도 raw response 전체를 포함하지 않는다.
+- Responses API 응답 구조 확인용으로 response type, `output_text` 존재 여부, `output` 타입/count, 일부 output item의 content 타입/count만 출력할 수 있다.
+- 텍스트 추출 후에는 raw text 길이, 빈 문자열 여부, `{` 시작 여부, `}` 종료 여부, 앞 200자 preview만 출력할 수 있다.
+- JSON parse 실패 시에는 raw text 길이, 첫 `{` 위치, 마지막 `}` 위치, candidate 존재 여부, candidate 길이, candidate `}` 종료 여부, JSON decode error 위치/메시지만 출력할 수 있다.
+
 ## 후속 단계
 
 - Phase AI-1B: backend mode 분기 구현 완료. 실제 OpenAI SDK 의존성 설치 및 key 설정 후 openai mode 검증 필요
