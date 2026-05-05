@@ -95,6 +95,11 @@ Phase AI-1B backend 구현 기준:
 - `OPENAI_MODEL` 기본값은 `gpt-5.4-nano`
 - OpenAI 응답이 code fence로 감싸지거나 앞뒤 설명 문장을 포함해도 JSON object를 추출해 parse하도록 보강됨
 - 최상위 `recommendation` 키가 없는 OpenAI 응답도 필수 category 객체 3개가 있으면 `recommendation` wrapper로 보정함
+- OpenAI prompt는 `skills`/`competencies` 구분 기준을 강화해 `커뮤니케이션`, `협업`, `데이터 기반 의사결정` 같은 업무 역량이 `skills`에 들어가지 않도록 안내한다.
+- OpenAI prompt는 제출 서류/전형 절차/지원 조건/포트폴리오 제출, 고객사명/파트너사명/제품명/기관명/인증명/수상명/지원사업명/회사 소개용 고유명사를 recommendation과 `review_item_candidates`에서 제외하도록 안내한다.
+- OpenAI prompt는 회사 기술스택 섹션의 개발 기술이 직무 직접 활용 요구가 아닐 때 제외하도록 안내하며, 기획자/PM/서비스기획 직무의 단순 회사 스택 나열을 `review_item_candidates`에 넣지 않도록 안내한다.
+- OpenAI prompt는 각 item의 `value`를 짧은 대표값으로 쓰고 자세한 설명은 `reason`에 쓰도록 안내한다.
+- OpenAI prompt에는 good/bad few-shot 예시가 포함되어 있다.
 - endpoint와 응답 구조는 유지
 - Mock mode는 유지
 
