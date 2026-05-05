@@ -38,6 +38,7 @@ POSTING_PROMPT_FIELDS = (
     "industry_memo",
     "raw_text",
 )
+RAW_TEXT_PREVIEW_MAX_LENGTH = 500
 AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
@@ -251,10 +252,7 @@ def _fetch_posting(
 
 
 def _build_ai_prompt(posting: dict[str, Any]) -> str:
-    posting_lines = [
-        f"{field}: {posting.get(field, '')}"
-        for field in POSTING_PROMPT_FIELDS
-    ]
+    posting_lines = _build_posting_prompt_lines(posting)
     return "\n".join(
         [
             "채용공고 분석 결과를 사용자 검토용 추천 JSON으로만 반환하세요.",
@@ -334,6 +332,28 @@ def _build_ai_prompt(posting: dict[str, Any]) -> str:
             *posting_lines,
         ]
     )
+
+
+def _build_posting_prompt_lines(posting: dict[str, Any]) -> list[str]:
+    posting_lines = []
+    for field in POSTING_PROMPT_FIELDS:
+        if field == "raw_text":
+            preview = _truncate_text(
+                posting.get("raw_text", ""),
+                RAW_TEXT_PREVIEW_MAX_LENGTH,
+            )
+            posting_lines.append(f"raw_text_preview: {preview}")
+            continue
+
+        posting_lines.append(f"{field}: {posting.get(field, '')}")
+    return posting_lines
+
+
+def _truncate_text(value: Any, max_length: int = RAW_TEXT_PREVIEW_MAX_LENGTH) -> str:
+    text = "" if value is None else str(value)
+    if len(text) <= max_length:
+        return text
+    return f"{text[:max_length]}...[truncated]"
 
 
 def _get_ai_recommendation_mode() -> str:

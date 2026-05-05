@@ -100,6 +100,10 @@ Phase AI-1B backend 구현 기준:
 - OpenAI prompt는 회사 기술스택 섹션의 개발 기술이 직무 직접 활용 요구가 아닐 때 제외하도록 안내하며, 기획자/PM/서비스기획 직무의 단순 회사 스택 나열을 `review_item_candidates`에 넣지 않도록 안내한다.
 - OpenAI prompt는 각 item의 `value`를 짧은 대표값으로 쓰고 자세한 설명은 `reason`에 쓰도록 안내한다.
 - OpenAI prompt에는 good/bad few-shot 예시가 포함되어 있다.
+- OpenAI 호출 속도 개선 1차로 prompt에 `raw_text` 전체를 넣지 않고 `raw_text_preview` 500자만 포함한다.
+- `duties`, `requirements`, `preferred`, `tools` 등 구조화 필드는 prompt에 계속 포함한다.
+- Streaming은 현재 구현 범위가 아니며, Responses API + Structured Outputs JSON 완성 응답 구조를 유지한다. Streaming은 후속 UX 개선 후보로만 둔다.
+- OpenAI 실제 재검증은 API key가 설정된 사용자 로컬 환경에서 수행해야 한다.
 - endpoint와 응답 구조는 유지
 - Mock mode는 유지
 

@@ -153,6 +153,20 @@ OpenAI 실제 호출 prompt는 서비스의 `field_type` 정책에 맞게 아래
 
 Prompt에는 위 기준과 함께 good/bad few-shot 예시를 포함해 `skills`/`competencies` 구분, 제출 요건 제외, 회사 기술스택 제외, 짧은 대표값 작성, 고유명사 제외를 안내한다.
 
+### AI prompt 입력량 축소 정책
+
+OpenAI 호출 latency와 비용을 줄이기 위해 prompt에 포함하는 공고 원문 입력량을 제한한다.
+
+- `raw_text` 전체 원문은 prompt에 그대로 포함하지 않는다.
+- `raw_text`는 앞 500자만 잘라 `raw_text_preview` 라벨로 포함한다.
+- `raw_text`가 비어 있으면 `raw_text_preview`는 빈 문자열로 둔다.
+- `raw_text`가 500자를 초과하면 preview 뒤에 truncation 표시를 붙일 수 있다.
+- `duties`, `requirements`, `preferred`, `tools` 등 구조화 필드는 기존처럼 prompt에 포함한다.
+- 목적은 입력 토큰과 비용 감소, 일부 OpenAI 호출 latency 개선이다.
+- endpoint, Structured Outputs schema, 최종 API 응답 구조, frontend 표시 구조는 변경하지 않는다.
+
+Streaming 응답은 현재 범위가 아니다. 현재 구현은 Responses API + Structured Outputs JSON을 완성 응답으로 받은 뒤 parse/normalize하는 구조이므로, streaming은 frontend 응답 방식, JSON 조립, error 처리 설계가 필요한 후속 UX 개선 후보로 분리한다.
+
 ## 후속 단계
 
 - Phase AI-1B: backend mode 분기 구현 완료. 실제 OpenAI SDK 의존성 설치 및 key 설정 후 openai mode 검증 필요
