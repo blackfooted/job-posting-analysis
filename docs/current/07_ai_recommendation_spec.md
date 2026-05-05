@@ -167,6 +167,24 @@ OpenAI 호출 latency와 비용을 줄이기 위해 prompt에 포함하는 공�
 
 Streaming 응답은 현재 범위가 아니다. 현재 구현은 Responses API + Structured Outputs JSON을 완성 응답으로 받은 뒤 parse/normalize하는 구조이므로, streaming은 frontend 응답 방식, JSON 조립, error 처리 설계가 필요한 후속 UX 개선 후보로 분리한다.
 
+### AI output length 제한 정책
+
+OpenAI 출력 JSON 생성 시간을 줄이기 위해 출력 길이도 1차 제한한다.
+
+- 현재 구현은 Responses API `client.responses.create(...)`를 사용하므로 `max_output_tokens=900`을 1차 기준으로 사용한다.
+- Chat Completions API를 사용하는 경우에는 `max_tokens` 또는 `max_completion_tokens` 등 파라미터명이 다르므로 Responses API의 `max_output_tokens`와 혼용하지 않는다.
+- `max_output_tokens`를 너무 낮게 잡으면 Structured Outputs JSON이 잘려 `AI_RESPONSE_PARSE_FAILED`가 발생할 수 있으므로 900으로 시작한다.
+- 추후 실제 응답 품질과 parse 안정성을 확인한 뒤 700~800 수준으로 낮출 수 있다.
+- prompt는 각 category item의 `value`를 가능한 짧은 대표값으로 작성하도록 지시한다.
+- prompt는 `reason`을 한 문장, 가능하면 80자 이내로 작성하도록 지시한다.
+- `skills`는 최대 8개까지만 반환한다.
+- `competencies`는 최대 8개까지만 반환한다.
+- `review_item_candidates`는 최대 5개까지만 반환한다.
+- 이미 `skills` 또는 `competencies`에 포함한 개념은 `review_item_candidates`에 중복해서 넣지 않는다.
+- 긴 문장형 후보는 `review_item_candidates`에 넣지 않는다.
+
+Streaming 응답은 계속 후속 UX 개선 후보로 유지한다.
+
 ## 후속 단계
 
 - Phase AI-1B: backend mode 분기 구현 완료. 실제 OpenAI SDK 의존성 설치 및 key 설정 후 openai mode 검증 필요

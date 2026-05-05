@@ -39,6 +39,7 @@ POSTING_PROMPT_FIELDS = (
     "raw_text",
 )
 RAW_TEXT_PREVIEW_MAX_LENGTH = 500
+AI_RECOMMENDATION_MAX_OUTPUT_TOKENS = 900
 AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
@@ -285,15 +286,21 @@ def _build_ai_prompt(posting: dict[str, Any]) -> str:
             "- 예: SQL, ERD, API는 기획자가 개발팀과 논의하거나 데이터 구조를 이해해야 한다고 명시되면 포함할 수 있습니다.",
             "",
             "Value writing rules:",
-            "- 각 item의 value는 가능한 짧은 대표값으로 작성하세요.",
-            "- 자세한 문맥, 판단 근거, 원문 맥락은 reason에 작성하세요.",
+            "- 각 category item의 value는 가능하면 15자 이내의 짧은 대표값으로 작성하세요.",
+            "- reason은 한 문장으로, 가능하면 80자 이내로 작성하세요.",
+            "- 불필요한 설명은 생략하고 자세한 문맥은 reason에만 짧게 작성하세요.",
             "- 좋은 value 예: 서비스 기획, 여행, 헬스케어, 이커머스, 데이터 분석, 요구사항 분석, 프로젝트 관리, 문서화, 프롬프트 엔지니어링.",
             "- 나쁜 value 예: 여행/항공권 유통 웹 서비스 기획(예약·환불·부가서비스 자동화).",
             "- 나쁜 value 예: 디지털 헬스케어 서비스 기획(EMR/건강관리 플랫폼, 사용자/의료기관 연결).",
+            "- skills는 최대 8개까지만 반환하세요.",
+            "- competencies는 최대 8개까지만 반환하세요.",
+            "- review_item_candidates는 최대 5개까지만 반환하세요.",
             "",
             "review_item_candidates rules:",
             "- field_type 판단이 애매한 표현, config 대표값 추가 검토가 필요한 표현, 신규 alias 후보, 사람이 검토해야 할 후보만 포함하세요.",
             "- 제출 요건, 포트폴리오 제출, 회사 소개 고유명사, 고객사명, 파트너사명, 제품명, 인증명, 단순 기술스택 나열은 넣지 마세요.",
+            "- 이미 skills 또는 competencies에 포함한 개념은 review_item_candidates에 중복해서 넣지 마세요.",
+            "- 긴 문장형 후보는 review_item_candidates에 넣지 마세요.",
             "",
             "Few-shot example 1: skills vs competencies",
             "Bad:",
@@ -442,6 +449,7 @@ def _get_openai_recommendation(
                 "strict": True,
             },
         },
+        max_output_tokens=AI_RECOMMENDATION_MAX_OUTPUT_TOKENS,
     )
 
     return _parse_openai_json_content(_extract_openai_response_text(response))

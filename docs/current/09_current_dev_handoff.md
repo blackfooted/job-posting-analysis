@@ -102,6 +102,11 @@ Phase AI-1B backend 구현 기준:
 - OpenAI prompt에는 good/bad few-shot 예시가 포함되어 있다.
 - OpenAI 호출 속도 개선 1차로 prompt에 `raw_text` 전체를 넣지 않고 `raw_text_preview` 500자만 포함한다.
 - `duties`, `requirements`, `preferred`, `tools` 등 구조화 필드는 prompt에 계속 포함한다.
+- OpenAI 호출 latency 개선 2차로 Responses API 기준 `max_output_tokens=900`을 적용한다.
+- 현재 호출 방식은 `client.responses.create(...)`이므로 Chat Completions API의 `max_tokens`/`max_completion_tokens`와 혼용하지 않는다.
+- prompt에는 `value`를 짧은 대표값으로 작성하고 `reason`을 한 문장/가능하면 80자 이내로 작성하라는 지시가 포함되어 있다.
+- prompt에는 `skills` 최대 8개, `competencies` 최대 8개, `review_item_candidates` 최대 5개 제한이 포함되어 있다.
+- prompt에는 이미 `skills` 또는 `competencies`에 포함한 개념을 `review_item_candidates`에 중복하지 말고 긴 문장형 후보를 제외하라는 지시가 포함되어 있다.
 - Streaming은 현재 구현 범위가 아니며, Responses API + Structured Outputs JSON 완성 응답 구조를 유지한다. Streaming은 후속 UX 개선 후보로만 둔다.
 - OpenAI 실제 재검증은 API key가 설정된 사용자 로컬 환경에서 수행해야 한다.
 - endpoint와 응답 구조는 유지
