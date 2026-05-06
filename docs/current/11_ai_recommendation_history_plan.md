@@ -271,7 +271,11 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - POST `/runs` 응답의 `data.recommendation`을 기존 추천 결과 표시 구조로 표시한다.
 - POST `/runs` 응답의 `run`/`meta`를 이용해 저장 상태를 표시한다.
 - `data.run=null`이면 run id/created_at은 표시하지 않는다.
-- history 목록 UI, 상세 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
+- history 목록은 `data.items`, `data.pagination` 구조를 기준으로 표시한다.
+- history 목록에는 run metadata만 표시하고 recommendation JSON 전체는 표시하지 않는다.
+- 공고 선택 시 history page 1로 초기화 후 목록을 조회한다.
+- POST `/runs` 성공 후 history page 1로 refresh한다.
+- 상세 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
 - 기존 GET endpoint는 호환 유지한다.
 
 초기 UI 후보:

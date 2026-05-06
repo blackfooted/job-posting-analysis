@@ -274,7 +274,13 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - POST `/runs` 응답의 `data.recommendation`은 기존 추천 결과 표시 구조로 렌더링한다.
 - POST `/runs` 응답의 `data.run`과 `data.meta.saved`를 이용해 저장 상태를 표시한다.
 - `data.run=null`이면 mock mode 또는 저장 없음으로 보고 run id/created_at은 표시하지 않는다.
-- history 목록/상세/선택 반영 UI는 후속 작업으로 둔다.
+- AI 추천 관리 화면에 공고별 history 목록 조회가 연결되었다.
+- history 목록은 `GET /api/ai-recommendations/postings/{posting_id}/history`를 사용한다.
+- backend 응답 구조는 `data.items`, `data.pagination` 기준으로 처리한다.
+- 공고 선택 시 history page를 1로 초기화한 뒤 조회한다.
+- POST `/runs` 성공 후 history page를 1로 초기화하고 refresh한다.
+- history 목록에는 run metadata만 표시하며 recommendation JSON 전체는 표시하지 않는다.
+- history 상세/비교/선택 반영 UI는 후속 작업으로 둔다.
 
 ## Phase AI-1B endpoint 정책
 

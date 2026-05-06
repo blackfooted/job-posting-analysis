@@ -718,6 +718,7 @@ button { font-family: inherit; }
 .ai-recommendation-source,
 .ai-recommendation-run-meta,
 .ai-recommendation-meta,
+.ai-recommendation-history,
 .ai-recommendation-list {
   margin-top: 18px;
   background: var(--gray-0);
@@ -800,6 +801,7 @@ button { font-family: inherit; }
 .ai-recommendation-source h2,
 .ai-recommendation-run-meta h2,
 .ai-recommendation-meta h2,
+.ai-recommendation-history h2,
 .ai-recommendation-list h2 {
   color: var(--gray-700);
   font-size: 15px;
@@ -837,6 +839,100 @@ button { font-family: inherit; }
 .ai-recommendation-unsaved-badge {
   background: var(--gray-100);
   color: var(--gray-600);
+}
+
+.ai-recommendation-history-header {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.ai-recommendation-history-header h2 {
+  margin-bottom: 4px;
+}
+
+.ai-recommendation-history-header p,
+.ai-recommendation-history-empty {
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+.ai-recommendation-history-header span {
+  color: var(--gray-500);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-recommendation-history-table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.ai-recommendation-history-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.ai-recommendation-history-table th,
+.ai-recommendation-history-table td {
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-700);
+  font-size: 13px;
+  padding: 9px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-recommendation-history-table th {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ai-recommendation-status-badge,
+.ai-recommendation-applied-status-badge {
+  background: var(--gray-100);
+  border-radius: 999px;
+  color: var(--gray-700);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.ai-recommendation-history-pagination {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.ai-recommendation-history-pagination button {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  color: var(--gray-700);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 10px;
+}
+
+.ai-recommendation-history-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.ai-recommendation-history-pagination span {
+  color: var(--gray-500);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .ai-recommendation-card-grid,

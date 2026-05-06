@@ -5,7 +5,10 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
-import { createAiRecommendationRun } from './api/aiRecommendationsApi'
+import {
+  createAiRecommendationRun,
+  fetchAiRecommendationHistory,
+} from './api/aiRecommendationsApi'
 import {
   createPosting,
   deletePosting,
@@ -26,6 +29,7 @@ const postingFormValidationMessages = {
 
 function App() {
   const reviewItemsPageSize = 15
+  const aiRecommendationHistoryPageSize = 10
   const initialPostingForm = {
     company: '',
     position: '',
@@ -103,6 +107,20 @@ function App() {
   const [aiRecommendationLoading, setAiRecommendationLoading] = useState(false)
   const [aiRecommendationError, setAiRecommendationError] = useState('')
   const [aiPostingsLoadRequested, setAiPostingsLoadRequested] = useState(false)
+  const [aiRecommendationHistory, setAiRecommendationHistory] = useState([])
+  const [aiRecommendationHistoryLoading, setAiRecommendationHistoryLoading] =
+    useState(false)
+  const [aiRecommendationHistoryError, setAiRecommendationHistoryError] =
+    useState('')
+  const [
+    aiRecommendationHistoryPagination,
+    setAiRecommendationHistoryPagination,
+  ] = useState({
+    page: 1,
+    size: aiRecommendationHistoryPageSize,
+    total: 0,
+    total_pages: 0,
+  })
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -830,11 +848,83 @@ function App() {
     }
   }
 
+  function resetAiRecommendationHistory() {
+    setAiRecommendationHistory([])
+    setAiRecommendationHistoryError('')
+    setAiRecommendationHistoryLoading(false)
+    setAiRecommendationHistoryPagination({
+      page: 1,
+      size: aiRecommendationHistoryPageSize,
+      total: 0,
+      total_pages: 0,
+    })
+  }
+
+  async function fetchSelectedAiRecommendationHistory(postingId, page = 1) {
+    if (!postingId) {
+      resetAiRecommendationHistory()
+      return
+    }
+
+    setAiRecommendationHistoryLoading(true)
+    setAiRecommendationHistoryError('')
+
+    try {
+      const result = await fetchAiRecommendationHistory(postingId, {
+        page,
+        size: aiRecommendationHistoryPageSize,
+      })
+
+      if (result.error) {
+        setAiRecommendationHistory([])
+        setAiRecommendationHistoryPagination({
+          page,
+          size: aiRecommendationHistoryPageSize,
+          total: 0,
+          total_pages: 0,
+        })
+        setAiRecommendationHistoryError(
+          result.error.message || 'AI 추천 이력을 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setAiRecommendationHistory(result.data?.items || [])
+      setAiRecommendationHistoryPagination(
+        result.data?.pagination || {
+          page,
+          size: aiRecommendationHistoryPageSize,
+          total: 0,
+          total_pages: 0,
+        },
+      )
+    } catch (requestError) {
+      setAiRecommendationHistory([])
+      setAiRecommendationHistoryPagination({
+        page,
+        size: aiRecommendationHistoryPageSize,
+        total: 0,
+        total_pages: 0,
+      })
+      setAiRecommendationHistoryError(
+        requestError.message || 'AI 추천 이력을 불러오지 못했습니다.',
+      )
+    } finally {
+      setAiRecommendationHistoryLoading(false)
+    }
+  }
+
   function handleAiPostingChange(event) {
-    setSelectedAiPostingId(event.target.value)
+    const postingId = event.target.value
+    setSelectedAiPostingId(postingId)
     setAiRecommendation(null)
     setAiRecommendationError('')
     setAiRecommendationLoading(false)
+    resetAiRecommendationHistory()
+
+    if (postingId) {
+      fetchSelectedAiRecommendationHistory(postingId, 1)
+    }
   }
 
   async function handleFetchAiRecommendation() {
@@ -857,6 +947,7 @@ function App() {
       }
 
       setAiRecommendation(result.data || null)
+      await fetchSelectedAiRecommendationHistory(selectedAiPostingId, 1)
     } catch (requestError) {
       setAiRecommendation(null)
       setAiRecommendationError(
@@ -865,6 +956,14 @@ function App() {
     } finally {
       setAiRecommendationLoading(false)
     }
+  }
+
+  function handleAiRecommendationHistoryPageChange(page) {
+    if (!selectedAiPostingId || aiRecommendationHistoryLoading) {
+      return
+    }
+
+    fetchSelectedAiRecommendationHistory(selectedAiPostingId, page)
   }
 
   const navigationItems = [
@@ -1414,6 +1513,16 @@ function App() {
               !postingsError &&
               postings.length === 0 && <p>추천을 조회할 공고가 없습니다.</p>}
 
+            {selectedAiPostingId && (
+              <AiRecommendationHistoryList
+                items={aiRecommendationHistory}
+                pagination={aiRecommendationHistoryPagination}
+                isLoading={aiRecommendationHistoryLoading}
+                error={aiRecommendationHistoryError}
+                onPageChange={handleAiRecommendationHistoryPageChange}
+              />
+            )}
+
             {aiRecommendationLoading && (
               <p>AI 추천 결과를 불러오는 중입니다.</p>
             )}
@@ -1655,6 +1764,99 @@ function AiRecommendationRunMeta({ run = null, meta = {} }) {
           <dd>{formatValue(meta?.prompt_version)}</dd>
         </div>
       </dl>
+    </section>
+  )
+}
+
+function AiRecommendationHistoryList({
+  items = [],
+  pagination = {},
+  isLoading = false,
+  error = '',
+  onPageChange,
+}) {
+  const currentPage = pagination?.page || 1
+  const totalPages = pagination?.total_pages || 0
+  const totalItems = pagination?.total || 0
+  const isFirstPage = currentPage <= 1
+  const isLastPage = totalPages === 0 || currentPage >= totalPages
+
+  return (
+    <section className="ai-recommendation-history">
+      <div className="ai-recommendation-history-header">
+        <div>
+          <h2>최근 추천 이력</h2>
+          <p>추천 실행 이력의 metadata만 표시합니다.</p>
+        </div>
+        <span>{totalItems}건</span>
+      </div>
+
+      {isLoading && <p>AI 추천 이력을 불러오는 중입니다.</p>}
+
+      {!isLoading && error && <p className="error">{error}</p>}
+
+      {!isLoading && !error && items.length === 0 && (
+        <p className="ai-recommendation-history-empty">
+          아직 저장된 AI 추천 이력이 없습니다.
+        </p>
+      )}
+
+      {!isLoading && !error && items.length > 0 && (
+        <div className="ai-recommendation-history-table-wrap">
+          <table className="ai-recommendation-history-table">
+            <thead>
+              <tr>
+                <th>Run ID</th>
+                <th>model</th>
+                <th>prompt_version</th>
+                <th>status</th>
+                <th>applied_status</th>
+                <th>created_at</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((run) => (
+                <tr key={run.id}>
+                  <td>{formatValue(run.id)}</td>
+                  <td>{formatValue(run.model)}</td>
+                  <td>{formatValue(run.prompt_version)}</td>
+                  <td>
+                    <span className="ai-recommendation-status-badge">
+                      {formatValue(run.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="ai-recommendation-applied-status-badge">
+                      {formatValue(run.applied_status)}
+                    </span>
+                  </td>
+                  <td>{formatValue(run.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="ai-recommendation-history-pagination">
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={isLoading || isFirstPage}
+        >
+          이전
+        </button>
+        <span>
+          {currentPage} / {totalPages || 1}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={isLoading || isLastPage}
+        >
+          다음
+        </button>
+      </div>
     </section>
   )
 }

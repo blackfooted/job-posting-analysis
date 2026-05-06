@@ -28,3 +28,17 @@ export function createAiRecommendationRun(postingId) {
     },
   )
 }
+
+export function fetchAiRecommendationHistory(
+  postingId,
+  { page = 1, size = 10 } = {},
+) {
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  })
+
+  return requestAiRecommendations(
+    `/api/ai-recommendations/postings/${postingId}/history?${searchParams.toString()}`,
+  )
+}
