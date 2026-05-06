@@ -158,7 +158,8 @@ AI Recommendation History backend 1차 구현 상태:
 - mock mode POST `/runs`는 저장하지 않고 `run=null`, `meta.saved=false` 반환
 - `recommendation_json`에는 정규화된 recommendation object만 저장
 - raw prompt 전체, raw OpenAI response 전체, API key는 저장하지 않음
-- frontend history 상세/비교 UI는 아직 미구현
+- frontend history 상세 UI는 1차 연결 완료
+- frontend history 비교 UI는 아직 미구현
 - 선택 반영 기능과 dictionary_candidates 연동은 후속
 
 AI Recommendation frontend 1차 연결 상태:
@@ -174,8 +175,12 @@ AI Recommendation frontend 1차 연결 상태:
 - POST `/runs` 성공 후 history page 1로 refresh
 - history 목록은 `data.items`, `data.pagination` 기준으로 표시
 - history 목록에는 run id, model, prompt_version, status, applied_status, created_at 표시
+- `fetchAiRecommendationHistoryDetail(runId)` 추가
+- history 목록에서 상세 보기 가능
+- history 상세 recommendation은 기존 현재 추천 결과 JSX와 독립된 별도 JSX로 표시
+- 공고 선택 변경, history page 이동, POST `/runs` refresh 시 상세 상태 초기화
 - backend 수정 없음
-- history 상세 UI, history 비교 UI, 선택 반영 UI, `applied_status` 관리는 후속
+- history 비교 UI, 선택 반영 UI, `applied_status` 관리는 후속
 
 ## 현재 정책 기준
 
@@ -359,7 +364,8 @@ http://127.0.0.1:8000/docs
    - 상세 기준은 `docs/current/11_ai_recommendation_history_plan.md`를 따른다.
    - frontend API client와 `App.jsx`는 POST `/runs`로 1차 연결되었다.
    - history 목록 UI 1차 연결은 완료되었다.
-   - 다음 단계에서는 history 상세 UI와 비교 UI를 설계/구현한다.
+   - history 상세 UI 1차 연결은 완료되었다.
+   - 다음 단계에서는 history 비교 UI를 설계/구현한다.
    - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
    - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.

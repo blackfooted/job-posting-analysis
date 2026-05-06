@@ -54,7 +54,7 @@
 - `ai_recommendation_runs` 테이블 또는 동등한 저장 구조 구현
 - 추천 실행 결과 저장
 - 공고별 추천 이력 조회 API
-- frontend 이력 조회 UI는 후속 검토
+- frontend history 목록/상세 조회 UI 1차 연결 완료
 
 ### Phase AI-4 — 저장된 추천 결과의 선택 반영 검토
 
@@ -280,7 +280,10 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 공고 선택 시 history page를 1로 초기화한 뒤 조회한다.
 - POST `/runs` 성공 후 history page를 1로 초기화하고 refresh한다.
 - history 목록에는 run metadata만 표시하며 recommendation JSON 전체는 표시하지 않는다.
-- history 상세/비교/선택 반영 UI는 후속 작업으로 둔다.
+- history 목록에서 `상세 보기`를 선택하면 `GET /api/ai-recommendations/history/{run_id}`로 저장된 추천 이력 상세를 조회한다.
+- history 상세 화면은 run metadata, source, 저장된 recommendation을 현재 추천 결과 영역과 별도 섹션으로 표시한다.
+- 기존 현재 recommendation 표시 JSX는 유지하고, history 상세 recommendation은 독립된 JSX 블록으로 표시한다.
+- history 비교/선택 반영 UI와 `applied_status` 변경은 후속 작업으로 둔다.
 
 ## Phase AI-1B endpoint 정책
 

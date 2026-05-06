@@ -42,3 +42,7 @@ export function fetchAiRecommendationHistory(
     `/api/ai-recommendations/postings/${postingId}/history?${searchParams.toString()}`,
   )
 }
+
+export function fetchAiRecommendationHistoryDetail(runId) {
+  return requestAiRecommendations(`/api/ai-recommendations/history/${runId}`)
+}

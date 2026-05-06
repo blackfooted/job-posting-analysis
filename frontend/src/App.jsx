@@ -8,6 +8,7 @@ import {
 import {
   createAiRecommendationRun,
   fetchAiRecommendationHistory,
+  fetchAiRecommendationHistoryDetail,
 } from './api/aiRecommendationsApi'
 import {
   createPosting,
@@ -121,6 +122,22 @@ function App() {
     total: 0,
     total_pages: 0,
   })
+  const [
+    aiRecommendationHistoryDetail,
+    setAiRecommendationHistoryDetail,
+  ] = useState(null)
+  const [
+    aiRecommendationHistoryDetailLoading,
+    setAiRecommendationHistoryDetailLoading,
+  ] = useState(false)
+  const [
+    aiRecommendationHistoryDetailError,
+    setAiRecommendationHistoryDetailError,
+  ] = useState('')
+  const [
+    selectedAiRecommendationHistoryRunId,
+    setSelectedAiRecommendationHistoryRunId,
+  ] = useState(null)
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -860,6 +877,13 @@ function App() {
     })
   }
 
+  function resetAiRecommendationHistoryDetail() {
+    setAiRecommendationHistoryDetail(null)
+    setAiRecommendationHistoryDetailError('')
+    setAiRecommendationHistoryDetailLoading(false)
+    setSelectedAiRecommendationHistoryRunId(null)
+  }
+
   async function fetchSelectedAiRecommendationHistory(postingId, page = 1) {
     if (!postingId) {
       resetAiRecommendationHistory()
@@ -914,6 +938,39 @@ function App() {
     }
   }
 
+  async function fetchSelectedAiRecommendationHistoryDetail(runId) {
+    if (!runId) {
+      resetAiRecommendationHistoryDetail()
+      return
+    }
+
+    setSelectedAiRecommendationHistoryRunId(runId)
+    setAiRecommendationHistoryDetailLoading(true)
+    setAiRecommendationHistoryDetailError('')
+
+    try {
+      const result = await fetchAiRecommendationHistoryDetail(runId)
+
+      if (result.error) {
+        setAiRecommendationHistoryDetail(null)
+        setAiRecommendationHistoryDetailError(
+          result.error.message ||
+            'AI 추천 이력 상세를 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setAiRecommendationHistoryDetail(result.data || null)
+    } catch (requestError) {
+      setAiRecommendationHistoryDetail(null)
+      setAiRecommendationHistoryDetailError(
+        requestError.message || 'AI 추천 이력 상세를 불러오지 못했습니다.',
+      )
+    } finally {
+      setAiRecommendationHistoryDetailLoading(false)
+    }
+  }
+
   function handleAiPostingChange(event) {
     const postingId = event.target.value
     setSelectedAiPostingId(postingId)
@@ -921,6 +978,7 @@ function App() {
     setAiRecommendationError('')
     setAiRecommendationLoading(false)
     resetAiRecommendationHistory()
+    resetAiRecommendationHistoryDetail()
 
     if (postingId) {
       fetchSelectedAiRecommendationHistory(postingId, 1)
@@ -947,6 +1005,7 @@ function App() {
       }
 
       setAiRecommendation(result.data || null)
+      resetAiRecommendationHistoryDetail()
       await fetchSelectedAiRecommendationHistory(selectedAiPostingId, 1)
     } catch (requestError) {
       setAiRecommendation(null)
@@ -963,6 +1022,7 @@ function App() {
       return
     }
 
+    resetAiRecommendationHistoryDetail()
     fetchSelectedAiRecommendationHistory(selectedAiPostingId, page)
   }
 
@@ -1519,7 +1579,18 @@ function App() {
                 pagination={aiRecommendationHistoryPagination}
                 isLoading={aiRecommendationHistoryLoading}
                 error={aiRecommendationHistoryError}
+                selectedRunId={selectedAiRecommendationHistoryRunId}
+                isDetailLoading={aiRecommendationHistoryDetailLoading}
                 onPageChange={handleAiRecommendationHistoryPageChange}
+                onDetailClick={fetchSelectedAiRecommendationHistoryDetail}
+              />
+            )}
+
+            {selectedAiPostingId && (
+              <AiRecommendationHistoryDetail
+                detail={aiRecommendationHistoryDetail}
+                isLoading={aiRecommendationHistoryDetailLoading}
+                error={aiRecommendationHistoryDetailError}
               />
             )}
 
@@ -1773,7 +1844,10 @@ function AiRecommendationHistoryList({
   pagination = {},
   isLoading = false,
   error = '',
+  selectedRunId = null,
+  isDetailLoading = false,
   onPageChange,
+  onDetailClick,
 }) {
   const currentPage = pagination?.page || 1
   const totalPages = pagination?.total_pages || 0
@@ -1812,11 +1886,19 @@ function AiRecommendationHistoryList({
                 <th>status</th>
                 <th>applied_status</th>
                 <th>created_at</th>
+                <th>상세</th>
               </tr>
             </thead>
             <tbody>
               {items.map((run) => (
-                <tr key={run.id}>
+                <tr
+                  key={run.id}
+                  className={
+                    selectedRunId === run.id
+                      ? 'ai-recommendation-history-row-selected'
+                      : undefined
+                  }
+                >
                   <td>{formatValue(run.id)}</td>
                   <td>{formatValue(run.model)}</td>
                   <td>{formatValue(run.prompt_version)}</td>
@@ -1831,6 +1913,18 @@ function AiRecommendationHistoryList({
                     </span>
                   </td>
                   <td>{formatValue(run.created_at)}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="ai-recommendation-history-detail-button"
+                      onClick={() => onDetailClick(run.id)}
+                      disabled={isDetailLoading && selectedRunId === run.id}
+                    >
+                      {isDetailLoading && selectedRunId === run.id
+                        ? '조회 중'
+                        : '상세 보기'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1857,6 +1951,261 @@ function AiRecommendationHistoryList({
           다음
         </button>
       </div>
+    </section>
+  )
+}
+
+function AiRecommendationHistoryDetail({
+  detail = null,
+  isLoading = false,
+  error = '',
+}) {
+  const run = detail?.run || null
+  const source = detail?.source || {}
+  const recommendation = detail?.recommendation || {}
+  const skills = recommendation.skills || []
+  const competencies = recommendation.competencies || []
+  const reviewItemCandidates = recommendation.review_item_candidates || []
+
+  return (
+    <section className="ai-recommendation-history-detail">
+      <h2>저장된 추천 이력 상세</h2>
+
+      {isLoading && <p>AI 추천 이력 상세를 불러오는 중입니다.</p>}
+
+      {!isLoading && error && <p className="error">{error}</p>}
+
+      {!isLoading && !error && !detail && (
+        <p className="ai-recommendation-history-detail-empty">
+          상세를 확인할 추천 이력을 선택하세요.
+        </p>
+      )}
+
+      {!isLoading && !error && detail && (
+        <>
+          <div className="ai-recommendation-history-detail-meta">
+            <dl className="ai-meta-list">
+              <div>
+                <dt>run_id</dt>
+                <dd>{formatValue(run?.id)}</dd>
+              </div>
+              <div>
+                <dt>created_at</dt>
+                <dd>{formatValue(run?.created_at)}</dd>
+              </div>
+              <div>
+                <dt>mode</dt>
+                <dd>{formatValue(run?.mode)}</dd>
+              </div>
+              <div>
+                <dt>model</dt>
+                <dd>{formatValue(run?.model)}</dd>
+              </div>
+              <div>
+                <dt>prompt_version</dt>
+                <dd>{formatValue(run?.prompt_version)}</dd>
+              </div>
+              <div>
+                <dt>status</dt>
+                <dd>{formatValue(run?.status)}</dd>
+              </div>
+              <div>
+                <dt>applied_status</dt>
+                <dd>{formatValue(run?.applied_status)}</dd>
+              </div>
+              <div>
+                <dt>source company</dt>
+                <dd>{formatValue(source?.company)}</dd>
+              </div>
+              <div>
+                <dt>source position</dt>
+                <dd>{formatValue(source?.position)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="ai-recommendation-history-detail-card-grid">
+            <article className="ai-recommendation-history-detail-card">
+              <h3>industry_category</h3>
+              <dl className="ai-recommendation-detail-list">
+                <div>
+                  <dt>value</dt>
+                  <dd>
+                    {formatValue(recommendation.industry_category?.value)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>confidence</dt>
+                  <dd>
+                    {formatValue(
+                      recommendation.industry_category?.confidence,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>reason</dt>
+                  <dd>
+                    {formatValue(recommendation.industry_category?.reason)}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="ai-recommendation-history-detail-card">
+              <h3>primary_domain_category</h3>
+              <dl className="ai-recommendation-detail-list">
+                <div>
+                  <dt>value</dt>
+                  <dd>
+                    {formatValue(
+                      recommendation.primary_domain_category?.value,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>confidence</dt>
+                  <dd>
+                    {formatValue(
+                      recommendation.primary_domain_category?.confidence,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>reason</dt>
+                  <dd>
+                    {formatValue(
+                      recommendation.primary_domain_category?.reason,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="ai-recommendation-history-detail-card">
+              <h3>position_category</h3>
+              <dl className="ai-recommendation-detail-list">
+                <div>
+                  <dt>value</dt>
+                  <dd>
+                    {formatValue(recommendation.position_category?.value)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>confidence</dt>
+                  <dd>
+                    {formatValue(
+                      recommendation.position_category?.confidence,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>reason</dt>
+                  <dd>
+                    {formatValue(recommendation.position_category?.reason)}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+
+          <section className="ai-recommendation-history-detail-list">
+            <h3>skills</h3>
+            {skills.length === 0 ? (
+              <p>No recommendation</p>
+            ) : (
+              <div className="ai-recommendation-history-detail-item-list">
+                {skills.map((item, index) => (
+                  <article
+                    className="ai-recommendation-history-detail-card"
+                    key={`history-skill-${item.value || index}`}
+                  >
+                    <h4>{formatValue(item.value)}</h4>
+                    <dl className="ai-recommendation-detail-list">
+                      <div>
+                        <dt>confidence</dt>
+                        <dd>{formatValue(item.confidence)}</dd>
+                      </div>
+                      <div>
+                        <dt>reason</dt>
+                        <dd>{formatValue(item.reason)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="ai-recommendation-history-detail-list">
+            <h3>competencies</h3>
+            {competencies.length === 0 ? (
+              <p>No recommendation</p>
+            ) : (
+              <div className="ai-recommendation-history-detail-item-list">
+                {competencies.map((item, index) => (
+                  <article
+                    className="ai-recommendation-history-detail-card"
+                    key={`history-competency-${item.value || index}`}
+                  >
+                    <h4>{formatValue(item.value)}</h4>
+                    <dl className="ai-recommendation-detail-list">
+                      <div>
+                        <dt>confidence</dt>
+                        <dd>{formatValue(item.confidence)}</dd>
+                      </div>
+                      <div>
+                        <dt>reason</dt>
+                        <dd>{formatValue(item.reason)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="ai-recommendation-history-detail-list">
+            <h3>review_item_candidates</h3>
+            {reviewItemCandidates.length === 0 ? (
+              <p>No candidates</p>
+            ) : (
+              <div className="ai-recommendation-history-detail-item-list">
+                {reviewItemCandidates.map((item, index) => (
+                  <article
+                    className="ai-recommendation-history-detail-card"
+                    key={`history-review-candidate-${
+                      item.raw_value || index
+                    }`}
+                  >
+                    <dl className="ai-recommendation-detail-list">
+                      <div>
+                        <dt>field_type</dt>
+                        <dd>{formatValue(item.field_type)}</dd>
+                      </div>
+                      <div>
+                        <dt>raw_value</dt>
+                        <dd>{formatValue(item.raw_value)}</dd>
+                      </div>
+                      <div>
+                        <dt>suggested_value</dt>
+                        <dd>{formatValue(item.suggested_value)}</dd>
+                      </div>
+                      <div>
+                        <dt>confidence</dt>
+                        <dd>{formatValue(item.confidence)}</dd>
+                      </div>
+                      <div>
+                        <dt>reason</dt>
+                        <dd>{formatValue(item.reason)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </section>
   )
 }

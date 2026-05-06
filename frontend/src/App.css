@@ -719,6 +719,7 @@ button { font-family: inherit; }
 .ai-recommendation-run-meta,
 .ai-recommendation-meta,
 .ai-recommendation-history,
+.ai-recommendation-history-detail,
 .ai-recommendation-list {
   margin-top: 18px;
   background: var(--gray-0);
@@ -802,6 +803,7 @@ button { font-family: inherit; }
 .ai-recommendation-run-meta h2,
 .ai-recommendation-meta h2,
 .ai-recommendation-history h2,
+.ai-recommendation-history-detail h2,
 .ai-recommendation-list h2 {
   color: var(--gray-700);
   font-size: 15px;
@@ -892,6 +894,10 @@ button { font-family: inherit; }
   font-weight: 800;
 }
 
+.ai-recommendation-history-row-selected {
+  background: var(--brand-50);
+}
+
 .ai-recommendation-status-badge,
 .ai-recommendation-applied-status-badge {
   background: var(--gray-100);
@@ -902,6 +908,28 @@ button { font-family: inherit; }
   font-weight: 700;
   line-height: 1;
   padding: 5px 8px;
+}
+
+.ai-recommendation-history-detail-button {
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.ai-recommendation-history-detail-button:hover:not(:disabled) {
+  background: var(--brand-100);
+}
+
+.ai-recommendation-history-detail-button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
 }
 
 .ai-recommendation-history-pagination {
@@ -933,6 +961,42 @@ button { font-family: inherit; }
   color: var(--gray-500);
   font-size: 13px;
   font-weight: 700;
+}
+
+.ai-recommendation-history-detail-empty {
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+.ai-recommendation-history-detail-meta {
+  margin-top: 12px;
+}
+
+.ai-recommendation-history-detail-card-grid,
+.ai-recommendation-history-detail-item-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ai-recommendation-history-detail-card {
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.ai-recommendation-history-detail-card h3,
+.ai-recommendation-history-detail-card h4,
+.ai-recommendation-history-detail-list h3 {
+  color: var(--gray-700);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.ai-recommendation-history-detail-list {
+  margin-top: 18px;
 }
 
 .ai-recommendation-card-grid,

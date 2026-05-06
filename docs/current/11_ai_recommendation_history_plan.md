@@ -39,7 +39,7 @@ AI Recommendation History backend 1차 구현 상태:
 - `GET /api/ai-recommendations/postings/{posting_id}/history` 추가
 - `GET /api/ai-recommendations/history/{run_id}` 추가
 - 기존 `GET /api/ai-recommendations/postings/{posting_id}`는 저장 없이 호환 유지
-- frontend는 후속 단계 유지
+- frontend는 POST `/runs`, history 목록, history 상세 조회까지 1차 연결 완료
 
 ## 3. 문제 정의
 
@@ -275,7 +275,10 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - history 목록에는 run metadata만 표시하고 recommendation JSON 전체는 표시하지 않는다.
 - 공고 선택 시 history page 1로 초기화 후 목록을 조회한다.
 - POST `/runs` 성공 후 history page 1로 refresh한다.
-- 상세 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
+- history 목록에서 `상세 보기`를 선택하면 `GET /api/ai-recommendations/history/{run_id}`로 상세를 조회한다.
+- history 상세는 run metadata, source, 저장된 recommendation을 표시한다.
+- history 상세 recommendation은 현재 추천 결과 영역과 별도 상세 영역으로 표시한다.
+- 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
 - 기존 GET endpoint는 호환 유지한다.
 
 초기 UI 후보:
@@ -349,7 +352,7 @@ ai-recommendation-v1
 - openai mode 성공 결과 저장
 - 공고별 추천 이력 조회 API 구현
 - run 상세 조회 API 구현
-- frontend 이력 조회 UI 검토
+- frontend history 목록/상세 조회 UI 1차 연결 완료
 
 ### Phase AI-4 — 선택 반영 설계 및 구현 검토
 
