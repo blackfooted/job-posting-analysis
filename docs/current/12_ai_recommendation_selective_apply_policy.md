@@ -41,7 +41,7 @@
 - industry/domain/position은 1차 선택 반영 대상에서 제외한다.
 - 기존 `review_items`와 중복되는 항목은 신규 생성하지 않는다.
 - `removed` 상태 또는 `removed` 이력은 되살리지 않는다.
-- 선택 반영 결과는 `ai_recommendation_runs.applied_status`와 후속 `applied_items_json`으로 추적한다.
+- 선택 반영 결과는 `ai_recommendation_runs.applied_status`와 `applied_items_json`으로 추적한다.
 
 ## 4. 1차 반영 대상
 
@@ -237,14 +237,14 @@ ai_recommendation_runs.applied_items_json TEXT
 정책:
 
 - 선택 반영 API 구현 전 추적 기반은 마련되었다.
-- 실제 write 로직은 후속 선택 반영 backend API에서 구현한다.
+- 실제 write 로직은 backend 선택 반영 API에서 구현되었다.
 - 별도 매핑 테이블은 다중 사용자/감사 로그가 필요할 때 후속 검토한다.
 
-## 11. 선택 반영 API 초안
+## 11. 선택 반영 API 1차 구현 상태
 
-이번 문서에서는 구현하지 않고 API 초안만 둔다.
+backend 1차 구현을 완료했다.
 
-후속 후보:
+구현 API:
 
 ```text
 POST /api/ai-recommendations/history/{run_id}/apply
@@ -302,11 +302,15 @@ POST /api/ai-recommendations/history/{run_id}/apply
 - `run_id`가 없으면 `AI_RECOMMENDATION_RUN_NOT_FOUND`
 - run의 `recommendation_json`에서 `source_path`가 유효한지 검증
 - 요청 item과 저장된 recommendation item이 일치하는지 검증
-- 허용 `field_type`은 `skill`/`competency` 우선
+- 허용 `field_type`은 `skill`/`competency`
 - industry/domain/position은 1차 구현에서 거부
+- 신규 항목은 `review_items`에 `status=confirmed`, `dictionary_apply=0`으로 생성
+- 기존 `unconfirmed` 중복은 `approved_value`를 채우고 `confirmed`로 갱신
+- 기존 `confirmed` 중복은 신규 생성하지 않고 reused/skipped 결과로 기록
 - `removed` 이력은 1차 구현에서 skipped 처리
 - 처리 결과는 `applied_items_json`에 저장
-- `applied_status`를 갱신
+- 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신
+- frontend 선택 반영 UI는 후속
 
 ## 12. frontend 선택 반영 UI 초안
 

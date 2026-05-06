@@ -256,7 +256,7 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
 - 저장과 선택 반영의 책임을 분리한다.
 - Phase AI-4 준비 작업으로 선택 반영 결과 추적용 `applied_items_json` 컬럼을 추가했다.
-- `applied_status` 갱신과 `applied_items_json` write는 후속 선택 반영 backend API 구현 단계에서 처리한다.
+- Phase AI-4 backend 1차 구현에서 `applied_status` 부분 갱신과 `applied_items_json` write를 처리한다.
 
 ### History backend 1차 구현 상태
 
@@ -272,8 +272,8 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - API key, raw prompt 전체, raw OpenAI response 전체, API 응답 전체 data/meta는 저장하지 않는다.
 - 저장된 추천 결과도 자동 확정하지 않는다.
 - 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
-- `applied_items_json` 컬럼은 존재하지만 아직 선택 반영 API/UI는 구현하지 않았다.
-- 선택 반영은 후속 Phase AI-4에서 검토한다.
+- `applied_items_json` 컬럼과 선택 반영 backend API는 구현되었다.
+- frontend 선택 반영 UI는 후속 Phase AI-4 작업으로 둔다.
 
 ### History frontend 1차 연결 상태
 
@@ -307,7 +307,15 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 기존 `unconfirmed`는 AI 추천 생성만으로 자동 `confirmed` 처리하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신을 검토한다.
 - 기존 `removed` 이력은 되살리지 않는다.
 - `applied_items_json`은 선택 반영 결과 추적용 컬럼으로 추가했다.
-- 아직 선택 반영 API/UI는 미구현이며, `applied_status` 갱신과 `applied_items_json` write는 후속 backend API 구현 단계에서 처리한다.
+- Phase AI-4 backend 1차 구현으로 `POST /api/ai-recommendations/history/{run_id}/apply`를 추가했다.
+- 선택 반영 API는 `skill`/`competency` 항목만 `review_items`에 반영한다.
+- 기존 `confirmed` 중복은 새로 생성하지 않고 skipped/reused 결과로 기록한다.
+- 기존 `unconfirmed` 중복은 사용자 선택 반영으로 보고 `approved_value`를 채운 뒤 `confirmed`로 갱신한다.
+- 기존 `removed` 이력은 되살리지 않고 `skipped_removed_history`로 기록한다.
+- 신규 항목은 `status=confirmed`, `dictionary_apply=0`인 `review_items`로 생성한다.
+- 처리 결과는 `applied_items_json`에 append 저장한다.
+- 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신한다.
+- frontend 선택 반영 UI는 후속이다.
 - `dictionary_candidates` 연동은 `review_items` 선택 반영 이후 별도 phase에서 검토한다.
 
 ## Phase AI-1B endpoint 정책

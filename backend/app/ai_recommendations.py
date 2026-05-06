@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 from fastapi.responses import JSONResponse
 
 from backend.app.database import get_connection, initialize_database
@@ -26,6 +27,10 @@ REVIEW_ITEM_FIELD_TYPES = {
     "skill",
     "competency",
 }
+AI_RECOMMENDATION_APPLY_FIELD_TYPES = {"skill", "competency"}
+AI_RECOMMENDATION_APPLY_SOURCE_PATH_PATTERN = re.compile(
+    r"^(skills|competencies|review_item_candidates)\[(\d+)\]$"
+)
 POSTING_PROMPT_FIELDS = (
     "company",
     "position",
@@ -435,6 +440,103 @@ def get_ai_recommendation_history_run(run_id: int) -> Any:
     )
 
 
+@router.post("/history/{run_id}/apply", response_model=None)
+def apply_ai_recommendation_history_run(
+    run_id: int,
+    payload: dict[str, Any] | None = Body(default=None),
+) -> Any:
+    initialize_database()
+    items = payload.get("items") if isinstance(payload, dict) else None
+    if not isinstance(items, list) or len(items) == 0:
+        return _invalid_apply_request_response()
+
+    connection = _connection()
+    try:
+        try:
+            row = _fetch_ai_recommendation_run(connection, run_id)
+            if row is None:
+                return JSONResponse(
+                    status_code=404,
+                    content=_error_response(
+                        "AI_RECOMMENDATION_RUN_NOT_FOUND",
+                        "AI 추천 이력을 찾을 수 없습니다.",
+                    ),
+                )
+
+            recommendation = _deserialize_recommendation_json(
+                row["recommendation_json"],
+            )
+            apply_targets = _build_apply_targets(
+                recommendation=recommendation,
+                request_items=items,
+            )
+        except AIRecommendationParseError:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RESPONSE_PARSE_FAILED",
+                    "AI 추천 이력 JSON을 해석할 수 없습니다.",
+                ),
+            )
+        except ValueError:
+            return _invalid_apply_request_response()
+
+        try:
+            applied_items, skipped_items = _apply_recommendation_targets(
+                connection=connection,
+                posting_id=row["posting_id"],
+                targets=apply_targets,
+            )
+            all_results = [*applied_items, *skipped_items]
+            applied_status = row["applied_status"]
+            if applied_items and applied_status != "applied":
+                applied_status = "partially_applied"
+
+            applied_items_json = json.dumps(
+                [
+                    *_deserialize_applied_items_json(
+                        row["applied_items_json"],
+                    ),
+                    *all_results,
+                ],
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            connection.execute(
+                """
+                UPDATE ai_recommendation_runs
+                SET applied_status = ?,
+                    applied_items_json = ?
+                WHERE id = ?
+                """,
+                (applied_status, applied_items_json, run_id),
+            )
+            connection.commit()
+        except sqlite3.Error:
+            connection.rollback()
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RECOMMENDATION_APPLY_FAILED",
+                    "AI 추천 선택 반영 중 오류가 발생했습니다.",
+                ),
+            )
+    finally:
+        connection.close()
+
+    return _success(
+        {
+            "run": {
+                "id": row["id"],
+                "posting_id": row["posting_id"],
+                "applied_status": applied_status,
+            },
+            "applied_items": applied_items,
+            "skipped_items": skipped_items,
+        }
+    )
+
+
 def _connection() -> sqlite3.Connection:
     connection = get_connection()
     connection.row_factory = sqlite3.Row
@@ -621,6 +723,337 @@ def _deserialize_recommendation_json(value: Any) -> dict[str, Any]:
         raise AIRecommendationParseError()
 
     return _normalize_recommendation_response({"recommendation": parsed})
+
+
+def _invalid_apply_request_response() -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content=_error_response(
+            "AI_RECOMMENDATION_APPLY_INVALID_REQUEST",
+            "선택 반영 요청이 올바르지 않습니다.",
+        ),
+    )
+
+
+def _build_apply_targets(
+    *,
+    recommendation: dict[str, Any],
+    request_items: list[Any],
+) -> list[dict[str, Any]]:
+    targets = []
+    for request_item in request_items:
+        if not isinstance(request_item, dict):
+            raise ValueError("Invalid apply request item.")
+
+        source_path = request_item.get("source_path")
+        requested_field_type = request_item.get("field_type")
+        if (
+            not isinstance(source_path, str)
+            or requested_field_type not in AI_RECOMMENDATION_APPLY_FIELD_TYPES
+        ):
+            raise ValueError("Invalid apply request item.")
+
+        source_group, source_index, stored_item = _resolve_apply_source_item(
+            recommendation,
+            source_path,
+        )
+        target = _build_apply_target_from_source(
+            source_path=source_path,
+            source_group=source_group,
+            source_index=source_index,
+            stored_item=stored_item,
+        )
+        if target["field_type"] != requested_field_type:
+            raise ValueError("Requested field_type does not match source item.")
+        if not _request_value_matches_source(request_item, target):
+            raise ValueError("Requested item values do not match source item.")
+
+        targets.append(target)
+
+    return targets
+
+
+def _resolve_apply_source_item(
+    recommendation: dict[str, Any],
+    source_path: str,
+) -> tuple[str, int, dict[str, Any]]:
+    match = AI_RECOMMENDATION_APPLY_SOURCE_PATH_PATTERN.match(source_path)
+    if match is None:
+        raise ValueError("Invalid source_path.")
+
+    source_group = match.group(1)
+    source_index = int(match.group(2))
+    source_items = recommendation.get(source_group)
+    if not isinstance(source_items, list) or source_index >= len(source_items):
+        raise ValueError("Invalid source_path index.")
+
+    stored_item = source_items[source_index]
+    if not isinstance(stored_item, dict):
+        raise ValueError("Invalid source item.")
+
+    return source_group, source_index, stored_item
+
+
+def _build_apply_target_from_source(
+    *,
+    source_path: str,
+    source_group: str,
+    source_index: int,
+    stored_item: dict[str, Any],
+) -> dict[str, Any]:
+    if source_group == "skills":
+        field_type = "skill"
+        raw_value = _clean_apply_value(stored_item.get("value"))
+        approved_value = raw_value
+    elif source_group == "competencies":
+        field_type = "competency"
+        raw_value = _clean_apply_value(stored_item.get("value"))
+        approved_value = raw_value
+    else:
+        field_type = stored_item.get("field_type")
+        if field_type not in AI_RECOMMENDATION_APPLY_FIELD_TYPES:
+            raise ValueError("Unsupported review item candidate field_type.")
+        raw_value = _clean_apply_value(
+            stored_item.get("raw_value") or stored_item.get("suggested_value")
+        )
+        approved_value = _clean_apply_value(
+            stored_item.get("suggested_value") or stored_item.get("raw_value")
+        )
+
+    return {
+        "source_path": source_path,
+        "source_group": source_group,
+        "source_index": source_index,
+        "field_type": field_type,
+        "raw_value": raw_value,
+        "suggested_value": approved_value,
+    }
+
+
+def _request_value_matches_source(
+    request_item: dict[str, Any],
+    target: dict[str, Any],
+) -> bool:
+    comparable_values = {
+        _normalize_review_item_raw_value(target.get("raw_value")),
+        _normalize_review_item_raw_value(target.get("suggested_value")),
+    }
+    comparable_values.discard("")
+
+    for key in ("raw_value", "suggested_value"):
+        request_value = _clean_apply_value(request_item.get(key))
+        if not request_value:
+            continue
+        if _normalize_review_item_raw_value(request_value) not in comparable_values:
+            return False
+    return True
+
+
+def _apply_recommendation_targets(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    targets: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    applied_items = []
+    skipped_items = []
+
+    for target in targets:
+        result = _apply_single_recommendation_target(
+            connection=connection,
+            posting_id=posting_id,
+            target=target,
+        )
+        if result["result"] == "applied":
+            applied_items.append(result)
+        else:
+            skipped_items.append(result)
+
+    return applied_items, skipped_items
+
+
+def _apply_single_recommendation_target(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    target: dict[str, Any],
+) -> dict[str, Any]:
+    base_result = _build_apply_result_base(target)
+    raw_value = target["raw_value"]
+    approved_value = target["suggested_value"]
+
+    if not raw_value or not approved_value:
+        return {
+            **base_result,
+            "action": "skipped_empty_value",
+            "review_item_id": None,
+            "result": "skipped",
+            "reason": "반영할 값이 비어 있어 처리하지 않았습니다.",
+        }
+
+    existing_rows = _fetch_matching_review_items(
+        connection=connection,
+        posting_id=posting_id,
+        field_type=target["field_type"],
+        raw_value=raw_value,
+    )
+    confirmed_row = _find_review_item_by_status(existing_rows, "confirmed")
+    if confirmed_row is not None:
+        return {
+            **base_result,
+            "action": "existing_confirmed_reused",
+            "review_item_id": confirmed_row["id"],
+            "result": "skipped",
+            "reason": "이미 confirmed 상태의 정제 항목이 있어 새로 생성하지 않았습니다.",
+        }
+
+    unconfirmed_row = _find_review_item_by_status(existing_rows, "unconfirmed")
+    if unconfirmed_row is not None:
+        connection.execute(
+            """
+            UPDATE review_items
+            SET approved_value = ?,
+                status = 'confirmed',
+                updated_at = datetime('now', '+9 hours')
+            WHERE id = ?
+            """,
+            (approved_value, unconfirmed_row["id"]),
+        )
+        return {
+            **base_result,
+            "action": "updated_existing_review_item",
+            "review_item_id": unconfirmed_row["id"],
+            "result": "applied",
+        }
+
+    removed_row = _find_review_item_by_status(existing_rows, "removed")
+    if removed_row is None:
+        removed_row = _fetch_removed_review_item_history(
+            connection=connection,
+            field_type=target["field_type"],
+            raw_value=raw_value,
+        )
+    if removed_row is not None:
+        return {
+            **base_result,
+            "action": "skipped_removed_history",
+            "review_item_id": removed_row["id"],
+            "result": "skipped",
+            "reason": "removed 이력이 있어 반영하지 않았습니다.",
+        }
+
+    cursor = connection.execute(
+        """
+        INSERT INTO review_items (
+          posting_id,
+          field_type,
+          raw_value,
+          approved_value,
+          status,
+          dictionary_apply
+        )
+        VALUES (?, ?, ?, ?, 'confirmed', 0)
+        """,
+        (posting_id, target["field_type"], raw_value, approved_value),
+    )
+    return {
+        **base_result,
+        "action": "created_review_item",
+        "review_item_id": cursor.lastrowid,
+        "result": "applied",
+    }
+
+
+def _build_apply_result_base(target: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "source_path": target["source_path"],
+        "field_type": target["field_type"],
+        "raw_value": target["raw_value"],
+        "suggested_value": target["suggested_value"],
+    }
+
+
+def _fetch_matching_review_items(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    field_type: str,
+    raw_value: str,
+) -> list[sqlite3.Row]:
+    normalized_raw_value = _normalize_review_item_raw_value(raw_value)
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM review_items
+        WHERE posting_id = ?
+          AND field_type = ?
+        """,
+        (posting_id, field_type),
+    ).fetchall()
+    return [
+        row
+        for row in rows
+        if _normalize_review_item_raw_value(row["raw_value"]) == normalized_raw_value
+    ]
+
+
+def _fetch_removed_review_item_history(
+    *,
+    connection: sqlite3.Connection,
+    field_type: str,
+    raw_value: str,
+) -> sqlite3.Row | None:
+    normalized_raw_value = _normalize_review_item_raw_value(raw_value)
+    rows = connection.execute(
+        """
+        SELECT review_items.*
+        FROM review_items AS review_items
+        INNER JOIN postings AS postings
+          ON postings.id = review_items.posting_id
+        WHERE review_items.field_type = ?
+          AND review_items.status = 'removed'
+          AND postings.is_deleted = 0
+        """,
+        (field_type,),
+    ).fetchall()
+
+    for row in rows:
+        if _normalize_review_item_raw_value(row["raw_value"]) == normalized_raw_value:
+            return row
+    return None
+
+
+def _find_review_item_by_status(
+    rows: list[sqlite3.Row],
+    status: str,
+) -> sqlite3.Row | None:
+    for row in rows:
+        if row["status"] == status:
+            return row
+    return None
+
+
+def _deserialize_applied_items_json(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, str) or not value.strip():
+        return []
+
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(parsed, list):
+        return []
+
+    return [item for item in parsed if isinstance(item, dict)]
+
+
+def _normalize_review_item_raw_value(value: Any) -> str:
+    return "".join(str(value or "").split())
+
+
+def _clean_apply_value(value: Any) -> str:
+    return "" if value is None else str(value).strip()
 
 
 def _build_ai_prompt(posting: dict[str, Any]) -> str:

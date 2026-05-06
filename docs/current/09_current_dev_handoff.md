@@ -169,7 +169,7 @@ AI Recommendation History backend 1차 구현 상태:
 - `removed` 이력은 존중해 되살리지 않음
 - `ai_recommendation_runs.applied_items_json` 컬럼 추가 완료
 - 신규 DB 생성용 schema와 기존 DB 보강 로직에 모두 반영
-- 선택 반영 API는 아직 미구현
+- 선택 반영 backend API 구현 완료
 
 AI Recommendation frontend 1차 연결 상태:
 
@@ -198,14 +198,18 @@ AI Recommendation frontend 1차 연결 상태:
 AI Recommendation 선택 반영 정책:
 
 - 정책 문서: `docs/current/12_ai_recommendation_selective_apply_policy.md`
+- backend 선택 반영 API 구현 완료: `POST /api/ai-recommendations/history/{run_id}/apply`
 - 1차 선택 반영 위치는 `review_items`이며 `dictionary_candidates`는 후속이다.
 - 1차 반영 field_type은 `skill`/`competency`만 허용한다.
 - industry/domain/position은 현재 `analysis_results.domain_category` 단일값 구조와 dashboard 영향 때문에 1차 반영에서 제외한다.
-- 기존 `unconfirmed`는 AI 추천만으로 자동 확정하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신을 검토한다.
+- 신규 항목은 `review_items`에 `status=confirmed`, `dictionary_apply=0`으로 생성한다.
+- 기존 `unconfirmed`는 AI 추천만으로 자동 확정하지 않고, 사용자가 선택 반영할 때만 `confirmed`로 갱신한다.
+- 기존 `confirmed` 중복은 신규 생성하지 않고 reused/skipped 결과로 기록한다.
 - 기존 `removed` 이력은 존중해 되살리지 않는다.
 - 선택 반영 결과 추적을 위한 `applied_items_json` DB 스키마 보완은 완료되었다.
-- 다음 작업 후보는 선택 반영 backend API 구현이다.
-- 후속 API에서는 `POST /api/ai-recommendations/history/{run_id}/apply`, `review_items` 생성/갱신, `applied_status` 갱신, `applied_items_json` write를 처리한다.
+- 선택 반영 API는 `applied_items_json`에 처리 결과를 append하고, 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신한다.
+- 다음 작업 후보는 frontend 선택 반영 UI 구현이다.
+- history 상세/비교 화면에서 applied result 표시와 반영 상태 표시를 검토한다.
 
 ## 현재 정책 기준
 
@@ -406,12 +410,13 @@ http://127.0.0.1:8000/docs
 2. AI Recommendation 선택 반영
    - 정책 문서 작성은 완료되었다: `docs/current/12_ai_recommendation_selective_apply_policy.md`
    - `applied_items_json` DB 스키마 보완은 완료되었다.
-   - 다음 작업 후보는 선택 반영 backend API 구현이다.
-   - 이후 frontend 선택 반영 UI를 구현한다.
+   - 선택 반영 backend API 구현은 완료되었다.
+   - 다음 작업 후보는 frontend 선택 반영 UI 구현이다.
    - 1차 반영 위치는 `review_items`이며, `dictionary_candidates`는 후속 구조 확정 후 검토한다.
    - industry/domain/position은 1차 반영 대상에서 제외한다.
    - 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신한다.
    - `removed` 이력은 존중해 되살리지 않는다.
+   - history 상세/비교 화면에 반영 상태와 applied result를 표시하는 UI를 검토한다.
 
 3. AI Recommendation 실제 응답 품질 검토 추가
    - 세나, 누아, 슈퍼진, 바티에이아이 결과를 비교한다.
