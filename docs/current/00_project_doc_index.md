@@ -21,6 +21,9 @@ Codex 작업을 시작할 때는 전체 문서를 읽기보다, 작업 범위에
    - classification/config: `05_classification_and_config_spec.md`
    - dashboard: `06_dashboard_spec.md`
    - AI recommendation: `07_ai_recommendation_spec.md`
+   - AI recommendation history: `11_ai_recommendation_history_plan.md`
+   - AI recommendation selective apply: `12_ai_recommendation_selective_apply_policy.md`
+   - AI recommendation quality validation: `13_ai_recommendation_quality_validation.md`
 5. `08_future_roadmap.md`
    - 현재 구현 범위를 넘는 후속 계획 확인용 문서
 
@@ -84,3 +87,6 @@ Codex 작업 지시문에는 아래 항목을 포함한다.
 | 복수 도메인 구조 도입 | `02_architecture_current_state.md`, `03_postings_feature_spec.md`, `05_classification_and_config_spec.md`, `06_dashboard_spec.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
 | 로드맵 변경 | `08_future_roadmap.md`, `09_current_dev_handoff.md` |
 | 문서 우선순위/운영 규칙 변경 | `00_project_doc_index.md` |
+## AI Recommendation 품질 검증 문서
+
+- AI recommendation 품질 검증/평가 변경 시 `13_ai_recommendation_quality_validation.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`를 함께 확인한다.

@@ -517,3 +517,10 @@ http://127.0.0.1:8000/docs
   - 기획 직무에 불필요한 기술 스택
   - 고유명사/기관명
   - 태도/성향 표현
+## AI Recommendation 품질 검증 다음 작업
+
+- 다음 우선순위는 AI 추천 품질 검증이다.
+- 품질 검증 문서: `docs/current/13_ai_recommendation_quality_validation.md`
+- 검증 대상은 기존 4개 공고인 누아, 슈퍼진, 세나, 바티에이아이부터 시작한다.
+- 필요 시 금융/핀테크, 교육/에듀테크, 문맥 의존 표현이 많은 공고 중 2~3개를 추가한다.
+- 후속 순서는 품질 검증 → classification phase 3 → 선택 반영 결과 표시 고도화 → dictionary_candidates 구조 설계다.

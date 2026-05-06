@@ -590,3 +590,13 @@ AI 추천 품질 검증을 다음 우선순위로 둔다.
 - 현재 규칙 기반 평균 매칭률 약 56%를 기준으로 비교한다.
 - 합산 매칭률이 70% 이상으로 상승하면 AI 추천의 실질 기여로 판단한다.
 - 오추출률이 높으면 prompt 개선 또는 후보 필터링을 우선 검토한다.
+## AI Recommendation Quality Validation 문서
+
+- AI 추천 품질 검증 문서: `docs/current/13_ai_recommendation_quality_validation.md`
+- 품질 검증 지표:
+  1. 규칙 기반 단독 매칭률
+  2. AI 추천 단독 매칭률
+  3. 규칙 기반 + AI 추천 합산 매칭률
+  4. AI 추천 오추출률
+- 검증은 기존 4개 공고를 시작점으로 하며, 필요 시 2~3개 공고를 추가한다.
+- 품질 검증 결과는 classification phase 3 개선, 선택 반영 결과 표시 고도화, dictionary_candidates 구조 설계의 우선순위 판단 기준으로 사용한다.
