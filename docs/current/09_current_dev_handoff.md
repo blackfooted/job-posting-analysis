@@ -147,6 +147,20 @@ Phase AI-2 이후는 AI Recommendation History 설계를 우선 검토한다.
 상세 설계 문서는 `docs/current/11_ai_recommendation_history_plan.md`다.
 핵심 정책은 openai mode 성공 결과 저장 우선, 정규화된 recommendation JSON 저장, API key/raw prompt/raw OpenAI response 전체 저장 금지, 저장과 선택 반영 책임 분리다.
 
+AI Recommendation History backend 1차 구현 상태:
+
+- `ai_recommendation_runs` 테이블 추가
+- `POST /api/ai-recommendations/postings/{posting_id}/runs` API 추가
+- `GET /api/ai-recommendations/postings/{posting_id}/history` 목록 API 추가
+- `GET /api/ai-recommendations/history/{run_id}` 상세 API 추가
+- 기존 `GET /api/ai-recommendations/postings/{posting_id}`는 저장 없이 유지
+- POST `/runs`는 openai mode 성공 결과만 저장
+- mock mode POST `/runs`는 저장하지 않고 `run=null`, `meta.saved=false` 반환
+- `recommendation_json`에는 정규화된 recommendation object만 저장
+- raw prompt 전체, raw OpenAI response 전체, API key는 저장하지 않음
+- frontend는 아직 미수정
+- 선택 반영 기능과 dictionary_candidates 연동은 후속
+
 ## 현재 정책 기준
 
 - 산업 = 회사의 주된 제품/수익 모델
@@ -325,9 +339,10 @@ http://127.0.0.1:8000/docs
 ## 다음 Codex 작업
 
 1. AI Recommendation History 설계
-   - AI 추천 결과를 저장하는 히스토리 관리 구조를 설계한다.
+   - AI 추천 결과를 저장하는 히스토리 관리 구조의 backend 1차 구현은 완료되었다.
    - 상세 기준은 `docs/current/11_ai_recommendation_history_plan.md`를 따른다.
-   - 저장 테이블, 필드, API, UI 범위를 정의한다.
+   - 다음 단계에서는 frontend API client와 `App.jsx`를 POST `/runs`로 연결할지 결정한다.
+   - history 목록 UI를 설계/구현한다.
    - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
    - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.
@@ -337,6 +352,7 @@ http://127.0.0.1:8000/docs
    - 기존 GET endpoint는 호환성을 위해 유지하거나 deprecated 처리 검토가 필요하다.
    - frontend 변경 범위를 최소화하려면 GET 유지 + 내부 저장 방식이 빠르지만, 장기적으로는 POST /runs가 더 적절하다.
    - review_items/dictionary_candidates 반영은 history 설계 이후 검토한다.
+   - 선택 반영은 후속 단계로 유지한다.
 
 2. AI Recommendation 실제 응답 품질 검토 추가
    - 세나, 누아, 슈퍼진, 바티에이아이 결과를 비교한다.

@@ -45,15 +45,16 @@
 - `model`, `prompt_version`, `recommendation_json`, `created_at` 저장 범위 정의
 - API key, raw prompt, raw OpenAI response 전체 저장 금지
 - 저장 대상은 openai mode 성공 결과 우선
-- mock 결과 저장 여부는 별도 결정
+- mock mode 결과는 1차 구현에서 저장하지 않음
 - 설계 문서: `docs/current/11_ai_recommendation_history_plan.md`
 
 ### Phase AI-3 — AI 추천 결과 히스토리 저장/조회 구현
 
+- backend 1차 구현 완료
 - `ai_recommendation_runs` 테이블 또는 동등한 저장 구조 구현
 - 추천 실행 결과 저장
 - 공고별 추천 이력 조회 API
-- frontend 이력 조회 UI 검토
+- frontend 이력 조회 UI는 후속 검토
 
 ### Phase AI-4 — 저장된 추천 결과의 선택 반영 검토
 
@@ -250,6 +251,22 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 저장과 선택 반영의 책임을 분리한다.
 - 초기 history 저장 구현에서는 `applied_status`만 두고, 선택 반영 항목 추적용 `applied_items_json`은 후속 반영 기능 단계에서 검토한다.
 
+### History backend 1차 구현 상태
+
+- `ai_recommendation_runs` 테이블을 추가했다.
+- `POST /api/ai-recommendations/postings/{posting_id}/runs`를 추가했다.
+- `GET /api/ai-recommendations/postings/{posting_id}/history`를 추가했다.
+- `GET /api/ai-recommendations/history/{run_id}`를 추가했다.
+- 기존 `GET /api/ai-recommendations/postings/{posting_id}`는 저장 없이 호환 유지한다.
+- POST `/runs`는 추천 실행 + 저장 API다.
+- openai mode 성공 결과만 저장한다.
+- mock mode는 저장하지 않고 `run=null`, `meta.saved=false`를 반환한다.
+- 저장되는 `recommendation_json`은 정규화된 recommendation object만 포함한다.
+- API key, raw prompt 전체, raw OpenAI response 전체, API 응답 전체 data/meta는 저장하지 않는다.
+- 저장된 추천 결과도 자동 확정하지 않는다.
+- 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
+- 선택 반영은 후속 Phase AI-4에서 검토한다.
+
 ## Phase AI-1B endpoint 정책
 
 Phase AI-1B에서도 endpoint는 변경하지 않는다.
@@ -438,6 +455,8 @@ Structured Outputs:
 | `AI_CONFIG_MISSING` | openai mode에서 `OPENAI_API_KEY`가 없음 |
 | `AI_RECOMMENDATION_FAILED` | OpenAI 호출 실패 |
 | `AI_RESPONSE_PARSE_FAILED` | AI 응답 JSON 파싱 또는 최소 구조 검증 실패 |
+| `AI_RECOMMENDATION_RUN_NOT_FOUND` | AI 추천 이력 run이 없음 |
+| `AI_RECOMMENDATION_HISTORY_SAVE_FAILED` | AI 추천 이력 저장 실패 |
 
 기존 공통 응답 포맷을 유지한다.
 

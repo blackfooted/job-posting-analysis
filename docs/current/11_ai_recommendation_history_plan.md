@@ -29,6 +29,18 @@ AI Recommendation Phase AI-1B는 구현 및 사용자 로컬 검증 완료 상�
 - config 수정 없음
 - 추천 결과는 화면 표시용
 
+AI Recommendation History backend 1차 구현 상태:
+
+- `ai_recommendation_runs` 테이블 추가
+- openai mode 성공 결과 저장
+- mock mode 결과는 저장하지 않음
+- 실패 결과 row는 1차 구현에서 생성하지 않음
+- `POST /api/ai-recommendations/postings/{posting_id}/runs` 추가
+- `GET /api/ai-recommendations/postings/{posting_id}/history` 추가
+- `GET /api/ai-recommendations/history/{run_id}` 추가
+- 기존 `GET /api/ai-recommendations/postings/{posting_id}`는 저장 없이 호환 유지
+- frontend는 후속 단계 유지
+
 ## 3. 문제 정의
 
 현재 AI 추천 결과 저장 기능이 없어 아래 문제가 있다.
@@ -53,7 +65,7 @@ AI Recommendation Phase AI-1B는 구현 및 사용자 로컬 검증 완료 상�
 - 저장 대상은 정규화된 recommendation JSON을 우선으로 한다.
 - mode/model/prompt_version을 반드시 저장한다.
 - openai mode 성공 결과 저장을 우선으로 한다.
-- mock mode 저장 여부는 별도 정책으로 결정한다.
+- mock mode 결과는 1차 구현에서 저장하지 않는다.
 - 추천 결과 전체 저장과 일부 항목 선택 반영을 분리한다.
 - 선택적 반영은 저장 단계가 아니라 후속 반영 단계에서 처리한다.
 
@@ -87,7 +99,6 @@ AI Recommendation Phase AI-1B는 구현 및 사용자 로컬 검증 완료 상�
 
 아래 항목은 1차 history 설계에서 보류한다.
 
-- mock mode 결과 저장 여부
 - 실패 결과 저장 여부
 - token usage 저장 여부
 - `latency_ms` 저장 여부
@@ -95,7 +106,6 @@ AI Recommendation Phase AI-1B는 구현 및 사용자 로컬 검증 완료 상�
 
 보류 사유:
 
-- mock mode 결과는 비용이 발생하지 않고 실제 AI 품질 비교 기준으로 부적합할 수 있다.
 - 실패 결과 저장은 디버깅에 유용하지만 error payload, prompt 일부, provider metadata 저장 범위를 별도 정의해야 한다.
 - token usage와 `latency_ms`는 비용/성능 분석에 유용하지만 Responses API 응답 형태와 SDK metadata 확인 후 안정적으로 설계해야 한다.
 - user action log는 다중 사용자/감사 로그 설계와 연결되므로 MVP history 저장과 분리한다.
@@ -147,13 +157,13 @@ history:
 
 ## 7. DB 저장 구조 초안
 
-초기 테이블 후보:
+1차 구현 테이블:
 
 ```text
 ai_recommendation_runs
 ```
 
-초기 컬럼 후보:
+1차 구현 컬럼:
 
 | column | type | required | note |
 |---|---|---:|---|
@@ -201,27 +211,32 @@ applied_status = not_applied | partially_applied | applied
 GET /api/ai-recommendations/postings/{posting_id}
 ```
 
-History 구현 시 API 후보:
+History 1차 구현 API:
 
 ```text
-GET /api/ai-recommendations/postings/{posting_id}/runs
-GET /api/ai-recommendations/runs/{run_id}
-PATCH /api/ai-recommendations/runs/{run_id}/applied-status
+POST /api/ai-recommendations/postings/{posting_id}/runs
+GET /api/ai-recommendations/postings/{posting_id}/history
+GET /api/ai-recommendations/history/{run_id}
 ```
 
 후속 검토 후보:
 
 ```text
-POST /api/ai-recommendations/postings/{posting_id}/runs
+PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 ```
 
 초기 정책:
 
 - 기존 조회형 추천 endpoint의 응답 구조는 유지한다.
-- openai mode 성공 결과 저장을 endpoint 내부에서 자동 수행할지, 별도 POST endpoint로 분리할지는 구현 단계에서 결정한다.
+- 기존 GET endpoint는 저장 없이 호환 유지한다.
+- POST `/runs`는 추천 실행 + 저장 API다.
+- openai mode 성공 결과만 저장한다.
+- mock mode는 저장하지 않고 `run=null`, `meta.saved=false`를 반환한다.
 - 저장 여부가 최종 API 응답 구조를 깨지 않도록 한다.
-- 저장 실패가 추천 조회 성공 자체를 실패로 만들지 여부는 별도 결정한다.
+- 저장 실패는 `AI_RECOMMENDATION_HISTORY_SAVE_FAILED`로 처리한다.
+- 실패 결과 row는 1차 구현에서 생성하지 않는다.
 - 선택 반영 API는 history 저장/조회 구현 이후 설계한다.
+- `PATCH /api/ai-recommendations/runs/{run_id}/applied-status`는 후속 선택 반영 단계에서 검토한다.
 
 ## 9. Frontend 설계 초안
 
@@ -315,6 +330,7 @@ ai-recommendation-v1
 
 ### Phase AI-3 — History 저장/조회 구현
 
+- backend 1차 구현 완료
 - `ai_recommendation_runs` 또는 동등한 저장 구조 구현
 - openai mode 성공 결과 저장
 - 공고별 추천 이력 조회 API 구현

@@ -51,6 +51,26 @@ CREATE TABLE IF NOT EXISTS analysis_results (
   analyzed_at            TEXT DEFAULT (datetime('now', '+9 hours')),
   FOREIGN KEY (posting_id) REFERENCES postings(id)
 );
+
+CREATE TABLE IF NOT EXISTS ai_recommendation_runs (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  posting_id          INTEGER NOT NULL,
+  mode                TEXT NOT NULL,
+  model               TEXT,
+  prompt_version      TEXT NOT NULL,
+  status              TEXT NOT NULL CHECK (status IN ('succeeded', 'failed')),
+  recommendation_json TEXT,
+  applied_status      TEXT NOT NULL DEFAULT 'not_applied'
+    CHECK (applied_status IN ('not_applied', 'partially_applied', 'applied')),
+  error_code          TEXT,
+  error_message       TEXT,
+  created_at          TEXT NOT NULL,
+  note                TEXT,
+  FOREIGN KEY (posting_id) REFERENCES postings(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_recommendation_runs_posting_id_created_at
+ON ai_recommendation_runs(posting_id, created_at DESC);
 """
 
 
@@ -68,5 +88,55 @@ def initialize_database(db_path: Path | str = DEFAULT_DB_PATH) -> Path:
 
     with get_connection(db_path) as connection:
         connection.executescript(SCHEMA_SQL)
+        _ensure_ai_recommendation_runs_schema(connection)
 
     return db_path
+
+
+def _ensure_ai_recommendation_runs_schema(
+    connection: sqlite3.Connection,
+) -> None:
+    columns = {
+        row[1]
+        for row in connection.execute(
+            "PRAGMA table_info(ai_recommendation_runs)"
+        ).fetchall()
+    }
+    column_sql = {
+        "posting_id": "ALTER TABLE ai_recommendation_runs ADD COLUMN posting_id INTEGER",
+        "mode": "ALTER TABLE ai_recommendation_runs ADD COLUMN mode TEXT",
+        "model": "ALTER TABLE ai_recommendation_runs ADD COLUMN model TEXT",
+        "prompt_version": (
+            "ALTER TABLE ai_recommendation_runs "
+            "ADD COLUMN prompt_version TEXT DEFAULT 'ai-recommendation-v1'"
+        ),
+        "status": (
+            "ALTER TABLE ai_recommendation_runs "
+            "ADD COLUMN status TEXT DEFAULT 'succeeded'"
+        ),
+        "recommendation_json": (
+            "ALTER TABLE ai_recommendation_runs ADD COLUMN recommendation_json TEXT"
+        ),
+        "applied_status": (
+            "ALTER TABLE ai_recommendation_runs "
+            "ADD COLUMN applied_status TEXT DEFAULT 'not_applied'"
+        ),
+        "error_code": "ALTER TABLE ai_recommendation_runs ADD COLUMN error_code TEXT",
+        "error_message": (
+            "ALTER TABLE ai_recommendation_runs ADD COLUMN error_message TEXT"
+        ),
+        "created_at": (
+            "ALTER TABLE ai_recommendation_runs ADD COLUMN created_at TEXT"
+        ),
+        "note": "ALTER TABLE ai_recommendation_runs ADD COLUMN note TEXT",
+    }
+    for column, sql in column_sql.items():
+        if column not in columns:
+            connection.execute(sql)
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_ai_recommendation_runs_posting_id_created_at
+        ON ai_recommendation_runs(posting_id, created_at DESC)
+        """
+    )

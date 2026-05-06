@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
 from backend.app.database import get_connection, initialize_database
@@ -41,6 +41,7 @@ POSTING_PROMPT_FIELDS = (
 )
 RAW_TEXT_PREVIEW_MAX_LENGTH = 500
 AI_RECOMMENDATION_MAX_OUTPUT_TOKENS = 900
+AI_RECOMMENDATION_PROMPT_VERSION = "ai-recommendation-v1"
 AI_RECOMMENDATION_DEBUG_ENV = "AI_RECOMMENDATION_DEBUG"
 AI_RECOMMENDATION_DEBUG_PREVIEW_LENGTH = 200
 AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
@@ -231,6 +232,209 @@ def get_ai_recommendation_for_posting(posting_id: int) -> Any:
     )
 
 
+@router.post("/postings/{posting_id}/runs", response_model=None)
+def create_ai_recommendation_run_for_posting(posting_id: int) -> Any:
+    initialize_database()
+    with _connection() as connection:
+        posting = _fetch_posting(connection, posting_id)
+
+    if posting is None:
+        return JSONResponse(
+            status_code=404,
+            content=_error_response(
+                "POSTING_NOT_FOUND",
+                "공고를 찾을 수 없습니다.",
+            ),
+        )
+
+    mode = _get_ai_recommendation_mode()
+    if mode not in AI_RECOMMENDATION_MODES:
+        return JSONResponse(
+            status_code=500,
+            content=_error_response(
+                "AI_CONFIG_INVALID",
+                "AI_RECOMMENDATION_MODE 값은 mock 또는 openai여야 합니다.",
+            ),
+        )
+
+    model = None
+    raw_recommendation: dict[str, Any]
+    if mode == "mock":
+        raw_recommendation = _get_mock_recommendation(posting)
+    else:
+        api_key = os.getenv(OPENAI_API_KEY_ENV, "").strip()
+        if not api_key:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_CONFIG_MISSING",
+                    "openai mode에서는 OPENAI_API_KEY가 필요합니다.",
+                ),
+            )
+
+        model = os.getenv(OPENAI_MODEL_ENV, "").strip() or DEFAULT_OPENAI_MODEL
+        try:
+            raw_recommendation = _get_openai_recommendation(
+                posting=posting,
+                api_key=api_key,
+                model=model,
+            )
+        except AIRecommendationParseError:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RESPONSE_PARSE_FAILED",
+                    "AI 추천 응답을 JSON으로 해석할 수 없습니다.",
+                ),
+            )
+        except Exception:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RECOMMENDATION_FAILED",
+                    "OpenAI 추천 호출에 실패했습니다.",
+                ),
+            )
+
+    try:
+        recommendation = _normalize_recommendation_response(
+            raw_recommendation,
+        )
+    except AIRecommendationParseError:
+        return JSONResponse(
+            status_code=500,
+            content=_error_response(
+                "AI_RESPONSE_PARSE_FAILED",
+                "AI 추천 응답을 JSON으로 해석할 수 없습니다.",
+            ),
+        )
+
+    generated_at = _current_kst_isoformat()
+    run = None
+    saved = False
+    if mode == "openai":
+        try:
+            with _connection() as connection:
+                run = _create_ai_recommendation_run(
+                    connection=connection,
+                    posting_id=posting_id,
+                    mode=mode,
+                    model=model,
+                    prompt_version=AI_RECOMMENDATION_PROMPT_VERSION,
+                    recommendation=recommendation,
+                    created_at=generated_at,
+                )
+                connection.commit()
+            saved = True
+        except sqlite3.Error:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RECOMMENDATION_HISTORY_SAVE_FAILED",
+                    "AI 추천 이력 저장 중 오류가 발생했습니다.",
+                ),
+            )
+
+    return _success(
+        _build_recommendation_payload(
+            posting=posting,
+            recommendation=recommendation,
+            mode=mode,
+            model=model,
+            saved=saved,
+            generated_at=generated_at,
+            run=run,
+        )
+    )
+
+
+@router.get("/postings/{posting_id}/history", response_model=None)
+def list_ai_recommendation_history_for_posting(
+    posting_id: int,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=10, ge=1, le=100),
+) -> Any:
+    initialize_database()
+    with _connection() as connection:
+        posting = _fetch_posting(connection, posting_id)
+        if posting is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "POSTING_NOT_FOUND",
+                    "공고를 찾을 수 없습니다.",
+                ),
+            )
+
+        rows, total = _fetch_ai_recommendation_runs(
+            connection=connection,
+            posting_id=posting_id,
+            page=page,
+            size=size,
+        )
+
+    total_pages = (total + size - 1) // size if total else 0
+    return _success(
+        {
+            "items": [_serialize_run(row) for row in rows],
+            "pagination": {
+                "page": page,
+                "size": size,
+                "total": total,
+                "total_pages": total_pages,
+            },
+        }
+    )
+
+
+@router.get("/history/{run_id}", response_model=None)
+def get_ai_recommendation_history_run(run_id: int) -> Any:
+    initialize_database()
+    with _connection() as connection:
+        row = _fetch_ai_recommendation_run(connection, run_id)
+        if row is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "AI_RECOMMENDATION_RUN_NOT_FOUND",
+                    "AI 추천 이력을 찾을 수 없습니다.",
+                ),
+            )
+
+        posting = _fetch_posting_by_id_including_deleted(
+            connection,
+            row["posting_id"],
+        )
+
+    try:
+        recommendation = _deserialize_recommendation_json(
+            row["recommendation_json"],
+        )
+    except AIRecommendationParseError:
+        return JSONResponse(
+            status_code=500,
+            content=_error_response(
+                "AI_RESPONSE_PARSE_FAILED",
+                "AI 추천 이력 JSON을 해석할 수 없습니다.",
+            ),
+        )
+
+    source = None
+    if posting is not None:
+        source = {
+            "company": posting["company"],
+            "position": posting["position"],
+        }
+
+    return _success(
+        {
+            "run": _serialize_run(row),
+            "source": source,
+            "recommendation": recommendation,
+        }
+    )
+
+
 def _connection() -> sqlite3.Connection:
     connection = get_connection()
     connection.row_factory = sqlite3.Row
@@ -253,6 +457,170 @@ def _fetch_posting(
     if row is None:
         return None
     return {key: row[key] for key in row.keys()}
+
+
+def _fetch_posting_by_id_including_deleted(
+    connection: sqlite3.Connection,
+    posting_id: int,
+) -> dict[str, Any] | None:
+    row = connection.execute(
+        """
+        SELECT *
+        FROM postings
+        WHERE id = ?
+        """,
+        (posting_id,),
+    ).fetchone()
+
+    if row is None:
+        return None
+    return {key: row[key] for key in row.keys()}
+
+
+def _build_recommendation_payload(
+    *,
+    posting: dict[str, Any],
+    recommendation: dict[str, Any],
+    mode: str,
+    model: str | None,
+    saved: bool,
+    generated_at: str,
+    run: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "run": run,
+        "source": {
+            "company": posting["company"],
+            "position": posting["position"],
+        },
+        "recommendation": recommendation,
+        "meta": {
+            "mode": mode,
+            "model": model,
+            "prompt_version": AI_RECOMMENDATION_PROMPT_VERSION,
+            "saved": saved,
+            "generated_at": generated_at,
+        },
+    }
+
+
+def _create_ai_recommendation_run(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    mode: str,
+    model: str | None,
+    prompt_version: str,
+    recommendation: dict[str, Any],
+    created_at: str,
+) -> dict[str, Any]:
+    recommendation_json = json.dumps(
+        recommendation,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    cursor = connection.execute(
+        """
+        INSERT INTO ai_recommendation_runs (
+          posting_id,
+          mode,
+          model,
+          prompt_version,
+          status,
+          recommendation_json,
+          applied_status,
+          error_code,
+          error_message,
+          created_at,
+          note
+        )
+        VALUES (?, ?, ?, ?, 'succeeded', ?, 'not_applied', NULL, NULL, ?, NULL)
+        """,
+        (
+            posting_id,
+            mode,
+            model,
+            prompt_version,
+            recommendation_json,
+            created_at,
+        ),
+    )
+    row = _fetch_ai_recommendation_run(connection, cursor.lastrowid)
+    if row is None:
+        raise sqlite3.Error("AI recommendation run insert failed.")
+    return _serialize_run(row)
+
+
+def _fetch_ai_recommendation_runs(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    page: int,
+    size: int,
+) -> tuple[list[sqlite3.Row], int]:
+    offset = (page - 1) * size
+    total = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM ai_recommendation_runs
+        WHERE posting_id = ?
+        """,
+        (posting_id,),
+    ).fetchone()[0]
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM ai_recommendation_runs
+        WHERE posting_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT ? OFFSET ?
+        """,
+        (posting_id, size, offset),
+    ).fetchall()
+    return rows, total
+
+
+def _fetch_ai_recommendation_run(
+    connection: sqlite3.Connection,
+    run_id: int,
+) -> sqlite3.Row | None:
+    return connection.execute(
+        """
+        SELECT *
+        FROM ai_recommendation_runs
+        WHERE id = ?
+        """,
+        (run_id,),
+    ).fetchone()
+
+
+def _serialize_run(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "posting_id": row["posting_id"],
+        "mode": row["mode"],
+        "model": row["model"],
+        "prompt_version": row["prompt_version"],
+        "status": row["status"],
+        "applied_status": row["applied_status"],
+        "created_at": row["created_at"],
+        "note": row["note"],
+    }
+
+
+def _deserialize_recommendation_json(value: Any) -> dict[str, Any]:
+    if not isinstance(value, str) or not value.strip():
+        raise AIRecommendationParseError()
+
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise AIRecommendationParseError() from exc
+
+    if not isinstance(parsed, dict):
+        raise AIRecommendationParseError()
+
+    return _normalize_recommendation_response({"recommendation": parsed})
 
 
 def _build_ai_prompt(posting: dict[str, Any]) -> str:
