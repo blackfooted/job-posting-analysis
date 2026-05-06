@@ -161,7 +161,7 @@ AI Recommendation History backend 1차 구현 상태:
 - frontend history 상세 UI는 1차 연결 완료
 - frontend history 비교 UI는 1차 연결 완료
 - AI Recommendation 선택 반영 정책 문서 작성 완료: `docs/current/12_ai_recommendation_selective_apply_policy.md`
-- 선택 반영 기능과 dictionary_candidates 연동은 후속
+- frontend 선택 반영 UI는 1차 연결 완료이며 dictionary_candidates 연동은 후속
 - 1차 반영 위치는 `review_items`
 - `dictionary_candidates`는 후속
 - industry/domain/position은 1차 반영 제외
@@ -208,8 +208,8 @@ AI Recommendation 선택 반영 정책:
 - 기존 `removed` 이력은 존중해 되살리지 않는다.
 - 선택 반영 결과 추적을 위한 `applied_items_json` DB 스키마 보완은 완료되었다.
 - 선택 반영 API는 `applied_items_json`에 처리 결과를 append하고, 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신한다.
-- 다음 작업 후보는 frontend 선택 반영 UI 구현이다.
-- history 상세/비교 화면에서 applied result 표시와 반영 상태 표시를 검토한다.
+- frontend 선택 반영 UI 구현은 완료되었다.
+- 다음 작업 후보는 applied result를 항목별로 표시하는 고도화와 dictionary_candidates 구조 설계다.
 
 ## 현재 정책 기준
 
@@ -395,7 +395,7 @@ http://127.0.0.1:8000/docs
    - history 목록 UI 1차 연결은 완료되었다.
    - history 상세 UI 1차 연결은 완료되었다.
    - history 비교 UI 1차 연결은 완료되었다.
-   - 다음 단계에서는 선택 반영 UI와 `applied_status` 관리를 설계/구현한다.
+   - 선택 반영 UI는 1차 구현 완료이며, 다음 단계에서는 항목별 반영 상태 표시를 고도화한다.
    - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
    - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.
@@ -405,13 +405,13 @@ http://127.0.0.1:8000/docs
    - 기존 GET endpoint는 호환성을 위해 유지하거나 deprecated 처리 검토가 필요하다.
    - frontend 변경 범위를 최소화하려면 GET 유지 + 내부 저장 방식이 빠르지만, 장기적으로는 POST /runs가 더 적절하다.
    - review_items/dictionary_candidates 반영은 history 설계 이후 검토한다.
-   - 선택 반영 UI와 `applied_status` 관리는 후속 단계로 유지한다.
+   - 선택 반영 UI는 1차 연결 완료이며, `applied_status` 표시 고도화는 후속 단계로 유지한다.
 
 2. AI Recommendation 선택 반영
    - 정책 문서 작성은 완료되었다: `docs/current/12_ai_recommendation_selective_apply_policy.md`
    - `applied_items_json` DB 스키마 보완은 완료되었다.
    - 선택 반영 backend API 구현은 완료되었다.
-   - 다음 작업 후보는 frontend 선택 반영 UI 구현이다.
+   - frontend 선택 반영 UI 구현은 완료되었다.
    - 1차 반영 위치는 `review_items`이며, `dictionary_candidates`는 후속 구조 확정 후 검토한다.
    - industry/domain/position은 1차 반영 대상에서 제외한다.
    - 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신한다.
@@ -461,3 +461,16 @@ http://127.0.0.1:8000/docs
 - 공고 저장/수정 시 AI 자동 호출은 금지한다.
 - debug mode는 검증 시에만 켜고 평소에는 끈다.
 - OpenAI API key는 frontend에 두지 않고 backend 환경변수로만 관리한다.
+## AI Recommendation Selective Apply UI 현행화
+
+- frontend 선택 반영 UI 1차 구현이 완료되었다.
+- `frontend/src/api/aiRecommendationsApi.js`에 `applyAiRecommendationItems(runId, items)` client를 추가했다.
+- history 상세/비교 화면에서 skill/competency 항목을 선택해 `POST /api/ai-recommendations/history/{run_id}/apply`를 호출할 수 있다.
+- 선택 반영 대상은 skills, competencies, review_item_candidates 중 `field_type=skill|competency` 항목이다.
+- industry/domain/position 항목은 1차 선택 반영 UI에서 제외한다.
+- `source_path`는 저장된 recommendation 원본 배열 index 기준을 유지한다. 필터링된 `review_item_candidates`의 렌더링 index를 사용하지 않는다.
+- 선택 반영 성공 결과는 `applied_items`와 `skipped_items`로 표시한다.
+- apply 성공 후 history 목록을 refresh하고, 현재 선택된 상세 run은 상세 API로 재조회한다.
+- backend 응답의 `applied_status`만 로컬 state에 직접 반영하지 않고 재조회 결과를 기준으로 화면을 갱신한다.
+- AI 추천 화면의 주요 label/컬럼명은 한글로 정리했다.
+- 다음 작업 후보는 applied result를 history 상세/비교 항목별로 표시하는 고도화, dictionary_candidates 구조 설계, 선택 반영 UX 개선이다.

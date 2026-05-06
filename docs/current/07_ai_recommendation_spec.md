@@ -273,7 +273,7 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 저장된 추천 결과도 자동 확정하지 않는다.
 - 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
 - `applied_items_json` 컬럼과 선택 반영 backend API는 구현되었다.
-- frontend 선택 반영 UI는 후속 Phase AI-4 작업으로 둔다.
+- frontend 선택 반영 UI는 history 상세/비교 화면에 1차 연결되었다.
 
 ### History frontend 1차 연결 상태
 
@@ -296,7 +296,7 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - history 비교 UI는 두 run의 metadata와 recommendation 요약을 좌우로 표시한다.
 - 상세 보기와 비교 선택은 독립적으로 동작한다.
 - 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
-- 비교 UI는 보기 전용이며 선택 반영 UI와 `applied_status` 변경은 후속 작업으로 둔다.
+- 비교 UI는 선택 반영 UI까지 1차 연결되었으며, `applied_status` 직접 변경 UI는 후속 작업으로 둔다.
 
 ### 선택 반영 정책
 
@@ -315,7 +315,7 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 신규 항목은 `status=confirmed`, `dictionary_apply=0`인 `review_items`로 생성한다.
 - 처리 결과는 `applied_items_json`에 append 저장한다.
 - 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신한다.
-- frontend 선택 반영 UI는 후속이다.
+- frontend 선택 반영 UI는 history 상세/비교 화면에 1차 연결되었다.
 - `dictionary_candidates` 연동은 `review_items` 선택 반영 이후 별도 phase에서 검토한다.
 
 ## Phase AI-1B endpoint 정책
@@ -538,3 +538,17 @@ Structured Outputs:
 - 비용/토큰 사용량 저장
 - 일괄 AI 추천 실행
 - 공고 저장/수정 시 AI 자동 호출
+## Frontend Selective Apply UI 현행화
+
+- frontend AI 추천 history 상세/비교 화면에서 선택 반영 UI를 1차 연결했다.
+- 선택 반영은 `POST /api/ai-recommendations/history/{run_id}/apply`를 사용한다.
+- 선택 가능한 항목은 `recommendation.skills`, `recommendation.competencies`, `review_item_candidates` 중 `field_type=skill|competency` 항목으로 제한한다.
+- `industry_category`, `primary_domain_category`, `position_category`, `field_type=industry|domain|position` 후보는 선택 반영 대상에서 제외한다.
+- frontend는 `source_path`를 저장된 recommendation 원본 배열 index 기준으로 생성한다. 예: `skills[0]`, `competencies[1]`, `review_item_candidates[2]`.
+- `review_item_candidates`를 필터링해 렌더링하더라도 `source_path`는 필터링 전 원본 배열 index를 유지한다.
+- 선택 반영 성공 시 `applied_items`/`skipped_items` 결과를 화면에 표시한다.
+- 선택 반영 성공 후 history 목록을 refresh하고, 현재 상세 run은 `GET /api/ai-recommendations/history/{run_id}`로 재조회해 최신 상태를 반영한다.
+- backend 응답의 `applied_status`만 로컬 상세/비교 state에 덮어쓰는 방식은 사용하지 않는다.
+- 비교 화면에서는 run별로 선택 항목을 분리하고, 한 번에 한 run 기준으로 apply API를 호출한다.
+- AI 추천 화면의 주요 사용자 노출 label/컬럼명은 한글로 표시한다.
+- `dictionary_candidates` 연동과 industry/domain/position 선택 반영은 후속 단계로 둔다.

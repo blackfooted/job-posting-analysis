@@ -286,7 +286,7 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - 선택한 2개 run은 `GET /api/ai-recommendations/history/{run_id}` 상세 응답을 기준으로 좌우 비교한다.
 - 비교 UI는 metadata와 recommendation 요약을 표시하며 자동 판단이나 선택 반영은 하지 않는다.
 - 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
-- 선택 반영 UI는 후속 단계로 둔다.
+- 선택 반영 UI는 history 상세/비교 화면에 1차 연결되었다.
 - 기존 GET endpoint는 호환 유지한다.
 
 초기 UI 후보:
@@ -400,3 +400,13 @@ ai-recommendation-v1
 AI Recommendation History는 추천 결과를 자동 확정하거나 즉시 반영하기 위한 기능이 아니다. 1차 목표는 비용이 발생한 openai mode 성공 결과를 보존하고, 모델/prompt 변경 전후 결과를 비교하며, 후속 선택 반영의 기준 데이터를 마련하는 것이다.
 
 초기 구현은 정규화된 `recommendation_json` 전체 저장, `applied_status` 관리, 선택 반영 추적용 `applied_items_json` 컬럼 마련에 집중한다. 항목별 선택 반영 write 로직은 backend 선택 반영 API에서 처리한다.
+## Frontend Selective Apply UI 1차 연결 상태
+
+- frontend history 상세/비교 화면에서 선택 반영 UI를 1차 연결했다.
+- 선택 반영은 backend apply API와 `applied_items_json` 기록 결과를 사용해 처리 결과를 표시한다.
+- 선택 가능한 항목은 skills/competencies/review_item_candidates 중 skill/competency 항목으로 제한한다.
+- `source_path`는 저장된 recommendation 원본 배열 index 기준을 유지한다.
+- 선택 반영은 `review_items` 대상으로만 수행하며 history 저장과 선택 반영의 책임 분리 원칙을 유지한다.
+- apply 성공 후 history 목록을 refresh하고 현재 상세 run은 상세 API로 재조회한다.
+- 비교 화면에서는 run별로 선택 항목을 분리해 한 run 단위로 반영한다.
+- `dictionary_candidates` 연동은 후속 단계로 유지한다.

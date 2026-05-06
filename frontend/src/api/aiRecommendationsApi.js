@@ -46,3 +46,16 @@ export function fetchAiRecommendationHistory(
 export function fetchAiRecommendationHistoryDetail(runId) {
   return requestAiRecommendations(`/api/ai-recommendations/history/${runId}`)
 }
+
+export function applyAiRecommendationItems(runId, items) {
+  return requestAiRecommendations(
+    `/api/ai-recommendations/history/${runId}/apply`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ items }),
+    },
+  )
+}

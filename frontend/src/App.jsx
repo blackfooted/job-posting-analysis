@@ -6,6 +6,7 @@ import {
   fetchDashboardSummary,
 } from './api/dashboardApi'
 import {
+  applyAiRecommendationItems,
   createAiRecommendationRun,
   fetchAiRecommendationHistory,
   fetchAiRecommendationHistoryDetail,
@@ -154,6 +155,16 @@ function App() {
     useState('')
   const [aiRecommendationCompareMessage, setAiRecommendationCompareMessage] =
     useState('')
+  const [aiRecommendationApplySelections, setAiRecommendationApplySelections] =
+    useState({})
+  const [
+    aiRecommendationApplyLoadingRunId,
+    setAiRecommendationApplyLoadingRunId,
+  ] = useState(null)
+  const [aiRecommendationApplyError, setAiRecommendationApplyError] =
+    useState('')
+  const [aiRecommendationApplyResult, setAiRecommendationApplyResult] =
+    useState(null)
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -908,6 +919,92 @@ function App() {
     setAiRecommendationCompareMessage('')
   }
 
+  function resetAiRecommendationApplyState() {
+    setAiRecommendationApplySelections({})
+    setAiRecommendationApplyLoadingRunId(null)
+    setAiRecommendationApplyError('')
+    setAiRecommendationApplyResult(null)
+  }
+
+  function handleAiRecommendationApplyToggle(runId, item) {
+    const runKey = String(runId)
+    setAiRecommendationApplyError('')
+    setAiRecommendationApplyResult(null)
+    setAiRecommendationApplySelections((currentSelections) => {
+      const currentRunSelections = currentSelections[runKey] || {}
+      const nextRunSelections = { ...currentRunSelections }
+
+      if (nextRunSelections[item.source_path]) {
+        delete nextRunSelections[item.source_path]
+      } else {
+        nextRunSelections[item.source_path] = item
+      }
+
+      return {
+        ...currentSelections,
+        [runKey]: nextRunSelections,
+      }
+    })
+  }
+
+  async function handleAiRecommendationApply(runId) {
+    const runKey = String(runId)
+    const selectedItems = Object.values(
+      aiRecommendationApplySelections[runKey] || {},
+    )
+
+    if (selectedItems.length === 0 || aiRecommendationApplyLoadingRunId) {
+      return
+    }
+
+    setAiRecommendationApplyLoadingRunId(runId)
+    setAiRecommendationApplyError('')
+    setAiRecommendationApplyResult(null)
+
+    try {
+      const result = await applyAiRecommendationItems(runId, selectedItems)
+
+      if (result.error) {
+        setAiRecommendationApplyError(
+          result.error.message || '선택 항목 반영 중 오류가 발생했습니다.',
+        )
+        return
+      }
+
+      await fetchSelectedAiRecommendationHistory(
+        selectedAiPostingId,
+        aiRecommendationHistoryPagination?.page || 1,
+      )
+
+      if (selectedAiRecommendationHistoryRunId === runId) {
+        await fetchSelectedAiRecommendationHistoryDetail(runId)
+      }
+
+      if (
+        aiRecommendationCompareDetails.some(
+          (detail) => detail?.run?.id === runId,
+        )
+      ) {
+        setAiRecommendationCompareDetails([])
+        setAiRecommendationCompareMessage(
+          '반영 후 비교 결과를 초기화했습니다. 다시 비교를 실행하세요.',
+        )
+      }
+
+      setAiRecommendationApplySelections((currentSelections) => ({
+        ...currentSelections,
+        [runKey]: {},
+      }))
+      setAiRecommendationApplyResult(result.data || null)
+    } catch (requestError) {
+      setAiRecommendationApplyError(
+        requestError.message || '선택 항목 반영 중 오류가 발생했습니다.',
+      )
+    } finally {
+      setAiRecommendationApplyLoadingRunId(null)
+    }
+  }
+
   async function fetchSelectedAiRecommendationHistory(postingId, page = 1) {
     if (!postingId) {
       resetAiRecommendationHistory()
@@ -971,6 +1068,8 @@ function App() {
     setSelectedAiRecommendationHistoryRunId(runId)
     setAiRecommendationHistoryDetailLoading(true)
     setAiRecommendationHistoryDetailError('')
+    setAiRecommendationApplyError('')
+    setAiRecommendationApplyResult(null)
 
     try {
       const result = await fetchAiRecommendationHistoryDetail(runId)
@@ -1075,6 +1174,7 @@ function App() {
     resetAiRecommendationHistory()
     resetAiRecommendationHistoryDetail()
     resetAiRecommendationHistoryCompare()
+    resetAiRecommendationApplyState()
 
     if (postingId) {
       fetchSelectedAiRecommendationHistory(postingId, 1)
@@ -1103,6 +1203,7 @@ function App() {
       setAiRecommendation(result.data || null)
       resetAiRecommendationHistoryDetail()
       resetAiRecommendationHistoryCompare()
+      resetAiRecommendationApplyState()
       await fetchSelectedAiRecommendationHistory(selectedAiPostingId, 1)
     } catch (requestError) {
       setAiRecommendation(null)
@@ -1121,6 +1222,7 @@ function App() {
 
     resetAiRecommendationHistoryDetail()
     resetAiRecommendationHistoryCompare()
+    resetAiRecommendationApplyState()
     fetchSelectedAiRecommendationHistory(selectedAiPostingId, page)
   }
 
@@ -1626,12 +1728,12 @@ function App() {
             <div className="ai-recommendation-notice">
               <p>AI 추천 조회는 버튼을 눌렀을 때만 실행됩니다.</p>
               <p>
-                OpenAI mode에서는 추천 실행 결과가 history에 저장될 수
+                OpenAI 모드에서는 추천 실행 결과가 이력에 저장될 수
                 있으며, 자동 확정되거나 정제 항목에 자동 반영되지는
                 않습니다.
               </p>
               <p>
-                Mock mode에서는 추천 결과를 화면에 표시하지만 history에는
+                Mock 모드에서는 추천 결과를 화면에 표시하지만 이력에는
                 저장하지 않습니다.
               </p>
             </div>
@@ -1694,6 +1796,10 @@ function App() {
                 isLoading={aiRecommendationCompareLoading}
                 error={aiRecommendationCompareError}
                 message={aiRecommendationCompareMessage}
+                applySelections={aiRecommendationApplySelections}
+                applyLoadingRunId={aiRecommendationApplyLoadingRunId}
+                onApplyToggle={handleAiRecommendationApplyToggle}
+                onApply={handleAiRecommendationApply}
                 onCompareClick={handleAiRecommendationCompareClick}
               />
             )}
@@ -1703,6 +1809,17 @@ function App() {
                 detail={aiRecommendationHistoryDetail}
                 isLoading={aiRecommendationHistoryDetailLoading}
                 error={aiRecommendationHistoryDetailError}
+                applySelections={aiRecommendationApplySelections}
+                applyLoadingRunId={aiRecommendationApplyLoadingRunId}
+                onApplyToggle={handleAiRecommendationApplyToggle}
+                onApply={handleAiRecommendationApply}
+              />
+            )}
+
+            {selectedAiPostingId && (
+              <AiRecommendationApplyResult
+                result={aiRecommendationApplyResult}
+                error={aiRecommendationApplyError}
               />
             )}
 
@@ -1767,11 +1884,11 @@ function AiRecommendationResult({ result }) {
       </div>
 
       <AiRecommendationList
-        title="Skills"
+        title="기술/도구"
         items={recommendation.skills}
       />
       <AiRecommendationList
-        title="Competencies"
+        title="역량"
         items={recommendation.competencies}
       />
       <AiReviewCandidateList
@@ -1791,15 +1908,15 @@ function AiRecommendationCard({ title, item = {} }) {
       <h3>{title}</h3>
       <dl className="ai-recommendation-detail-list">
         <div>
-          <dt>value</dt>
+          <dt>값</dt>
           <dd>{formatValue(normalizedItem.value)}</dd>
         </div>
         <div>
-          <dt>confidence</dt>
+          <dt>확신도</dt>
           <dd>{formatValue(normalizedItem.confidence)}</dd>
         </div>
         <div>
-          <dt>reason</dt>
+          <dt>판단 근거</dt>
           <dd>{formatValue(normalizedItem.reason)}</dd>
         </div>
       </dl>
@@ -1812,7 +1929,7 @@ function AiRecommendationList({ title, items = [] }) {
     <section className="ai-recommendation-list">
       <h2>{title}</h2>
       {items.length === 0 ? (
-        <p>No recommendation</p>
+        <p>추천 항목이 없습니다.</p>
       ) : (
         <div className="ai-recommendation-item-list">
           {items.map((item, index) => (
@@ -1831,9 +1948,9 @@ function AiRecommendationList({ title, items = [] }) {
 function AiReviewCandidateList({ items = [] }) {
   return (
     <section className="ai-recommendation-list">
-      <h2>Review Item Candidates</h2>
+      <h2>검토 후보</h2>
       {items.length === 0 ? (
-        <p>No candidates</p>
+        <p>검토 후보가 없습니다.</p>
       ) : (
         <div className="ai-review-candidate-list">
           {items.map((item, index) => (
@@ -1843,23 +1960,23 @@ function AiReviewCandidateList({ items = [] }) {
             >
               <dl className="ai-recommendation-detail-list">
                 <div>
-                  <dt>field_type</dt>
-                  <dd>{formatValue(item.field_type)}</dd>
+                  <dt>항목 유형</dt>
+                  <dd>{formatAiFieldType(item.field_type)}</dd>
                 </div>
                 <div>
-                  <dt>raw_value</dt>
+                  <dt>원문값</dt>
                   <dd>{formatValue(item.raw_value)}</dd>
                 </div>
                 <div>
-                  <dt>suggested_value</dt>
+                  <dt>제안값</dt>
                   <dd>{formatValue(item.suggested_value)}</dd>
                 </div>
                 <div>
-                  <dt>confidence</dt>
+                  <dt>확신도</dt>
                   <dd>{formatValue(item.confidence)}</dd>
                 </div>
                 <div>
-                  <dt>reason</dt>
+                  <dt>판단 근거</dt>
                   <dd>{formatValue(item.reason)}</dd>
                 </div>
               </dl>
@@ -1877,26 +1994,26 @@ function AiRecommendationMeta({ meta = {} }) {
 
   return (
     <section className="ai-recommendation-meta">
-      <h2>Meta</h2>
+      <h2>실행 정보</h2>
       <dl className="ai-meta-list">
         <div>
-          <dt>mode</dt>
+          <dt>실행 모드</dt>
           <dd>{formatValue(meta.mode)}</dd>
         </div>
         <div>
-          <dt>saved</dt>
+          <dt>저장 여부</dt>
           <dd>{formatValue(savedValue)}</dd>
         </div>
         <div>
-          <dt>model</dt>
+          <dt>모델</dt>
           <dd>{formatValue(meta.model)}</dd>
         </div>
         <div>
-          <dt>prompt_version</dt>
+          <dt>프롬프트 버전</dt>
           <dd>{formatValue(meta.prompt_version)}</dd>
         </div>
         <div>
-          <dt>generated_at</dt>
+          <dt>생성 시각</dt>
           <dd>{formatValue(meta.generated_at)}</dd>
         </div>
       </dl>
@@ -1910,7 +2027,7 @@ function AiRecommendationRunMeta({ run = null, meta = {} }) {
   return (
     <section className="ai-recommendation-run-meta">
       <div className="ai-recommendation-run-meta-heading">
-        <h2>History 저장 상태</h2>
+        <h2>이력 저장 상태</h2>
         <span
           className={
             isSaved
@@ -1925,25 +2042,25 @@ function AiRecommendationRunMeta({ run = null, meta = {} }) {
         {run && (
           <>
             <div>
-              <dt>run_id</dt>
+              <dt>이력 ID</dt>
               <dd>{formatValue(run.id)}</dd>
             </div>
             <div>
-              <dt>created_at</dt>
+              <dt>생성 시각</dt>
               <dd>{formatValue(run.created_at)}</dd>
             </div>
           </>
         )}
         <div>
-          <dt>mode</dt>
+          <dt>실행 모드</dt>
           <dd>{formatValue(meta?.mode)}</dd>
         </div>
         <div>
-          <dt>model</dt>
+          <dt>모델</dt>
           <dd>{formatValue(meta?.model)}</dd>
         </div>
         <div>
-          <dt>prompt_version</dt>
+          <dt>프롬프트 버전</dt>
           <dd>{formatValue(meta?.prompt_version)}</dd>
         </div>
       </dl>
@@ -1995,12 +2112,12 @@ function AiRecommendationHistoryList({
           <table className="ai-recommendation-history-table">
             <thead>
               <tr>
-                <th>Run ID</th>
-                <th>model</th>
-                <th>prompt_version</th>
-                <th>status</th>
-                <th>applied_status</th>
-                <th>created_at</th>
+                <th>이력 ID</th>
+                <th>모델</th>
+                <th>프롬프트 버전</th>
+                <th>실행 상태</th>
+                <th>반영 상태</th>
+                <th>생성 시각</th>
                 <th>비교</th>
                 <th>상세</th>
               </tr>
@@ -2022,12 +2139,12 @@ function AiRecommendationHistoryList({
                   <td>{formatValue(run.prompt_version)}</td>
                   <td>
                     <span className="ai-recommendation-status-badge">
-                      {formatValue(run.status)}
+                      {formatAiRunStatus(run.status)}
                     </span>
                   </td>
                   <td>
                     <span className="ai-recommendation-applied-status-badge">
-                      {formatValue(run.applied_status)}
+                      {formatAiAppliedStatus(run.applied_status)}
                     </span>
                   </td>
                   <td>{formatValue(run.created_at)}</td>
@@ -2090,6 +2207,10 @@ function AiRecommendationHistoryCompare({
   isLoading = false,
   error = '',
   message = '',
+  applySelections = {},
+  applyLoadingRunId = null,
+  onApplyToggle,
+  onApply,
   onCompareClick,
 }) {
   const canCompare = selectedRunIds.length === 2
@@ -2100,7 +2221,7 @@ function AiRecommendationHistoryCompare({
       <div className="ai-recommendation-compare-heading">
         <div>
           <h2>추천 이력 비교</h2>
-          <p>저장된 run 2개를 선택해 추천 요약을 좌우로 비교합니다.</p>
+          <p>저장된 이력 2개를 선택해 추천 요약을 좌우로 비교합니다.</p>
         </div>
         <span>{selectedRunIds.length} / 2 선택</span>
       </div>
@@ -2127,6 +2248,10 @@ function AiRecommendationHistoryCompare({
             <AiRecommendationCompareCard
               key={detail?.run?.id || `compare-${index}`}
               detail={detail}
+              applySelections={applySelections}
+              applyLoadingRunId={applyLoadingRunId}
+              onApplyToggle={onApplyToggle}
+              onApply={onApply}
             />
           ))}
         </div>
@@ -2135,57 +2260,66 @@ function AiRecommendationHistoryCompare({
   )
 }
 
-function AiRecommendationCompareCard({ detail = {} }) {
+function AiRecommendationCompareCard({
+  detail = {},
+  applySelections = {},
+  applyLoadingRunId = null,
+  onApplyToggle,
+  onApply,
+}) {
   const run = detail?.run || {}
   const source = detail?.source || {}
   const recommendation = detail?.recommendation || {}
+  const runId = run?.id
+  const selectedItems = applySelections[String(runId)] || {}
+  const selectableItems = getSelectableAiRecommendationApplyItems(recommendation)
 
   return (
     <article className="ai-recommendation-compare-card">
-      <h3>Run {formatValue(run.id)}</h3>
+      <h3>이력 {formatValue(run.id)}</h3>
 
       <dl className="ai-meta-list">
         <div>
-          <dt>created_at</dt>
+          <dt>생성 시각</dt>
           <dd>{formatValue(run.created_at)}</dd>
         </div>
         <div>
-          <dt>mode</dt>
+          <dt>실행 모드</dt>
           <dd>{formatValue(run.mode)}</dd>
         </div>
         <div>
-          <dt>model</dt>
+          <dt>모델</dt>
           <dd>{formatValue(run.model)}</dd>
         </div>
         <div>
-          <dt>prompt_version</dt>
+          <dt>프롬프트 버전</dt>
           <dd>{formatValue(run.prompt_version)}</dd>
         </div>
         <div>
-          <dt>status</dt>
-          <dd>{formatValue(run.status)}</dd>
+          <dt>실행 상태</dt>
+          <dd>{formatAiRunStatus(run.status)}</dd>
         </div>
         <div>
-          <dt>applied_status</dt>
-          <dd>{formatValue(run.applied_status)}</dd>
+          <dt>반영 상태</dt>
+          <dd>{formatAiAppliedStatus(run.applied_status)}</dd>
         </div>
         <div>
-          <dt>source company</dt>
+          <dt>회사</dt>
           <dd>{formatValue(source.company)}</dd>
         </div>
         <div>
-          <dt>source position</dt>
+          <dt>직무</dt>
           <dd>{formatValue(source.position)}</dd>
         </div>
       </dl>
 
       <div className="ai-recommendation-compare-values">
         <div>
-          <h4>industry_category</h4>
+          <h4>산업</h4>
           <p>{formatValue(getCategoryValue(recommendation.industry_category))}</p>
         </div>
         <div>
-          <h4>primary_domain_category</h4>
+          <h4>대표 도메인</h4>
           <p>
             {formatValue(
               getCategoryValue(recommendation.primary_domain_category),
@@ -2193,15 +2327,15 @@ function AiRecommendationCompareCard({ detail = {} }) {
           </p>
         </div>
         <div>
-          <h4>position_category</h4>
+          <h4>직무 분류</h4>
           <p>{formatValue(getCategoryValue(recommendation.position_category))}</p>
         </div>
         <div>
-          <h4>skills</h4>
+          <h4>기술/도구</h4>
           <p>{formatValue(getRecommendationItemValues(recommendation.skills))}</p>
         </div>
         <div>
-          <h4>competencies</h4>
+          <h4>역량</h4>
           <p>
             {formatValue(
               getRecommendationItemValues(recommendation.competencies),
@@ -2209,7 +2343,7 @@ function AiRecommendationCompareCard({ detail = {} }) {
           </p>
         </div>
         <div>
-          <h4>review_item_candidates</h4>
+          <h4>검토 후보</h4>
           <p>
             {formatValue(
               getReviewCandidateValues(
@@ -2219,6 +2353,16 @@ function AiRecommendationCompareCard({ detail = {} }) {
           </p>
         </div>
       </div>
+
+      <AiRecommendationApplyPanel
+        runId={runId}
+        items={selectableItems}
+        selectedItems={selectedItems}
+        isLoading={applyLoadingRunId === runId}
+        buttonLabel="이 이력의 선택 항목 반영"
+        onToggle={onApplyToggle}
+        onApply={onApply}
+      />
     </article>
   )
 }
@@ -2249,10 +2393,204 @@ function getReviewCandidateValues(items = []) {
     .join(', ')
 }
 
+function AiRecommendationApplyPanel({
+  runId,
+  items = [],
+  selectedItems = {},
+  isLoading = false,
+  buttonLabel = '선택 항목 반영',
+  onToggle,
+  onApply,
+}) {
+  const selectedCount = Object.keys(selectedItems || {}).length
+
+  return (
+    <section className="ai-recommendation-apply-panel">
+      <h3>정제 항목 선택 반영</h3>
+      {items.length === 0 ? (
+        <p>반영 가능한 기술/도구 또는 역량 항목이 없습니다.</p>
+      ) : (
+        <div className="ai-recommendation-apply-list">
+          {items.map((entry) => (
+            <label
+              className="ai-recommendation-apply-item"
+              key={entry.source_path}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(selectedItems?.[entry.source_path])}
+                onChange={() => onToggle(runId, entry.payload)}
+                disabled={isLoading}
+              />
+              <span>
+                <strong>{formatValue(entry.label)}</strong>
+                <small>{entry.categoryLabel}</small>
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => onApply(runId)}
+        disabled={selectedCount === 0 || isLoading}
+      >
+        {isLoading ? '반영 중입니다' : buttonLabel}
+      </button>
+    </section>
+  )
+}
+
+function AiRecommendationApplyResult({ result = null, error = '' }) {
+  if (!result && !error) {
+    return null
+  }
+
+  const appliedItems = result?.applied_items || []
+  const skippedItems = result?.skipped_items || []
+
+  return (
+    <section className="ai-recommendation-apply-result">
+      <h2>선택 반영 결과</h2>
+      {error && <p className="error">{error}</p>}
+      {result && (
+        <>
+          <dl className="ai-meta-list">
+            <div>
+              <dt>이력 ID</dt>
+              <dd>{formatValue(result?.run?.id)}</dd>
+            </div>
+            <div>
+              <dt>반영 상태</dt>
+              <dd>{formatAiAppliedStatus(result?.run?.applied_status)}</dd>
+            </div>
+            <div>
+              <dt>반영 완료</dt>
+              <dd>{appliedItems.length}건</dd>
+            </div>
+            <div>
+              <dt>반영 제외</dt>
+              <dd>{skippedItems.length}건</dd>
+            </div>
+          </dl>
+
+          <AiRecommendationApplyResultList
+            title="반영 항목"
+            items={appliedItems}
+          />
+          <AiRecommendationApplyResultList
+            title="제외 항목"
+            items={skippedItems}
+          />
+        </>
+      )}
+    </section>
+  )
+}
+
+function AiRecommendationApplyResultList({ title, items = [] }) {
+  return (
+    <div className="ai-recommendation-apply-result-list">
+      <h3>{title}</h3>
+      {items.length === 0 ? (
+        <p>없음</p>
+      ) : (
+        <ul>
+          {items.map((item, index) => (
+            <li key={`${item.source_path}-${index}`}>
+              <strong>{formatValue(item.suggested_value || item.raw_value)}</strong>
+              <span>
+                {formatAiFieldType(item.field_type)} ·{' '}
+                {formatAiApplyAction(item.action)}
+              </span>
+              {item.reason && <em>{item.reason}</em>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function getSelectableAiRecommendationApplyItems(recommendation = {}) {
+  const skillItems = (recommendation.skills || [])
+    .map((item, index) =>
+      createApplyItemEntry({
+        sourcePath: `skills[${index}]`,
+        fieldType: 'skill',
+        rawValue: item?.value,
+        suggestedValue: item?.value,
+        categoryLabel: '기술/도구',
+      }),
+    )
+    .filter(Boolean)
+
+  const competencyItems = (recommendation.competencies || [])
+    .map((item, index) =>
+      createApplyItemEntry({
+        sourcePath: `competencies[${index}]`,
+        fieldType: 'competency',
+        rawValue: item?.value,
+        suggestedValue: item?.value,
+        categoryLabel: '역량',
+      }),
+    )
+    .filter(Boolean)
+
+  const candidateItems = (recommendation.review_item_candidates || [])
+    .map((item, index) => {
+      if (!['skill', 'competency'].includes(item?.field_type)) {
+        return null
+      }
+
+      return createApplyItemEntry({
+        sourcePath: `review_item_candidates[${index}]`,
+        fieldType: item.field_type,
+        rawValue: item.raw_value,
+        suggestedValue: item.suggested_value,
+        categoryLabel: `검토 후보 · ${formatAiFieldType(item.field_type)}`,
+      })
+    })
+    .filter(Boolean)
+
+  return [...skillItems, ...competencyItems, ...candidateItems]
+}
+
+function createApplyItemEntry({
+  sourcePath,
+  fieldType,
+  rawValue,
+  suggestedValue,
+  categoryLabel,
+}) {
+  const normalizedRawValue = rawValue || suggestedValue || ''
+  const normalizedSuggestedValue = suggestedValue || rawValue || ''
+
+  if (!normalizedRawValue && !normalizedSuggestedValue) {
+    return null
+  }
+
+  return {
+    source_path: sourcePath,
+    label: normalizedSuggestedValue || normalizedRawValue,
+    categoryLabel,
+    payload: {
+      source_path: sourcePath,
+      field_type: fieldType,
+      raw_value: normalizedRawValue,
+      suggested_value: normalizedSuggestedValue,
+    },
+  }
+}
+
 function AiRecommendationHistoryDetail({
   detail = null,
   isLoading = false,
   error = '',
+  applySelections = {},
+  applyLoadingRunId = null,
+  onApplyToggle,
+  onApply,
 }) {
   const run = detail?.run || null
   const source = detail?.source || {}
@@ -2260,6 +2598,9 @@ function AiRecommendationHistoryDetail({
   const skills = recommendation.skills || []
   const competencies = recommendation.competencies || []
   const reviewItemCandidates = recommendation.review_item_candidates || []
+  const runId = run?.id
+  const selectedItems = applySelections[String(runId)] || {}
+  const selectableItems = getSelectableAiRecommendationApplyItems(recommendation)
 
   return (
     <section className="ai-recommendation-history-detail">
@@ -2280,39 +2621,39 @@ function AiRecommendationHistoryDetail({
           <div className="ai-recommendation-history-detail-meta">
             <dl className="ai-meta-list">
               <div>
-                <dt>run_id</dt>
+                <dt>이력 ID</dt>
                 <dd>{formatValue(run?.id)}</dd>
               </div>
               <div>
-                <dt>created_at</dt>
+                <dt>생성 시각</dt>
                 <dd>{formatValue(run?.created_at)}</dd>
               </div>
               <div>
-                <dt>mode</dt>
+                <dt>실행 모드</dt>
                 <dd>{formatValue(run?.mode)}</dd>
               </div>
               <div>
-                <dt>model</dt>
+                <dt>모델</dt>
                 <dd>{formatValue(run?.model)}</dd>
               </div>
               <div>
-                <dt>prompt_version</dt>
+                <dt>프롬프트 버전</dt>
                 <dd>{formatValue(run?.prompt_version)}</dd>
               </div>
               <div>
-                <dt>status</dt>
-                <dd>{formatValue(run?.status)}</dd>
+                <dt>실행 상태</dt>
+                <dd>{formatAiRunStatus(run?.status)}</dd>
               </div>
               <div>
-                <dt>applied_status</dt>
-                <dd>{formatValue(run?.applied_status)}</dd>
+                <dt>반영 상태</dt>
+                <dd>{formatAiAppliedStatus(run?.applied_status)}</dd>
               </div>
               <div>
-                <dt>source company</dt>
+                <dt>회사</dt>
                 <dd>{formatValue(source?.company)}</dd>
               </div>
               <div>
-                <dt>source position</dt>
+                <dt>직무</dt>
                 <dd>{formatValue(source?.position)}</dd>
               </div>
             </dl>
@@ -2320,16 +2661,16 @@ function AiRecommendationHistoryDetail({
 
           <div className="ai-recommendation-history-detail-card-grid">
             <article className="ai-recommendation-history-detail-card">
-              <h3>industry_category</h3>
+              <h3>산업</h3>
               <dl className="ai-recommendation-detail-list">
                 <div>
-                  <dt>value</dt>
+                  <dt>값</dt>
                   <dd>
                     {formatValue(recommendation.industry_category?.value)}
                   </dd>
                 </div>
                 <div>
-                  <dt>confidence</dt>
+                  <dt>확신도</dt>
                   <dd>
                     {formatValue(
                       recommendation.industry_category?.confidence,
@@ -2337,7 +2678,7 @@ function AiRecommendationHistoryDetail({
                   </dd>
                 </div>
                 <div>
-                  <dt>reason</dt>
+                  <dt>판단 근거</dt>
                   <dd>
                     {formatValue(recommendation.industry_category?.reason)}
                   </dd>
@@ -2346,10 +2687,10 @@ function AiRecommendationHistoryDetail({
             </article>
 
             <article className="ai-recommendation-history-detail-card">
-              <h3>primary_domain_category</h3>
+              <h3>대표 도메인</h3>
               <dl className="ai-recommendation-detail-list">
                 <div>
-                  <dt>value</dt>
+                  <dt>값</dt>
                   <dd>
                     {formatValue(
                       recommendation.primary_domain_category?.value,
@@ -2357,7 +2698,7 @@ function AiRecommendationHistoryDetail({
                   </dd>
                 </div>
                 <div>
-                  <dt>confidence</dt>
+                  <dt>확신도</dt>
                   <dd>
                     {formatValue(
                       recommendation.primary_domain_category?.confidence,
@@ -2365,7 +2706,7 @@ function AiRecommendationHistoryDetail({
                   </dd>
                 </div>
                 <div>
-                  <dt>reason</dt>
+                  <dt>판단 근거</dt>
                   <dd>
                     {formatValue(
                       recommendation.primary_domain_category?.reason,
@@ -2376,16 +2717,16 @@ function AiRecommendationHistoryDetail({
             </article>
 
             <article className="ai-recommendation-history-detail-card">
-              <h3>position_category</h3>
+              <h3>직무 분류</h3>
               <dl className="ai-recommendation-detail-list">
                 <div>
-                  <dt>value</dt>
+                  <dt>값</dt>
                   <dd>
                     {formatValue(recommendation.position_category?.value)}
                   </dd>
                 </div>
                 <div>
-                  <dt>confidence</dt>
+                  <dt>확신도</dt>
                   <dd>
                     {formatValue(
                       recommendation.position_category?.confidence,
@@ -2393,7 +2734,7 @@ function AiRecommendationHistoryDetail({
                   </dd>
                 </div>
                 <div>
-                  <dt>reason</dt>
+                  <dt>판단 근거</dt>
                   <dd>
                     {formatValue(recommendation.position_category?.reason)}
                   </dd>
@@ -2403,9 +2744,9 @@ function AiRecommendationHistoryDetail({
           </div>
 
           <section className="ai-recommendation-history-detail-list">
-            <h3>skills</h3>
+            <h3>기술/도구</h3>
             {skills.length === 0 ? (
-              <p>No recommendation</p>
+              <p>추천 항목이 없습니다.</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {skills.map((item, index) => (
@@ -2416,11 +2757,11 @@ function AiRecommendationHistoryDetail({
                     <h4>{formatValue(item.value)}</h4>
                     <dl className="ai-recommendation-detail-list">
                       <div>
-                        <dt>confidence</dt>
+                        <dt>확신도</dt>
                         <dd>{formatValue(item.confidence)}</dd>
                       </div>
                       <div>
-                        <dt>reason</dt>
+                        <dt>판단 근거</dt>
                         <dd>{formatValue(item.reason)}</dd>
                       </div>
                     </dl>
@@ -2431,9 +2772,9 @@ function AiRecommendationHistoryDetail({
           </section>
 
           <section className="ai-recommendation-history-detail-list">
-            <h3>competencies</h3>
+            <h3>역량</h3>
             {competencies.length === 0 ? (
-              <p>No recommendation</p>
+              <p>추천 항목이 없습니다.</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {competencies.map((item, index) => (
@@ -2444,11 +2785,11 @@ function AiRecommendationHistoryDetail({
                     <h4>{formatValue(item.value)}</h4>
                     <dl className="ai-recommendation-detail-list">
                       <div>
-                        <dt>confidence</dt>
+                        <dt>확신도</dt>
                         <dd>{formatValue(item.confidence)}</dd>
                       </div>
                       <div>
-                        <dt>reason</dt>
+                        <dt>판단 근거</dt>
                         <dd>{formatValue(item.reason)}</dd>
                       </div>
                     </dl>
@@ -2459,9 +2800,9 @@ function AiRecommendationHistoryDetail({
           </section>
 
           <section className="ai-recommendation-history-detail-list">
-            <h3>review_item_candidates</h3>
+            <h3>검토 후보</h3>
             {reviewItemCandidates.length === 0 ? (
-              <p>No candidates</p>
+              <p>검토 후보가 없습니다.</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {reviewItemCandidates.map((item, index) => (
@@ -2473,23 +2814,23 @@ function AiRecommendationHistoryDetail({
                   >
                     <dl className="ai-recommendation-detail-list">
                       <div>
-                        <dt>field_type</dt>
-                        <dd>{formatValue(item.field_type)}</dd>
+                        <dt>항목 유형</dt>
+                        <dd>{formatAiFieldType(item.field_type)}</dd>
                       </div>
                       <div>
-                        <dt>raw_value</dt>
+                        <dt>원문값</dt>
                         <dd>{formatValue(item.raw_value)}</dd>
                       </div>
                       <div>
-                        <dt>suggested_value</dt>
+                        <dt>제안값</dt>
                         <dd>{formatValue(item.suggested_value)}</dd>
                       </div>
                       <div>
-                        <dt>confidence</dt>
+                        <dt>확신도</dt>
                         <dd>{formatValue(item.confidence)}</dd>
                       </div>
                       <div>
-                        <dt>reason</dt>
+                        <dt>판단 근거</dt>
                         <dd>{formatValue(item.reason)}</dd>
                       </div>
                     </dl>
@@ -2498,6 +2839,16 @@ function AiRecommendationHistoryDetail({
               </div>
             )}
           </section>
+
+          <AiRecommendationApplyPanel
+            runId={runId}
+            items={selectableItems}
+            selectedItems={selectedItems}
+            isLoading={applyLoadingRunId === runId}
+            buttonLabel="선택 항목 반영"
+            onToggle={onApplyToggle}
+            onApply={onApply}
+          />
         </>
       )}
     </section>
@@ -2877,6 +3228,52 @@ function formatReviewItemFieldType(fieldType) {
   }
 
   return fieldTypeLabels[fieldType] || formatValue(fieldType)
+}
+
+function formatAiRunStatus(status) {
+  if (status === 'succeeded') {
+    return '성공'
+  }
+  if (status === 'failed') {
+    return '실패'
+  }
+  return formatValue(status)
+}
+
+function formatAiAppliedStatus(status) {
+  if (status === 'not_applied') {
+    return '미반영'
+  }
+  if (status === 'partially_applied') {
+    return '일부 반영'
+  }
+  if (status === 'applied') {
+    return '반영 완료'
+  }
+  return formatValue(status)
+}
+
+function formatAiFieldType(fieldType) {
+  const fieldTypeLabels = {
+    industry: '산업',
+    domain: '도메인',
+    position: '직무',
+    skill: '기술/도구',
+    competency: '역량',
+  }
+
+  return fieldTypeLabels[fieldType] || formatValue(fieldType)
+}
+
+function formatAiApplyAction(action) {
+  const actionLabels = {
+    created_review_item: '정제 항목 생성',
+    updated_existing_review_item: '기존 항목 갱신',
+    existing_confirmed_reused: '기존 확정 항목 유지',
+    skipped_removed_history: '제외 이력으로 미반영',
+  }
+
+  return actionLabels[action] || formatValue(action)
 }
 
 function createReviewItemDrafts(items = []) {

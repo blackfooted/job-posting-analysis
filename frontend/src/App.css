@@ -721,6 +721,7 @@ button { font-family: inherit; }
 .ai-recommendation-history,
 .ai-recommendation-history-compare,
 .ai-recommendation-history-detail,
+.ai-recommendation-apply-result,
 .ai-recommendation-list {
   margin-top: 18px;
   background: var(--gray-0);
@@ -1114,6 +1115,120 @@ button { font-family: inherit; }
 
 .ai-recommendation-history-detail-list {
   margin-top: 18px;
+}
+
+.ai-recommendation-apply-panel {
+  border-top: 1px solid var(--gray-100);
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.ai-recommendation-apply-panel h3,
+.ai-recommendation-apply-result h2,
+.ai-recommendation-apply-result-list h3 {
+  color: var(--gray-700);
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+.ai-recommendation-apply-panel p,
+.ai-recommendation-apply-result-list p {
+  color: var(--gray-500);
+  font-size: 13px;
+}
+
+.ai-recommendation-apply-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-recommendation-apply-item {
+  align-items: flex-start;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 9px;
+  padding: 9px 10px;
+}
+
+.ai-recommendation-apply-item input {
+  accent-color: var(--brand-500);
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.ai-recommendation-apply-item span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ai-recommendation-apply-item strong {
+  color: var(--gray-700);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.ai-recommendation-apply-item small {
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.ai-recommendation-apply-panel button {
+  justify-self: start;
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+}
+
+.ai-recommendation-apply-panel button:hover:not(:disabled) {
+  background: var(--brand-100);
+}
+
+.ai-recommendation-apply-panel button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.ai-recommendation-apply-result {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-recommendation-apply-result-list ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.ai-recommendation-apply-result-list li {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+}
+
+.ai-recommendation-apply-result-list strong {
+  color: var(--gray-700);
+  font-size: 13px;
+}
+
+.ai-recommendation-apply-result-list span,
+.ai-recommendation-apply-result-list em {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-style: normal;
 }
 
 .ai-recommendation-card-grid,

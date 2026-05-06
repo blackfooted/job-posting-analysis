@@ -310,9 +310,9 @@ POST /api/ai-recommendations/history/{run_id}/apply
 - `removed` 이력은 1차 구현에서 skipped 처리
 - 처리 결과는 `applied_items_json`에 저장
 - 최소 1개 이상 applied되면 `applied_status=partially_applied`로 갱신
-- frontend 선택 반영 UI는 후속
+- frontend 선택 반영 UI는 history 상세/비교 화면에 1차 연결 완료
 
-## 12. frontend 선택 반영 UI 초안
+## 12. frontend 선택 반영 UI 1차 구현 상태
 
 후속 UI로 아래를 검토한다.
 
@@ -399,3 +399,15 @@ POST /api/ai-recommendations/history/{run_id}/apply
 - 선택 반영 backend API 구현
 - 선택 반영 frontend UI 구현
 - `dictionary_candidates` 구조 설계
+## Frontend Selective Apply UI 1차 구현 상태
+
+- frontend history 상세/비교 화면에서 선택 반영 UI를 1차 구현했다.
+- 상세 화면에서는 저장된 run의 skill/competency 항목을 선택해 apply API를 호출한다.
+- 비교 화면에서는 run별 선택 상태를 분리하고, 한 번에 한 run 기준으로 apply API를 호출한다.
+- `source_path`는 `skills[0]`, `competencies[1]`, `review_item_candidates[2]`처럼 저장된 recommendation 원본 배열 index를 기준으로 생성한다.
+- `review_item_candidates` 중 skill/competency만 선택 가능하며, 필터링 후 렌더링 index를 `source_path`로 사용하지 않는다.
+- apply 성공 후 history 목록을 refresh하고 현재 상세 run은 상세 API로 재조회한다.
+- backend 응답의 `applied_status`만 로컬 상세/비교 state에 덮어쓰는 방식은 사용하지 않는다.
+- apply 결과의 `applied_items`와 `skipped_items`를 화면에 표시한다.
+- AI 추천 화면의 주요 label/컬럼명은 한글로 정리했다.
+- backend 선택 반영 정책은 유지하며, `dictionary_candidates` 연동은 후속 단계로 둔다.
