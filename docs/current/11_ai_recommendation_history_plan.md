@@ -410,3 +410,10 @@ AI Recommendation History는 추천 결과를 자동 확정하거나 즉시 반�
 - apply 성공 후 history 목록을 refresh하고 현재 상세 run은 상세 API로 재조회한다.
 - 비교 화면에서는 run별로 선택 항목을 분리해 한 run 단위로 반영한다.
 - `dictionary_candidates` 연동은 후속 단계로 유지한다.
+## Phase AI-4 1차 완료 상태
+
+- AI Recommendation History 기능은 저장, 목록, 상세, 비교, 선택 반영 UI까지 1차 완료되었다.
+- 선택 반영 결과는 `ai_recommendation_runs.applied_items_json`에 기록된다.
+- 선택 반영은 `review_items` 대상으로만 수행한다.
+- `dictionary_candidates` 연동은 후속 단계로 둔다.
+- 다음 고도화는 `applied_items_json` 기반 항목별 반영 상태 표시와 AI 추천 품질 검증 결과 반영 이후 진행한다.

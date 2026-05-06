@@ -474,3 +474,46 @@ http://127.0.0.1:8000/docs
 - backend 응답의 `applied_status`만 로컬 state에 직접 반영하지 않고 재조회 결과를 기준으로 화면을 갱신한다.
 - AI 추천 화면의 주요 label/컬럼명은 한글로 정리했다.
 - 다음 작업 후보는 applied result를 history 상세/비교 항목별로 표시하는 고도화, dictionary_candidates 구조 설계, 선택 반영 UX 개선이다.
+## AI Recommendation Phase AI-4 완료 및 다음 우선순위
+
+### 현재 상태
+
+- Phase AI-4 1차 구현 완료
+- 선택 반영 backend API 구현 완료: `POST /api/ai-recommendations/history/{run_id}/apply`
+- 선택 반영 frontend UI 구현 완료
+- 사용자 로컬에서 선택 반영 정상 작동 확인
+- 선택 항목의 `review_items` 반영 확인
+- 선택 반영 결과 `applied_items`/`skipped_items` 표시
+- AI 추천 화면 label/컬럼명 한글화 완료
+- 선택 반영은 `review_items` 대상으로만 수행한다.
+- `dictionary_candidates` 연동은 후속 단계다.
+
+### 다음 작업 우선순위
+
+1. AI 추천 품질 검증 문서화
+   - 기존 4개 공고 기준 규칙 기반 결과와 AI 추천 결과 비교
+   - 규칙 기반 단독 / AI 단독 / 합산 매칭률 / 오추출률 산출
+   - 필요 시 2~3개 공고 추가
+
+2. classification phase 3 개선
+   - AI 추천 품질 검증 결과를 바탕으로 반복 누락/오추출 패턴 개선
+   - IA/IATA, 고유명사/기관명, 대문자 약어 필터링 등 검토
+
+3. 선택 반영 결과 표시 고도화
+   - `applied_items_json` 기반 항목별 반영 상태 표시
+   - skipped 사유 표시 고도화
+
+4. dictionary_candidates 구조 설계
+   - `review_items` confirmed 결과를 config 후보로 연결하는 구조
+   - 품질 검증과 classification 개선 이후 진행
+
+### AI 추천 품질 검증 기준
+
+- 기존 4개 공고: 누아, 슈퍼진, 세나, 바티에이아이
+- 추가 권장 공고: 금융/핀테크, 교육/에듀테크, 문맥 의존 표현이 많은 공고 중 2~3개
+- 총 6~8개 공고 기준 1차 방향성을 판단한다.
+- HR 페르소나 기대값 기준으로 비교한다.
+- 오추출 항목은 별도 목록화한다.
+  - 기획 직무에 불필요한 기술 스택
+  - 고유명사/기관명
+  - 태도/성향 표현

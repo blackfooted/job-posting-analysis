@@ -411,3 +411,17 @@ POST /api/ai-recommendations/history/{run_id}/apply
 - apply 결과의 `applied_items`와 `skipped_items`를 화면에 표시한다.
 - AI 추천 화면의 주요 label/컬럼명은 한글로 정리했다.
 - backend 선택 반영 정책은 유지하며, `dictionary_candidates` 연동은 후속 단계로 둔다.
+## Phase AI-4 선택 반영 1차 완료 상태
+
+- 선택 반영 backend/frontend 1차 구현이 완료되었다.
+- 사용자 로컬에서 선택 반영 정상 작동을 확인했다.
+- 선택 항목의 `review_items` 반영을 확인했다.
+- 선택 반영 결과는 `applied_items`/`skipped_items`로 표시한다.
+- `applied_items_json`에는 선택 반영 처리 결과를 기록한다.
+
+정책상 남은 후속:
+
+- `applied_items_json` 기반 항목별 반영 상태 표시 고도화
+- `dictionary_candidates` 연동
+- removed 항목 재승인 정책
+- `applied_status`를 `applied`로 전환하는 명시적 완료 처리

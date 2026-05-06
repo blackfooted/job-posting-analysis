@@ -552,3 +552,41 @@ Structured Outputs:
 - 비교 화면에서는 run별로 선택 항목을 분리하고, 한 번에 한 run 기준으로 apply API를 호출한다.
 - AI 추천 화면의 주요 사용자 노출 label/컬럼명은 한글로 표시한다.
 - `dictionary_candidates` 연동과 industry/domain/position 선택 반영은 후속 단계로 둔다.
+## Phase AI-4 1차 완료 및 품질 검증 계획
+
+### Phase AI-4 1차 완료 상태
+
+- 선택 반영 backend API 구현 완료: `POST /api/ai-recommendations/history/{run_id}/apply`
+- 선택 반영 frontend UI 구현 완료
+- history 상세/비교 화면에서 skill/competency 항목 선택 반영 가능
+- 선택한 항목은 `review_items`에 반영된다.
+- industry/domain/position은 1차 선택 반영 대상에서 제외한다.
+- `dictionary_candidates` 연동은 후속 단계로 둔다.
+- 선택 반영 처리 결과는 `ai_recommendation_runs.applied_items_json`에 추적한다.
+- 최소 1개 이상 반영되면 `applied_status=partially_applied`로 갱신된다.
+- 사용자 로컬 검증에서 선택 항목의 `review_items` 반영이 정상 작동하는 것을 확인했다.
+- 선택 반영 결과의 `applied_items`/`skipped_items`는 frontend에서 표시한다.
+- AI 추천 화면 label/컬럼명은 한글로 정리했다.
+
+### 다음 우선순위 — AI 추천 품질 검증
+
+AI 추천 품질 검증을 다음 우선순위로 둔다.
+
+검증 목적:
+
+- 규칙 기반 classification이 놓친 항목을 AI가 얼마나 보완하는지 확인한다.
+- AI 추천의 오추출률을 확인한다.
+- classification phase 3와 dictionary_candidates 설계 우선순위를 데이터 기반으로 결정한다.
+
+검증 지표:
+
+1. 규칙 기반 단독 매칭률
+2. AI 추천 단독 매칭률
+3. 규칙 기반 + AI 추천 합산 매칭률
+4. AI 추천 오추출률
+
+목표 기준:
+
+- 현재 규칙 기반 평균 매칭률 약 56%를 기준으로 비교한다.
+- 합산 매칭률이 70% 이상으로 상승하면 AI 추천의 실질 기여로 판단한다.
+- 오추출률이 높으면 prompt 개선 또는 후보 필터링을 우선 검토한다.

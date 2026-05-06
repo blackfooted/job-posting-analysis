@@ -76,6 +76,10 @@ Codex 작업 지시문에는 아래 항목을 포함한다.
 | classification 로직/config | `05_classification_and_config_spec.md`, 필요 시 `09_current_dev_handoff.md` |
 | dashboard API/집계 기준 | `06_dashboard_spec.md`, 필요 시 `09_current_dev_handoff.md` |
 | AI recommendation | `07_ai_recommendation_spec.md`, 필요 시 `09_current_dev_handoff.md` |
+| AI recommendation 기능 변경 | `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md`, `12_ai_recommendation_selective_apply_policy.md` |
+| AI recommendation history 저장/조회 변경 | `11_ai_recommendation_history_plan.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
+| AI recommendation 선택 반영 변경 | `12_ai_recommendation_selective_apply_policy.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md` |
+| AI recommendation 품질 검증/평가 변경 | 품질 검증 문서, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
 | DB 스키마 변경 | `02_architecture_current_state.md`와 연관 기능 spec |
 | 복수 도메인 구조 도입 | `02_architecture_current_state.md`, `03_postings_feature_spec.md`, `05_classification_and_config_spec.md`, `06_dashboard_spec.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
 | 로드맵 변경 | `08_future_roadmap.md`, `09_current_dev_handoff.md` |
