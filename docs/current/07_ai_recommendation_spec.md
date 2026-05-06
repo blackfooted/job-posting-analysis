@@ -46,6 +46,7 @@
 - API key, raw prompt, raw OpenAI response 전체 저장 금지
 - 저장 대상은 openai mode 성공 결과 우선
 - mock 결과 저장 여부는 별도 결정
+- 설계 문서: `docs/current/11_ai_recommendation_history_plan.md`
 
 ### Phase AI-3 — AI 추천 결과 히스토리 저장/조회 구현
 
@@ -233,6 +234,21 @@ Streaming 응답은 계속 후속 UX 개선 후보로 유지한다.
 - Phase AI-2: AI 추천 결과 히스토리 설계
 - Phase AI-3: AI 추천 결과 히스토리 저장/조회 구현
 - Phase AI-4: 저장된 추천 결과의 선택 반영 검토
+
+## AI Recommendation History 설계
+
+AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recommendation_history_plan.md`를 따른다.
+
+핵심 정책:
+
+- openai mode 성공 결과 저장을 우선으로 한다.
+- 저장 대상은 정규화된 recommendation JSON 전체를 우선으로 한다.
+- `posting_id`, `mode`, `model`, `prompt_version`, `recommendation_json`, `created_at`, 실행 상태를 저장 대상으로 검토한다.
+- API key, raw prompt 전체, raw OpenAI response 전체, request payload 전체는 저장하지 않는다.
+- AI 추천 결과는 저장해도 자동 확정하지 않는다.
+- 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
+- 저장과 선택 반영의 책임을 분리한다.
+- 초기 history 저장 구현에서는 `applied_status`만 두고, 선택 반영 항목 추적용 `applied_items_json`은 후속 반영 기능 단계에서 검토한다.
 
 ## Phase AI-1B endpoint 정책
 

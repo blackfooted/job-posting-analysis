@@ -144,6 +144,8 @@ Phase AI-1B에서도 아래는 제외한다.
 - dictionary_candidates 연동
 
 Phase AI-2 이후는 AI Recommendation History 설계를 우선 검토한다.
+상세 설계 문서는 `docs/current/11_ai_recommendation_history_plan.md`다.
+핵심 정책은 openai mode 성공 결과 저장 우선, 정규화된 recommendation JSON 저장, API key/raw prompt/raw OpenAI response 전체 저장 금지, 저장과 선택 반영 책임 분리다.
 
 ## 현재 정책 기준
 
@@ -324,11 +326,16 @@ http://127.0.0.1:8000/docs
 
 1. AI Recommendation History 설계
    - AI 추천 결과를 저장하는 히스토리 관리 구조를 설계한다.
+   - 상세 기준은 `docs/current/11_ai_recommendation_history_plan.md`를 따른다.
    - 저장 테이블, 필드, API, UI 범위를 정의한다.
    - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
    - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.
    - mock 결과 저장 여부는 별도 결정한다.
+   - 1차 history 저장 구현에서는 `applied_status`만 두고, `applied_items_json`은 선택 반영 기능 구현 단계에서 추가 검토한다.
+   - POST /runs 전환 시 frontend 영향 범위는 `frontend/src/api/aiRecommendationsApi.js`와 `frontend/src/App.jsx`다.
+   - 기존 GET endpoint는 호환성을 위해 유지하거나 deprecated 처리 검토가 필요하다.
+   - frontend 변경 범위를 최소화하려면 GET 유지 + 내부 저장 방식이 빠르지만, 장기적으로는 POST /runs가 더 적절하다.
    - review_items/dictionary_candidates 반영은 history 설계 이후 검토한다.
 
 2. AI Recommendation 실제 응답 품질 검토 추가
