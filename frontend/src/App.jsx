@@ -138,6 +138,22 @@ function App() {
     selectedAiRecommendationHistoryRunId,
     setSelectedAiRecommendationHistoryRunId,
   ] = useState(null)
+  const [
+    aiRecommendationCompareRunIds,
+    setAiRecommendationCompareRunIds,
+  ] = useState([])
+  const [
+    aiRecommendationCompareDetails,
+    setAiRecommendationCompareDetails,
+  ] = useState([])
+  const [
+    aiRecommendationCompareLoading,
+    setAiRecommendationCompareLoading,
+  ] = useState(false)
+  const [aiRecommendationCompareError, setAiRecommendationCompareError] =
+    useState('')
+  const [aiRecommendationCompareMessage, setAiRecommendationCompareMessage] =
+    useState('')
 
   async function loadSummary(shouldUpdate = () => true) {
     setLoading(true)
@@ -884,6 +900,14 @@ function App() {
     setSelectedAiRecommendationHistoryRunId(null)
   }
 
+  function resetAiRecommendationHistoryCompare() {
+    setAiRecommendationCompareRunIds([])
+    setAiRecommendationCompareDetails([])
+    setAiRecommendationCompareLoading(false)
+    setAiRecommendationCompareError('')
+    setAiRecommendationCompareMessage('')
+  }
+
   async function fetchSelectedAiRecommendationHistory(postingId, page = 1) {
     if (!postingId) {
       resetAiRecommendationHistory()
@@ -971,6 +995,77 @@ function App() {
     }
   }
 
+  function handleAiRecommendationCompareToggle(runId) {
+    setAiRecommendationCompareError('')
+    setAiRecommendationCompareDetails([])
+
+    if (aiRecommendationCompareRunIds.includes(runId)) {
+      setAiRecommendationCompareMessage('')
+      setAiRecommendationCompareRunIds((currentRunIds) =>
+        currentRunIds.filter((id) => id !== runId),
+      )
+      return
+    }
+
+    if (aiRecommendationCompareRunIds.length >= 2) {
+      setAiRecommendationCompareMessage(
+        '비교는 최대 2개 이력까지만 선택할 수 있습니다.',
+      )
+      return
+    }
+
+    setAiRecommendationCompareMessage('')
+    setAiRecommendationCompareRunIds((currentRunIds) => [
+      ...currentRunIds,
+      runId,
+    ])
+  }
+
+  async function fetchAiRecommendationCompareDetails(runIds) {
+    if (runIds.length !== 2) {
+      setAiRecommendationCompareMessage('비교할 추천 이력 2개를 선택하세요.')
+      setAiRecommendationCompareDetails([])
+      return
+    }
+
+    setAiRecommendationCompareLoading(true)
+    setAiRecommendationCompareError('')
+    setAiRecommendationCompareMessage('')
+
+    try {
+      const results = await Promise.all(
+        runIds.map((runId) => fetchAiRecommendationHistoryDetail(runId)),
+      )
+
+      const failedResult = results.find((result) => result.error)
+
+      if (failedResult) {
+        setAiRecommendationCompareDetails([])
+        setAiRecommendationCompareError(
+          failedResult.error.message ||
+            'AI 추천 이력 비교 정보를 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setAiRecommendationCompareDetails(
+        results.map((result) => result.data).filter(Boolean),
+      )
+    } catch (requestError) {
+      setAiRecommendationCompareDetails([])
+      setAiRecommendationCompareError(
+        requestError.message ||
+          'AI 추천 이력 비교 정보를 불러오지 못했습니다.',
+      )
+    } finally {
+      setAiRecommendationCompareLoading(false)
+    }
+  }
+
+  function handleAiRecommendationCompareClick() {
+    fetchAiRecommendationCompareDetails(aiRecommendationCompareRunIds)
+  }
+
   function handleAiPostingChange(event) {
     const postingId = event.target.value
     setSelectedAiPostingId(postingId)
@@ -979,6 +1074,7 @@ function App() {
     setAiRecommendationLoading(false)
     resetAiRecommendationHistory()
     resetAiRecommendationHistoryDetail()
+    resetAiRecommendationHistoryCompare()
 
     if (postingId) {
       fetchSelectedAiRecommendationHistory(postingId, 1)
@@ -1006,6 +1102,7 @@ function App() {
 
       setAiRecommendation(result.data || null)
       resetAiRecommendationHistoryDetail()
+      resetAiRecommendationHistoryCompare()
       await fetchSelectedAiRecommendationHistory(selectedAiPostingId, 1)
     } catch (requestError) {
       setAiRecommendation(null)
@@ -1023,6 +1120,7 @@ function App() {
     }
 
     resetAiRecommendationHistoryDetail()
+    resetAiRecommendationHistoryCompare()
     fetchSelectedAiRecommendationHistory(selectedAiPostingId, page)
   }
 
@@ -1580,9 +1678,23 @@ function App() {
                 isLoading={aiRecommendationHistoryLoading}
                 error={aiRecommendationHistoryError}
                 selectedRunId={selectedAiRecommendationHistoryRunId}
+                selectedCompareRunIds={aiRecommendationCompareRunIds}
                 isDetailLoading={aiRecommendationHistoryDetailLoading}
+                isCompareLoading={aiRecommendationCompareLoading}
                 onPageChange={handleAiRecommendationHistoryPageChange}
                 onDetailClick={fetchSelectedAiRecommendationHistoryDetail}
+                onCompareToggle={handleAiRecommendationCompareToggle}
+              />
+            )}
+
+            {selectedAiPostingId && (
+              <AiRecommendationHistoryCompare
+                selectedRunIds={aiRecommendationCompareRunIds}
+                details={aiRecommendationCompareDetails}
+                isLoading={aiRecommendationCompareLoading}
+                error={aiRecommendationCompareError}
+                message={aiRecommendationCompareMessage}
+                onCompareClick={handleAiRecommendationCompareClick}
               />
             )}
 
@@ -1845,9 +1957,12 @@ function AiRecommendationHistoryList({
   isLoading = false,
   error = '',
   selectedRunId = null,
+  selectedCompareRunIds = [],
   isDetailLoading = false,
+  isCompareLoading = false,
   onPageChange,
   onDetailClick,
+  onCompareToggle,
 }) {
   const currentPage = pagination?.page || 1
   const totalPages = pagination?.total_pages || 0
@@ -1886,6 +2001,7 @@ function AiRecommendationHistoryList({
                 <th>status</th>
                 <th>applied_status</th>
                 <th>created_at</th>
+                <th>비교</th>
                 <th>상세</th>
               </tr>
             </thead>
@@ -1896,6 +2012,8 @@ function AiRecommendationHistoryList({
                   className={
                     selectedRunId === run.id
                       ? 'ai-recommendation-history-row-selected'
+                      : selectedCompareRunIds.includes(run.id)
+                        ? 'ai-recommendation-history-row-compare-selected'
                       : undefined
                   }
                 >
@@ -1913,6 +2031,17 @@ function AiRecommendationHistoryList({
                     </span>
                   </td>
                   <td>{formatValue(run.created_at)}</td>
+                  <td>
+                    <label className="ai-recommendation-history-compare-check">
+                      <input
+                        type="checkbox"
+                        checked={selectedCompareRunIds.includes(run.id)}
+                        onChange={() => onCompareToggle(run.id)}
+                        disabled={isCompareLoading}
+                      />
+                      <span>비교 선택</span>
+                    </label>
+                  </td>
                   <td>
                     <button
                       type="button"
@@ -1953,6 +2082,171 @@ function AiRecommendationHistoryList({
       </div>
     </section>
   )
+}
+
+function AiRecommendationHistoryCompare({
+  selectedRunIds = [],
+  details = [],
+  isLoading = false,
+  error = '',
+  message = '',
+  onCompareClick,
+}) {
+  const canCompare = selectedRunIds.length === 2
+  const shouldShowCompare = !isLoading && !error && details.length === 2
+
+  return (
+    <section className="ai-recommendation-history-compare">
+      <div className="ai-recommendation-compare-heading">
+        <div>
+          <h2>추천 이력 비교</h2>
+          <p>저장된 run 2개를 선택해 추천 요약을 좌우로 비교합니다.</p>
+        </div>
+        <span>{selectedRunIds.length} / 2 선택</span>
+      </div>
+
+      <div className="ai-recommendation-compare-controls">
+        <button
+          type="button"
+          onClick={onCompareClick}
+          disabled={!canCompare || isLoading}
+        >
+          선택한 이력 비교
+        </button>
+        {!canCompare && <p>비교할 추천 이력 2개를 선택하세요.</p>}
+        {message && <p>{message}</p>}
+      </div>
+
+      {isLoading && <p>추천 이력 비교 정보를 불러오는 중입니다.</p>}
+
+      {!isLoading && error && <p className="error">{error}</p>}
+
+      {shouldShowCompare && (
+        <div className="ai-recommendation-compare-grid">
+          {details.map((detail, index) => (
+            <AiRecommendationCompareCard
+              key={detail?.run?.id || `compare-${index}`}
+              detail={detail}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function AiRecommendationCompareCard({ detail = {} }) {
+  const run = detail?.run || {}
+  const source = detail?.source || {}
+  const recommendation = detail?.recommendation || {}
+
+  return (
+    <article className="ai-recommendation-compare-card">
+      <h3>Run {formatValue(run.id)}</h3>
+
+      <dl className="ai-meta-list">
+        <div>
+          <dt>created_at</dt>
+          <dd>{formatValue(run.created_at)}</dd>
+        </div>
+        <div>
+          <dt>mode</dt>
+          <dd>{formatValue(run.mode)}</dd>
+        </div>
+        <div>
+          <dt>model</dt>
+          <dd>{formatValue(run.model)}</dd>
+        </div>
+        <div>
+          <dt>prompt_version</dt>
+          <dd>{formatValue(run.prompt_version)}</dd>
+        </div>
+        <div>
+          <dt>status</dt>
+          <dd>{formatValue(run.status)}</dd>
+        </div>
+        <div>
+          <dt>applied_status</dt>
+          <dd>{formatValue(run.applied_status)}</dd>
+        </div>
+        <div>
+          <dt>source company</dt>
+          <dd>{formatValue(source.company)}</dd>
+        </div>
+        <div>
+          <dt>source position</dt>
+          <dd>{formatValue(source.position)}</dd>
+        </div>
+      </dl>
+
+      <div className="ai-recommendation-compare-values">
+        <div>
+          <h4>industry_category</h4>
+          <p>{formatValue(getCategoryValue(recommendation.industry_category))}</p>
+        </div>
+        <div>
+          <h4>primary_domain_category</h4>
+          <p>
+            {formatValue(
+              getCategoryValue(recommendation.primary_domain_category),
+            )}
+          </p>
+        </div>
+        <div>
+          <h4>position_category</h4>
+          <p>{formatValue(getCategoryValue(recommendation.position_category))}</p>
+        </div>
+        <div>
+          <h4>skills</h4>
+          <p>{formatValue(getRecommendationItemValues(recommendation.skills))}</p>
+        </div>
+        <div>
+          <h4>competencies</h4>
+          <p>
+            {formatValue(
+              getRecommendationItemValues(recommendation.competencies),
+            )}
+          </p>
+        </div>
+        <div>
+          <h4>review_item_candidates</h4>
+          <p>
+            {formatValue(
+              getReviewCandidateValues(
+                recommendation.review_item_candidates,
+              ),
+            )}
+          </p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function getCategoryValue(category = {}) {
+  return category?.value || ''
+}
+
+function getRecommendationItemValues(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return ''
+  }
+
+  return items
+    .map((item) => item?.value)
+    .filter(Boolean)
+    .join(', ')
+}
+
+function getReviewCandidateValues(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return ''
+  }
+
+  return items
+    .map((item) => item?.suggested_value || item?.raw_value)
+    .filter(Boolean)
+    .join(', ')
 }
 
 function AiRecommendationHistoryDetail({

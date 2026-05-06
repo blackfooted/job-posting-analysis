@@ -278,7 +278,11 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - history 목록에서 `상세 보기`를 선택하면 `GET /api/ai-recommendations/history/{run_id}`로 상세를 조회한다.
 - history 상세는 run metadata, source, 저장된 recommendation을 표시한다.
 - history 상세 recommendation은 현재 추천 결과 영역과 별도 상세 영역으로 표시한다.
-- 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
+- history 목록에서 같은 공고의 저장된 run 2개를 보기 전용 비교 대상으로 선택할 수 있다.
+- 선택한 2개 run은 `GET /api/ai-recommendations/history/{run_id}` 상세 응답을 기준으로 좌우 비교한다.
+- 비교 UI는 metadata와 recommendation 요약을 표시하며 자동 판단이나 선택 반영은 하지 않는다.
+- 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
+- 선택 반영 UI는 후속 단계로 둔다.
 - 기존 GET endpoint는 호환 유지한다.
 
 초기 UI 후보:

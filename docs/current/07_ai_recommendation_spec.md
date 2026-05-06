@@ -283,7 +283,12 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - history 목록에서 `상세 보기`를 선택하면 `GET /api/ai-recommendations/history/{run_id}`로 저장된 추천 이력 상세를 조회한다.
 - history 상세 화면은 run metadata, source, 저장된 recommendation을 현재 추천 결과 영역과 별도 섹션으로 표시한다.
 - 기존 현재 recommendation 표시 JSX는 유지하고, history 상세 recommendation은 독립된 JSX 블록으로 표시한다.
-- history 비교/선택 반영 UI와 `applied_status` 변경은 후속 작업으로 둔다.
+- history 목록에서 같은 공고의 run 2개를 비교 대상으로 선택할 수 있다.
+- `선택한 이력 비교` 버튼을 누르면 선택한 2개 run에 대해 `GET /api/ai-recommendations/history/{run_id}`를 각각 호출한다.
+- history 비교 UI는 두 run의 metadata와 recommendation 요약을 좌우로 표시한다.
+- 상세 보기와 비교 선택은 독립적으로 동작한다.
+- 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
+- 비교 UI는 보기 전용이며 선택 반영 UI와 `applied_status` 변경은 후속 작업으로 둔다.
 
 ## Phase AI-1B endpoint 정책
 
