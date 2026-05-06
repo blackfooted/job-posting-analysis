@@ -14,53 +14,68 @@
 - review_items 반영 없음
 - analysis_results 갱신 없음
 
-### Phase AI-1B — 다음 구현 범위
+### Phase AI-1B — 완료
 
-구현 상태:
+현재 완료 상태:
 
-- backend mode 분기 구현 완료
-- `AI_RECOMMENDATION_MODE=mock` 기본 동작 유지
-- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI 호출 경로 추가
+- Phase AI-1B 구현 완료
+- 사용자 로컬 검증 완료
+- `AI_RECOMMENDATION_MODE=mock|openai` mode 분기 구현 완료
+- 기본 mode는 `mock`
+- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI 실제 호출 가능
+- 기본 model은 `gpt-5.4-nano`
 - OpenAI 호출은 Responses API와 `text.format` json_schema Structured Outputs를 사용
+- Structured Outputs schema로 recommendation JSON 구조 강제
 - OpenAI 응답 JSON parse 및 normalize/검증 경로 추가
-
-구현 범위:
-
-- Mock recommendation 호출을 실제 OpenAI 호출로 교체할 수 있는 mode 분기
 - 기존 endpoint 유지
 - 기존 frontend 표시 구조 유지
-- OpenAI API key가 설정되고 mode가 `openai`일 때만 실제 호출
 - mode가 `mock`이거나 미설정이면 기존 Mock 응답 유지
+- 최종 응답 구조 유지
+- `domain_categories` 제외 유지
 - DB 저장 없음
-- review_items 반영 없음
-- analysis_results 갱신 없음
+- review_items 자동 반영 없음
+- analysis_results 자동 갱신 없음
+- config 수정 없음
+- 실제 frontend 실행 기준 AI 추천 조회 성공
+- `AI_RESPONSE_PARSE_FAILED` 오류는 현재 재현되지 않음
 
-### Phase AI-2 — 후속
+### Phase AI-2 — AI 추천 결과 히스토리 설계
 
-- 실제 AI 연동 결과의 UI 표시 품질 점검
-- loading/error/empty 상태 고도화
-- 비용/토큰 안내 또는 mode 표시 개선 검토
+- AI 추천 결과 저장 이력 관리 설계
+- `model`, `prompt_version`, `recommendation_json`, `created_at` 저장 범위 정의
+- API key, raw prompt, raw OpenAI response 전체 저장 금지
+- 저장 대상은 openai mode 성공 결과 우선
+- mock 결과 저장 여부는 별도 결정
 
-### Phase AI-3 — 후속
+### Phase AI-3 — AI 추천 결과 히스토리 저장/조회 구현
 
-- AI 추천 결과를 review_items 또는 dictionary_candidates에 선택 반영할지 검토
-- dictionary_candidates 구조 완료 후 진행 여부 판단
+- `ai_recommendation_runs` 테이블 또는 동등한 저장 구조 구현
+- 추천 실행 결과 저장
+- 공고별 추천 이력 조회 API
+- frontend 이력 조회 UI 검토
 
-### Phase AI-4 — 후속
+### Phase AI-4 — 저장된 추천 결과의 선택 반영 검토
 
-- 개별 review_item 단위 AI 추천 고도화
-- 후보별 대표값/field_type 추천
+- review_items 또는 dictionary_candidates와 연결할지 검토
+- 자동 반영이 아니라 사용자 선택 반영 원칙 유지
 
 ## 현재 상태
 
 확인한 소스코드 기준 현재 구현:
 
 - backend AI recommendation API 1차 Mock 구현이 있다.
-- Phase AI-1B backend mode 분기가 구현되어 있다.
+- Phase AI-1B backend mode 분기가 구현되어 있고 사용자 로컬 검증이 완료되었다.
 - `backend/app/main.py`에 AI router가 등록되어 있다.
 - endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
-- 기본 mode는 Mock recommendation 응답으로 Swagger 검증하는 단계다.
-- `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API 호출을 시도한다.
+- 기본 mode는 Mock recommendation 응답이다.
+- `AI_RECOMMENDATION_MODE=openai`일 때만 OpenAI API를 실제 호출한다.
+- 기본 model은 `gpt-5.4-nano`다.
+- OpenAI 호출은 Responses API와 `text.format` json_schema Structured Outputs를 사용한다.
+- Structured Outputs schema로 recommendation JSON 구조를 강제한다.
+- 사용자 로컬 검증에서 `posting_id=17`, `posting_id=16` openai mode 호출이 성공했다.
+- 사용자 로컬 검증에서 `meta.mode = openai`, `meta.model = gpt-5.4-nano`, `meta.saved = false`가 확인되었다.
+- 사용자 로컬 검증에서 recommendation 구조가 정상 반환되고 `domain_categories`가 없는 것이 확인되었다.
+- `AI_RESPONSE_PARSE_FAILED` 오류는 현재 재현되지 않는다.
 - OpenAI SDK import는 openai mode 호출 시점에만 수행한다.
 - Mock mode는 OpenAI 결제/API key 없이 Swagger에서 테스트 가능하다.
 - 추천 생성 로직은 `backend/app/ai_recommendations.py`에 격리되어 있다.
@@ -197,13 +212,27 @@ Streaming 응답은 계속 후속 UX 개선 후보로 유지한다.
 - Responses API 응답 구조 확인용으로 response type, `output_text` 존재 여부, `output` 타입/count, 일부 output item의 content 타입/count만 출력할 수 있다.
 - 텍스트 추출 후에는 raw text 길이, 빈 문자열 여부, `{` 시작 여부, `}` 종료 여부, 앞 200자 preview만 출력할 수 있다.
 - JSON parse 실패 시에는 raw text 길이, 첫 `{` 위치, 마지막 `}` 위치, candidate 존재 여부, candidate 길이, candidate `}` 종료 여부, JSON decode error 위치/메시지만 출력할 수 있다.
+- 실제 확인 후 debug mode는 꺼야 한다.
+
+### Phase AI-1B 실제 검증 결과
+
+사용자 로컬 환경에서 아래 항목을 확인했다.
+
+- `posting_id=17` openai mode 호출 성공
+- `posting_id=16` openai mode 호출 성공
+- `meta.mode = openai`
+- `meta.model = gpt-5.4-nano`
+- `meta.saved = false`
+- recommendation 구조 정상 반환
+- `domain_categories` 없음
+- debug 로그로 Responses API 응답 추출 경로 정상 확인
+- `AI_RESPONSE_PARSE_FAILED` 재현 없음
 
 ## 후속 단계
 
-- Phase AI-1B: backend mode 분기 구현 완료. 실제 OpenAI SDK 의존성 설치 및 key 설정 후 openai mode 검증 필요
-- Phase AI-2: 실제 OpenAI 연동 결과의 UI 표시 점검
-- Phase AI-3: dictionary_candidates 구조 완료 후 AI 추천 결과 선택 반영 검토
-- Phase AI-4: 개별 review_item 단위 추천 고도화
+- Phase AI-2: AI 추천 결과 히스토리 설계
+- Phase AI-3: AI 추천 결과 히스토리 저장/조회 구현
+- Phase AI-4: 저장된 추천 결과의 선택 반영 검토
 
 ## Phase AI-1B endpoint 정책
 

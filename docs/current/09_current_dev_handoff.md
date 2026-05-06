@@ -62,16 +62,19 @@
 
 소스코드에서 확인한 현재 구현:
 
-- 현재 AI Recommendation은 Phase AI-1 완료 및 Phase AI-1B backend mode 분기 구현 상태
+- 현재 AI Recommendation은 Phase AI-1 완료 및 Phase AI-1B 구현/사용자 로컬 검증 완료 상태
 - backend AI recommendation API 1차 Mock 구현 존재
 - endpoint: `GET /api/ai-recommendations/postings/{posting_id}`
 - 저장된 공고를 `posting_id`로 조회한 뒤 Mock recommendation JSON 반환
 - 공고가 없거나 삭제된 경우 `POSTING_NOT_FOUND` 404 반환
 - 기본 mode는 mock이며 OpenAI 결제/API key 없이 Swagger 테스트 가능
-- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI API 호출 경로 존재
+- `AI_RECOMMENDATION_MODE=openai`일 때 OpenAI API 실제 호출 성공
+- 기본 model은 `gpt-5.4-nano`
+- OpenAI 호출은 Responses API + Structured Outputs를 사용
 - OpenAI SDK import는 openai mode 호출 시점에만 수행
 - OpenAI SDK 의존성은 `backend/requirements.txt`의 `openai>=1.0.0` 기준으로 관리
-- openai mode 실제 호출 검증은 `OPENAI_API_KEY` 설정 후 가능
+- 사용자 로컬 검증에서 `posting_id=16`, `posting_id=17` openai mode 호출 성공
+- 사용자 로컬 검증에서 `AI_RESPONSE_PARSE_FAILED`는 현재 재현되지 않음
 - `review_item_candidates.field_type`이 허용값이 아니면 해당 candidate는 최종 응답에서 제외
 - DB 저장 없음
 - `analysis_results` 수정 없음
@@ -84,6 +87,10 @@
 - 공고 선택 후 `AI 추천 조회` 버튼을 눌렀을 때만 AI 추천 API 호출
 - 공고 선택 변경 시 이전 추천 결과와 error 상태 초기화
 - 추천 결과는 화면 표시용이며 DB 저장/자동 확정/review_items 반영 없음
+- prompt 품질 개선 완료
+- `raw_text_preview` 500자 적용 완료
+- output length 제한과 배열 개수 제한 지시 적용 완료
+- 제한 debug 로그 추가 완료
 
 Phase AI-1B backend 구현 기준:
 
@@ -108,13 +115,25 @@ Phase AI-1B backend 구현 기준:
 - prompt에는 `skills` 최대 8개, `competencies` 최대 8개, `review_item_candidates` 최대 5개 제한이 포함되어 있다.
 - prompt에는 이미 `skills` 또는 `competencies`에 포함한 개념을 `review_item_candidates`에 중복하지 말고 긴 문장형 후보를 제외하라는 지시가 포함되어 있다.
 - Streaming은 현재 구현 범위가 아니며, Responses API + Structured Outputs JSON 완성 응답 구조를 유지한다. Streaming은 후속 UX 개선 후보로만 둔다.
-- OpenAI 실제 재검증은 API key가 설정된 사용자 로컬 환경에서 수행해야 한다.
+- 추가 OpenAI 회귀 검증이 필요하면 API key가 설정된 사용자 로컬 환경에서 수행해야 한다.
 - `AI_RESPONSE_PARSE_FAILED` 원인 확인용 제한 debug 로그가 있다.
 - debug 로그는 `AI_RECOMMENDATION_DEBUG=1`일 때만 출력되며 기본 비활성화다.
 - debug 로그는 response 구조 요약, 추출 raw text 길이/빈 문자열 여부/JSON 시작·종료 여부/앞 200자 preview, parse 실패 위치 정보를 출력한다.
 - OpenAI API key, request payload, full raw response는 로그나 API 응답에 포함하지 않는다.
 - endpoint와 응답 구조는 유지
 - Mock mode는 유지
+
+Phase AI-1B 사용자 로컬 검증 결과:
+
+- `posting_id=16` openai mode 호출 성공
+- `posting_id=17` openai mode 호출 성공
+- `meta.mode = openai`
+- `meta.model = gpt-5.4-nano`
+- `meta.saved = false`
+- recommendation 구조 정상 반환
+- `domain_categories` 없음
+- 제한 debug 로그로 Responses API 응답 추출 정상 확인
+- `AI_RESPONSE_PARSE_FAILED` 현재 재현 없음
 
 Phase AI-1B에서도 아래는 제외한다.
 
@@ -124,7 +143,7 @@ Phase AI-1B에서도 아래는 제외한다.
 - `domain_categories` 추가
 - dictionary_candidates 연동
 
-Phase AI-3/AI-4는 dictionary_candidates 구조 완료 후 검토한다.
+Phase AI-2 이후는 AI Recommendation History 설계를 우선 검토한다.
 
 ## 현재 정책 기준
 
@@ -260,6 +279,8 @@ Phase AI-3/AI-4는 dictionary_candidates 구조 완료 후 검토한다.
 
 ## AI Recommendation 검증 방법
 
+Phase AI-1B openai mode는 사용자 로컬에서 `posting_id=16`, `posting_id=17` 기준 호출 성공이 확인되었다. 아래 항목은 회귀 검증이 필요할 때 확인한다.
+
 PowerShell 기준:
 
 ```powershell
@@ -301,31 +322,30 @@ http://127.0.0.1:8000/docs
 
 ## 다음 Codex 작업
 
-1. AI Recommendation Phase AI-1B 검증 및 의존성 정리
-   - `AI_RECOMMENDATION_MODE=mock`에서 기존 Mock 응답이 유지되는지 확인한다.
-   - `AI_RECOMMENDATION_MODE`가 허용값 외 값이면 `AI_CONFIG_INVALID`가 반환되는지 확인한다.
-   - `AI_RECOMMENDATION_MODE=openai`이고 `OPENAI_API_KEY`가 없으면 `AI_CONFIG_MISSING`이 반환되는지 확인한다.
-   - `OPENAI_API_KEY` 설정 후 `AI_RECOMMENDATION_MODE=openai` 실제 호출을 사용자 로컬에서 재검증한다.
-   - `OPENAI_MODEL` 기본값은 `gpt-5.4-nano`로 유지한다.
-   - OpenAI 응답 구조는 Responses API + Structured Outputs schema로 강제한다.
-   - endpoint `GET /api/ai-recommendations/postings/{posting_id}`와 응답 구조는 유지한다.
-   - DB 저장 없는 조회형 API 원칙을 유지한다.
-   - review_items 반영, analysis_results 갱신, config 수정, domain_categories 추가, dictionary_candidates 연동은 제외한다.
-   - frontend는 원칙적으로 수정하지 않는다.
+1. AI Recommendation History 설계
+   - AI 추천 결과를 저장하는 히스토리 관리 구조를 설계한다.
+   - 저장 테이블, 필드, API, UI 범위를 정의한다.
+   - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
+   - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
+   - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.
+   - mock 결과 저장 여부는 별도 결정한다.
+   - review_items/dictionary_candidates 반영은 history 설계 이후 검토한다.
 
-2. removed 이력 기반 후보 제외 고도화
+2. AI Recommendation 실제 응답 품질 검토 추가
+   - 세나, 누아, 슈퍼진, 바티에이아이 결과를 비교한다.
+   - prompt 개선 전후 차이를 기록한다.
+   - `review_item_candidates` 과다 후보와 중복 후보 여부를 검토한다.
+   - skills/competencies 분리 품질과 고유명사 제외 품질을 확인한다.
+
+3. Streaming UX 개선 검토
+   - 현재는 후속 후보로만 둔다.
+   - Structured Outputs 완성 JSON 구조와 충돌 가능성이 있으므로 별도 설계가 필요하다.
+   - frontend 응답 방식, JSON 조립, error 처리 설계가 필요하다.
+
+4. removed 이력 기반 후보 제외 고도화
    - 현재 구현은 동일 `field_type + normalized raw_value` 기준만 적용한다.
    - 유사 표현 제외는 후속 고도화로 둔다.
    - confirmed 이력 재사용은 별도 정책 결정 후 검토한다.
-
-3. AI recommendation 추천 결과 저장/반영 정책 결정
-   - 추천 결과를 review_items에 반영할지 여부와 저장 범위를 별도 정책으로 정의한다.
-   - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천으로 유지한다.
-
-4. 복수 도메인 저장 구조와 API 형태 정의
-   - AI recommendation 응답 구조의 `domain_categories` 배열과 연관되므로 실제 구조 확정 이후 진행을 권장한다.
-   - 후속 목표는 대표 도메인 1개 + 전체 도메인 N개 구조다.
-   - 현재는 `analysis_results.domain_category` 단일값 구조임을 유지해서 명시한다.
 
 5. 실데이터 classification 품질 검토와 config 반영
    - config 안전 반영 phase 1은 `posting_id=14` 세나, `posting_id=17` 바티에이아이 재분석에서 phase 1 반영 대상 기준 pass로 기록되었다.
@@ -349,3 +369,8 @@ http://127.0.0.1:8000/docs
 
 - config inventory 점검은 사람이 먼저 확인할 항목이지, Codex의 즉시 개발 작업이 아니다.
 - AI recommendation은 자동 확정이 아니라 사용자 검토용 추천이다.
+- openai mode 호출은 비용이 발생한다.
+- AI 추천은 사용자가 버튼을 눌렀을 때만 호출한다.
+- 공고 저장/수정 시 AI 자동 호출은 금지한다.
+- debug mode는 검증 시에만 켜고 평소에는 끈다.
+- OpenAI API key는 frontend에 두지 않고 backend 환경변수로만 관리한다.
