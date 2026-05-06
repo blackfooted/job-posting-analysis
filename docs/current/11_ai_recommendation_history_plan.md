@@ -112,6 +112,8 @@ AI Recommendation History backend 1차 구현 상태:
 
 ## 6. 저장 단위와 선택적 반영 정책
 
+선택 반영 상세 정책은 `docs/current/12_ai_recommendation_selective_apply_policy.md`를 따른다.
+
 정책:
 
 - 1차 구현에서는 AI 추천 결과 전체를 `recommendation_json`으로 저장한다.
@@ -122,6 +124,8 @@ AI Recommendation History backend 1차 구현 상태:
 - 일부 항목만 반영한 경우 `partially_applied`로 관리할 수 있다.
 - 전체 또는 주요 항목을 반영한 경우 `applied`로 관리할 수 있다.
 - 어떤 항목이 반영되었는지까지 추적하려면 후속 컬럼 `applied_items_json`을 추가할 수 있다.
+- `applied_items_json`은 Phase AI-4 선택 반영 결과 추적용으로 검토한다.
+- history 저장과 선택 반영의 책임 분리 원칙을 유지한다.
 
 권장 추가 후보 컬럼:
 
@@ -360,10 +364,15 @@ ai-recommendation-v1
 
 ### Phase AI-4 — 선택 반영 설계 및 구현 검토
 
+- 선택 반영 정책 문서: `docs/current/12_ai_recommendation_selective_apply_policy.md`
 - 저장된 recommendation에서 사용자가 선택한 항목을 review_items 또는 dictionary_candidates에 반영할지 결정
 - 자동 반영이 아닌 사용자 선택 반영 원칙 유지
 - `applied_status` 갱신 정책 구현
 - 필요 시 `applied_items_json`, `applied_at`, `applied_by` 추가 검토
+- 1차 반영 위치는 `review_items`로 제한하고 `dictionary_candidates`는 후속 검토
+- industry/domain/position은 1차 반영 제외
+- 기존 `unconfirmed`는 사용자 선택 반영 시에만 `confirmed` 갱신 검토
+- 기존 `removed` 이력은 되살리지 않음
 
 ## 13. 검증 기준
 

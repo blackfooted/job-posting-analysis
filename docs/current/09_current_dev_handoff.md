@@ -160,7 +160,13 @@ AI Recommendation History backend 1차 구현 상태:
 - raw prompt 전체, raw OpenAI response 전체, API key는 저장하지 않음
 - frontend history 상세 UI는 1차 연결 완료
 - frontend history 비교 UI는 1차 연결 완료
+- AI Recommendation 선택 반영 정책 문서 작성 완료: `docs/current/12_ai_recommendation_selective_apply_policy.md`
 - 선택 반영 기능과 dictionary_candidates 연동은 후속
+- 1차 반영 위치는 `review_items`
+- `dictionary_candidates`는 후속
+- industry/domain/position은 1차 반영 제외
+- 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신 검토
+- `removed` 이력은 존중해 되살리지 않음
 
 AI Recommendation frontend 1차 연결 상태:
 
@@ -185,6 +191,16 @@ AI Recommendation frontend 1차 연결 상태:
 - 공고 선택, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태 초기화
 - backend 수정 없음
 - 선택 반영 UI, `applied_status` 관리, history note, 비교 결과 품질 판단 기록은 후속
+
+AI Recommendation 선택 반영 정책:
+
+- 정책 문서: `docs/current/12_ai_recommendation_selective_apply_policy.md`
+- 1차 선택 반영 위치는 `review_items`이며 `dictionary_candidates`는 후속이다.
+- 1차 반영 field_type은 `skill`/`competency`만 허용한다.
+- industry/domain/position은 현재 `analysis_results.domain_category` 단일값 구조와 dashboard 영향 때문에 1차 반영에서 제외한다.
+- 기존 `unconfirmed`는 AI 추천만으로 자동 확정하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신을 검토한다.
+- 기존 `removed` 이력은 존중해 되살리지 않는다.
+- 선택 반영 결과 추적을 위해 `applied_items_json` DB 스키마 보완을 다음 작업 후보로 둔다.
 
 ## 현재 정책 기준
 
@@ -382,13 +398,22 @@ http://127.0.0.1:8000/docs
    - review_items/dictionary_candidates 반영은 history 설계 이후 검토한다.
    - 선택 반영 UI와 `applied_status` 관리는 후속 단계로 유지한다.
 
-2. AI Recommendation 실제 응답 품질 검토 추가
+2. AI Recommendation 선택 반영
+   - 정책 문서 작성은 완료되었다: `docs/current/12_ai_recommendation_selective_apply_policy.md`
+   - 다음 작업 후보는 `applied_items_json` DB 스키마 보완이다.
+   - 이후 선택 반영 backend API와 frontend UI를 구현한다.
+   - 1차 반영 위치는 `review_items`이며, `dictionary_candidates`는 후속 구조 확정 후 검토한다.
+   - industry/domain/position은 1차 반영 대상에서 제외한다.
+   - 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신한다.
+   - `removed` 이력은 존중해 되살리지 않는다.
+
+3. AI Recommendation 실제 응답 품질 검토 추가
    - 세나, 누아, 슈퍼진, 바티에이아이 결과를 비교한다.
    - prompt 개선 전후 차이를 기록한다.
    - `review_item_candidates` 과다 후보와 중복 후보 여부를 검토한다.
    - skills/competencies 분리 품질과 고유명사 제외 품질을 확인한다.
 
-3. Streaming UX 개선 검토
+4. Streaming UX 개선 검토
    - 현재는 후속 후보로만 둔다.
    - Structured Outputs 완성 JSON 구조와 충돌 가능성이 있으므로 별도 설계가 필요하다.
    - frontend 응답 방식, JSON 조립, error 처리 설계가 필요하다.

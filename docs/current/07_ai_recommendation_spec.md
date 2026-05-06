@@ -58,7 +58,13 @@
 
 ### Phase AI-4 — 저장된 추천 결과의 선택 반영 검토
 
-- review_items 또는 dictionary_candidates와 연결할지 검토
+- 선택 반영 정책 문서: `docs/current/12_ai_recommendation_selective_apply_policy.md`
+- 1차 반영 위치는 `review_items`로 제한하고 `dictionary_candidates`는 후속 검토
+- 1차 선택 반영 대상은 skills/competencies와 review_item_candidates 중 `skill`/`competency`
+- industry/domain/position은 1차 반영 대상에서 제외
+- 기존 `unconfirmed`는 AI 추천만으로 자동 `confirmed` 처리하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신 검토
+- 기존 `removed` 이력은 존중하며 되살리지 않음
+- `applied_items_json`은 선택 반영 결과 추적용으로 추가 검토
 - 자동 반영이 아니라 사용자 선택 반영 원칙 유지
 
 ## 현재 상태
@@ -289,6 +295,17 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 상세 보기와 비교 선택은 독립적으로 동작한다.
 - 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
 - 비교 UI는 보기 전용이며 선택 반영 UI와 `applied_status` 변경은 후속 작업으로 둔다.
+
+### 선택 반영 정책
+
+- 선택 반영 정책 문서는 `docs/current/12_ai_recommendation_selective_apply_policy.md`를 따른다.
+- Phase AI-4는 저장된 AI 추천 이력에서 사용자가 일부 항목만 선택해 `review_items`에 반영하는 단계다.
+- 1차 선택 반영 대상은 `recommendation.skills`, `recommendation.competencies`, `review_item_candidates` 중 `field_type=skill|competency`인 항목이다.
+- `industry_category`, `primary_domain_category`, `position_category`와 `field_type=industry|domain|position` 후보는 1차 반영 대상에서 제외한다.
+- 기존 `unconfirmed`는 AI 추천 생성만으로 자동 `confirmed` 처리하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신을 검토한다.
+- 기존 `removed` 이력은 되살리지 않는다.
+- `applied_items_json`은 선택 반영 결과 추적용 컬럼으로 추가 검토한다.
+- `dictionary_candidates` 연동은 `review_items` 선택 반영 이후 별도 phase에서 검토한다.
 
 ## Phase AI-1B endpoint 정책
 
