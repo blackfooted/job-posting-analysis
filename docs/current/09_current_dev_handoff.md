@@ -158,8 +158,19 @@ AI Recommendation History backend 1차 구현 상태:
 - mock mode POST `/runs`는 저장하지 않고 `run=null`, `meta.saved=false` 반환
 - `recommendation_json`에는 정규화된 recommendation object만 저장
 - raw prompt 전체, raw OpenAI response 전체, API key는 저장하지 않음
-- frontend는 아직 미수정
+- frontend history 목록/상세 UI는 아직 미구현
 - 선택 반영 기능과 dictionary_candidates 연동은 후속
+
+AI Recommendation frontend 1차 연결 상태:
+
+- frontend AI recommendation 화면이 POST `/runs` API에 연결됨
+- `frontend/src/api/aiRecommendationsApi.js`에 `createAiRecommendationRun(postingId)` 추가
+- 기존 `fetchAiRecommendation(postingId)`는 호환용으로 유지
+- `frontend/src/App.jsx`의 AI 추천 조회 버튼 클릭 핸들러가 POST `/runs`를 호출
+- 기존 recommendation 표시 구조 유지
+- POST `/runs` 응답의 `data.run`과 `data.meta.saved` 기반으로 저장 상태 표시
+- backend 수정 없음
+- history 목록 UI, history 상세 UI, 선택 반영 UI, `applied_status` 관리는 후속
 
 ## 현재 정책 기준
 
@@ -341,7 +352,7 @@ http://127.0.0.1:8000/docs
 1. AI Recommendation History 설계
    - AI 추천 결과를 저장하는 히스토리 관리 구조의 backend 1차 구현은 완료되었다.
    - 상세 기준은 `docs/current/11_ai_recommendation_history_plan.md`를 따른다.
-   - 다음 단계에서는 frontend API client와 `App.jsx`를 POST `/runs`로 연결할지 결정한다.
+   - frontend API client와 `App.jsx`는 POST `/runs`로 1차 연결되었다.
    - history 목록 UI를 설계/구현한다.
    - `model`, `prompt_version`, `mode`, `recommendation_json`, `created_at` 관리 기준을 정한다.
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.

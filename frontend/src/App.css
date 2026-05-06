@@ -716,6 +716,7 @@ button { font-family: inherit; }
 .ai-recommendation-notice,
 .ai-recommendation-controls,
 .ai-recommendation-source,
+.ai-recommendation-run-meta,
 .ai-recommendation-meta,
 .ai-recommendation-list {
   margin-top: 18px;
@@ -797,11 +798,45 @@ button { font-family: inherit; }
 }
 
 .ai-recommendation-source h2,
+.ai-recommendation-run-meta h2,
 .ai-recommendation-meta h2,
 .ai-recommendation-list h2 {
   color: var(--gray-700);
   font-size: 15px;
   margin-bottom: 12px;
+}
+
+.ai-recommendation-run-meta-heading {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ai-recommendation-run-meta-heading h2 {
+  margin-bottom: 0;
+}
+
+.ai-recommendation-saved-badge,
+.ai-recommendation-unsaved-badge {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 10px;
+}
+
+.ai-recommendation-saved-badge {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.ai-recommendation-unsaved-badge {
+  background: var(--gray-100);
+  color: var(--gray-600);
 }
 
 .ai-recommendation-card-grid,

@@ -1,8 +1,8 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-async function requestAiRecommendations(endpoint) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`)
+async function requestAiRecommendations(endpoint, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, options)
   const result = await response.json()
 
   if (!response.ok) {
@@ -17,5 +17,14 @@ async function requestAiRecommendations(endpoint) {
 export function fetchAiRecommendation(postingId) {
   return requestAiRecommendations(
     `/api/ai-recommendations/postings/${postingId}`,
+  )
+}
+
+export function createAiRecommendationRun(postingId) {
+  return requestAiRecommendations(
+    `/api/ai-recommendations/postings/${postingId}/runs`,
+    {
+      method: 'POST',
+    },
   )
 }

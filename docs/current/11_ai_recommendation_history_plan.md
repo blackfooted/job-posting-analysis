@@ -264,6 +264,16 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
   - 비용 발생 및 저장 발생 행위이므로 POST /runs가 더 적절하다.
   - 단기 구현 방식과 장기 전환 방식은 구현 전에 최종 결정해야 한다.
 
+1차 frontend 연결 상태:
+
+- AI 추천 조회 버튼은 POST `/runs`를 사용한다.
+- 기존 GET client는 호환용으로 유지한다.
+- POST `/runs` 응답의 `data.recommendation`을 기존 추천 결과 표시 구조로 표시한다.
+- POST `/runs` 응답의 `run`/`meta`를 이용해 저장 상태를 표시한다.
+- `data.run=null`이면 run id/created_at은 표시하지 않는다.
+- history 목록 UI, 상세 비교 UI, 선택 반영 UI는 후속 단계로 둔다.
+- 기존 GET endpoint는 호환 유지한다.
+
 초기 UI 후보:
 
 - 공고별 AI 추천 이력 목록

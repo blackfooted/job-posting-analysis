@@ -5,7 +5,7 @@ import {
   fetchDashboardComparison,
   fetchDashboardSummary,
 } from './api/dashboardApi'
-import { fetchAiRecommendation } from './api/aiRecommendationsApi'
+import { createAiRecommendationRun } from './api/aiRecommendationsApi'
 import {
   createPosting,
   deletePosting,
@@ -846,7 +846,7 @@ function App() {
     setAiRecommendationError('')
 
     try {
-      const result = await fetchAiRecommendation(selectedAiPostingId)
+      const result = await createAiRecommendationRun(selectedAiPostingId)
 
       if (result.error) {
         setAiRecommendation(null)
@@ -1367,13 +1367,15 @@ function App() {
           >
             <h1>AI 추천 관리</h1>
             <div className="ai-recommendation-notice">
-              <p>현재 AI 추천 기능은 Mock 응답 기반 테스트 단계입니다.</p>
+              <p>AI 추천 조회는 버튼을 눌렀을 때만 실행됩니다.</p>
               <p>
-                추천 결과는 실제 AI 판단 결과가 아니며, 자동 확정되거나
-                DB에 저장되지 않습니다.
+                OpenAI mode에서는 추천 실행 결과가 history에 저장될 수
+                있으며, 자동 확정되거나 정제 항목에 자동 반영되지는
+                않습니다.
               </p>
               <p>
-                공고를 선택한 뒤 버튼을 눌렀을 때만 추천 결과를 조회합니다.
+                Mock mode에서는 추천 결과를 화면에 표시하지만 history에는
+                저장하지 않습니다.
               </p>
             </div>
 
@@ -1483,6 +1485,7 @@ function AiRecommendationResult({ result }) {
       <AiReviewCandidateList
         items={recommendation.review_item_candidates}
       />
+      <AiRecommendationRunMeta run={result?.run} meta={result?.meta} />
       <AiRecommendationMeta meta={result?.meta} />
     </div>
   )
@@ -1597,8 +1600,59 @@ function AiRecommendationMeta({ meta = {} }) {
           <dd>{formatValue(meta.model)}</dd>
         </div>
         <div>
+          <dt>prompt_version</dt>
+          <dd>{formatValue(meta.prompt_version)}</dd>
+        </div>
+        <div>
           <dt>generated_at</dt>
           <dd>{formatValue(meta.generated_at)}</dd>
+        </div>
+      </dl>
+    </section>
+  )
+}
+
+function AiRecommendationRunMeta({ run = null, meta = {} }) {
+  const isSaved = meta?.saved === true
+
+  return (
+    <section className="ai-recommendation-run-meta">
+      <div className="ai-recommendation-run-meta-heading">
+        <h2>History 저장 상태</h2>
+        <span
+          className={
+            isSaved
+              ? 'ai-recommendation-saved-badge'
+              : 'ai-recommendation-unsaved-badge'
+          }
+        >
+          {isSaved ? '저장됨' : '저장 안 됨'}
+        </span>
+      </div>
+      <dl className="ai-meta-list">
+        {run && (
+          <>
+            <div>
+              <dt>run_id</dt>
+              <dd>{formatValue(run.id)}</dd>
+            </div>
+            <div>
+              <dt>created_at</dt>
+              <dd>{formatValue(run.created_at)}</dd>
+            </div>
+          </>
+        )}
+        <div>
+          <dt>mode</dt>
+          <dd>{formatValue(meta?.mode)}</dd>
+        </div>
+        <div>
+          <dt>model</dt>
+          <dd>{formatValue(meta?.model)}</dd>
+        </div>
+        <div>
+          <dt>prompt_version</dt>
+          <dd>{formatValue(meta?.prompt_version)}</dd>
         </div>
       </dl>
     </section>

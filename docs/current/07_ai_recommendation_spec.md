@@ -267,6 +267,15 @@ AI Recommendation History의 상세 설계 기준은 `docs/current/11_ai_recomme
 - 저장된 추천 결과도 review_items, analysis_results, config에 자동 반영하지 않는다.
 - 선택 반영은 후속 Phase AI-4에서 검토한다.
 
+### History frontend 1차 연결 상태
+
+- AI 추천 조회 버튼은 `POST /api/ai-recommendations/postings/{posting_id}/runs`를 호출한다.
+- 기존 `GET /api/ai-recommendations/postings/{posting_id}` endpoint와 `fetchAiRecommendation()` client는 호환용으로 유지한다.
+- POST `/runs` 응답의 `data.recommendation`은 기존 추천 결과 표시 구조로 렌더링한다.
+- POST `/runs` 응답의 `data.run`과 `data.meta.saved`를 이용해 저장 상태를 표시한다.
+- `data.run=null`이면 mock mode 또는 저장 없음으로 보고 run id/created_at은 표시하지 않는다.
+- history 목록/상세/선택 반영 UI는 후속 작업으로 둔다.
+
 ## Phase AI-1B endpoint 정책
 
 Phase AI-1B에서도 endpoint는 변경하지 않는다.
