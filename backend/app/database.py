@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS ai_recommendation_runs (
   recommendation_json TEXT,
   applied_status      TEXT NOT NULL DEFAULT 'not_applied'
     CHECK (applied_status IN ('not_applied', 'partially_applied', 'applied')),
+  applied_items_json  TEXT,
   error_code          TEXT,
   error_message       TEXT,
   created_at          TEXT NOT NULL,
@@ -120,6 +121,10 @@ def _ensure_ai_recommendation_runs_schema(
         "applied_status": (
             "ALTER TABLE ai_recommendation_runs "
             "ADD COLUMN applied_status TEXT DEFAULT 'not_applied'"
+        ),
+        "applied_items_json": (
+            "ALTER TABLE ai_recommendation_runs "
+            "ADD COLUMN applied_items_json TEXT"
         ),
         "error_code": "ALTER TABLE ai_recommendation_runs ADD COLUMN error_code TEXT",
         "error_message": (

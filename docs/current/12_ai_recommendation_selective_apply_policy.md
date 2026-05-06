@@ -23,7 +23,7 @@
 - history 비교 UI 완료
 - `recommendation_json`에는 정규화된 recommendation object 저장
 - `applied_status`는 존재하지만 선택 반영 기능은 아직 없음
-- `applied_items_json`은 아직 미구현
+- `applied_items_json` 컬럼 추가 완료
 - `review_items` 자동 반영 없음
 - `dictionary_candidates` 연동 없음
 - `analysis_results` 자동 갱신 없음
@@ -185,7 +185,7 @@ normalized raw value 기준:
 
 ## 10. applied_items_json 정책
 
-선택 반영 기능 구현 전 DB 보완으로 `applied_items_json` 추가를 검토한다.
+선택 반영 기능 구현 전 DB 보완으로 `applied_items_json` 컬럼을 추가했다.
 
 목적:
 
@@ -236,8 +236,8 @@ ai_recommendation_runs.applied_items_json TEXT
 
 정책:
 
-- 1차 선택 반영 API 구현 전에 `applied_items_json` 컬럼 추가 여부를 결정한다.
-- 선택 반영 결과를 추적하려면 `applied_items_json` 추가를 권장한다.
+- 선택 반영 API 구현 전 추적 기반은 마련되었다.
+- 실제 write 로직은 후속 선택 반영 backend API에서 구현한다.
 - 별도 매핑 테이블은 다중 사용자/감사 로그가 필요할 때 후속 검토한다.
 
 ## 11. 선택 반영 API 초안
@@ -350,7 +350,7 @@ POST /api/ai-recommendations/history/{run_id}/apply
 
 ### Phase AI-4B — DB 스키마 보완
 
-- `applied_items_json` 컬럼 추가 여부 결정
+- `applied_items_json` 컬럼 추가 완료
 - 필요 시 `applied_at` 검토
 - 기존 `ai_recommendation_runs`와 호환 유지
 
@@ -385,14 +385,13 @@ POST /api/ai-recommendations/history/{run_id}/apply
 | 기존 unconfirmed 중복 | 자동 confirmed / 선택 시 confirmed | 선택 시 confirmed |
 | 기존 removed 중복 | 되살림 / 제외 유지 | 제외 유지 |
 | 신규 항목 status | `unconfirmed` / `confirmed` | `confirmed` |
-| `applied_items_json` | 추가 / 미추가 | 추가 권장 |
+| `applied_items_json` | 추가 / 미추가 | 추가 완료 |
 | `dictionary_candidates` | 즉시 연동 / 후속 | 후속 |
 
 ## 16. 다음 작업 제안
 
 다음 Codex 작업 후보:
 
-- `applied_items_json` DB 스키마 보완 지시문 작성
 - 선택 반영 backend API 구현
 - 선택 반영 frontend UI 구현
 - `dictionary_candidates` 구조 설계

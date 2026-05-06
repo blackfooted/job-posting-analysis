@@ -123,22 +123,22 @@ AI Recommendation History backend 1차 구현 상태:
 - `applied_status` 기본값은 `not_applied`다.
 - 일부 항목만 반영한 경우 `partially_applied`로 관리할 수 있다.
 - 전체 또는 주요 항목을 반영한 경우 `applied`로 관리할 수 있다.
-- 어떤 항목이 반영되었는지까지 추적하려면 후속 컬럼 `applied_items_json`을 추가할 수 있다.
-- `applied_items_json`은 Phase AI-4 선택 반영 결과 추적용으로 검토한다.
+- 어떤 항목이 반영되었는지까지 추적하기 위해 `applied_items_json` 컬럼을 추가했다.
+- `applied_items_json`은 Phase AI-4 선택 반영 결과 추적용 컬럼이다.
+- 컬럼은 존재하지만 아직 선택 반영 write 로직은 후속이다.
 - history 저장과 선택 반영의 책임 분리 원칙을 유지한다.
 
 권장 추가 후보 컬럼:
 
 | column | reason |
 |---|---|
-| `applied_items_json` | 사용자가 선택 반영한 skills/competencies/review_item_candidates 항목 추적 |
 | `applied_at` | 마지막 반영 시각 추적용 |
 | `applied_by` | 다중 사용자 구조 도입 시 반영 사용자 추적 |
 
 초기 판단:
 
-- 1차 history 저장 구현에서는 `applied_status`만 둔다.
-- `applied_items_json`은 선택 반영 기능 구현 단계에서 추가 검토한다.
+- 1차 history 저장 구현에서는 `applied_status`와 `applied_items_json` 컬럼을 둔다.
+- `applied_items_json` write는 선택 반영 backend API 구현 단계에서 처리한다.
 - 저장과 반영의 책임을 분리한다.
 
 예시:
@@ -179,6 +179,7 @@ ai_recommendation_runs
 | `status` | TEXT | yes | `succeeded`, 실패 저장 시 `failed` 후보 |
 | `recommendation_json` | TEXT | yes | 정규화된 recommendation JSON |
 | `applied_status` | TEXT | yes | `not_applied`, `partially_applied`, `applied` |
+| `applied_items_json` | TEXT | no | 선택 반영 처리 결과 추적용 JSON |
 | `created_at` | TEXT | yes | 추천 실행 저장 시각 |
 
 후속 컬럼 후보:
@@ -190,7 +191,6 @@ ai_recommendation_runs
 | `output_token_count` | 비용 분석 |
 | `error_code` | 실패 결과 저장 시 원인 분류 |
 | `error_message` | 실패 결과 저장 시 제한된 오류 메시지 |
-| `applied_items_json` | 선택 반영 항목 추적 |
 | `applied_at` | 반영 시각 추적 |
 | `applied_by` | 다중 사용자 구조 도입 시 사용자 추적 |
 
@@ -368,7 +368,7 @@ ai-recommendation-v1
 - 저장된 recommendation에서 사용자가 선택한 항목을 review_items 또는 dictionary_candidates에 반영할지 결정
 - 자동 반영이 아닌 사용자 선택 반영 원칙 유지
 - `applied_status` 갱신 정책 구현
-- 필요 시 `applied_items_json`, `applied_at`, `applied_by` 추가 검토
+- `applied_items_json` 컬럼은 추가 완료, 필요 시 `applied_at`, `applied_by` 추가 검토
 - 1차 반영 위치는 `review_items`로 제한하고 `dictionary_candidates`는 후속 검토
 - industry/domain/position은 1차 반영 제외
 - 기존 `unconfirmed`는 사용자 선택 반영 시에만 `confirmed` 갱신 검토
@@ -397,4 +397,4 @@ ai-recommendation-v1
 
 AI Recommendation History는 추천 결과를 자동 확정하거나 즉시 반영하기 위한 기능이 아니다. 1차 목표는 비용이 발생한 openai mode 성공 결과를 보존하고, 모델/prompt 변경 전후 결과를 비교하며, 후속 선택 반영의 기준 데이터를 마련하는 것이다.
 
-초기 구현은 정규화된 `recommendation_json` 전체 저장과 `applied_status=not_applied` 관리에 집중한다. 항목별 선택 반영 추적은 후속 반영 기능 설계에서 `applied_items_json` 등으로 확장한다.
+초기 구현은 정규화된 `recommendation_json` 전체 저장, `applied_status=not_applied` 관리, 선택 반영 추적용 `applied_items_json` 컬럼 마련에 집중한다. 항목별 선택 반영 write 로직은 후속 선택 반영 backend API에서 구현한다.

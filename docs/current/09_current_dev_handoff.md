@@ -167,6 +167,9 @@ AI Recommendation History backend 1차 구현 상태:
 - industry/domain/position은 1차 반영 제외
 - 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신 검토
 - `removed` 이력은 존중해 되살리지 않음
+- `ai_recommendation_runs.applied_items_json` 컬럼 추가 완료
+- 신규 DB 생성용 schema와 기존 DB 보강 로직에 모두 반영
+- 선택 반영 API는 아직 미구현
 
 AI Recommendation frontend 1차 연결 상태:
 
@@ -200,7 +203,9 @@ AI Recommendation 선택 반영 정책:
 - industry/domain/position은 현재 `analysis_results.domain_category` 단일값 구조와 dashboard 영향 때문에 1차 반영에서 제외한다.
 - 기존 `unconfirmed`는 AI 추천만으로 자동 확정하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신을 검토한다.
 - 기존 `removed` 이력은 존중해 되살리지 않는다.
-- 선택 반영 결과 추적을 위해 `applied_items_json` DB 스키마 보완을 다음 작업 후보로 둔다.
+- 선택 반영 결과 추적을 위한 `applied_items_json` DB 스키마 보완은 완료되었다.
+- 다음 작업 후보는 선택 반영 backend API 구현이다.
+- 후속 API에서는 `POST /api/ai-recommendations/history/{run_id}/apply`, `review_items` 생성/갱신, `applied_status` 갱신, `applied_items_json` write를 처리한다.
 
 ## 현재 정책 기준
 
@@ -391,7 +396,7 @@ http://127.0.0.1:8000/docs
    - API key, raw prompt, raw OpenAI response 전체는 저장하지 않는다.
    - 저장 대상은 openai mode 성공 결과를 우선으로 검토한다.
    - mock 결과 저장 여부는 별도 결정한다.
-   - 1차 history 저장 구현에서는 `applied_status`만 두고, `applied_items_json`은 선택 반영 기능 구현 단계에서 추가 검토한다.
+   - 1차 history 저장 구현에서는 `applied_status`와 `applied_items_json` 컬럼을 둔다.
    - POST /runs 전환 시 frontend 영향 범위는 `frontend/src/api/aiRecommendationsApi.js`와 `frontend/src/App.jsx`다.
    - 기존 GET endpoint는 호환성을 위해 유지하거나 deprecated 처리 검토가 필요하다.
    - frontend 변경 범위를 최소화하려면 GET 유지 + 내부 저장 방식이 빠르지만, 장기적으로는 POST /runs가 더 적절하다.
@@ -400,8 +405,9 @@ http://127.0.0.1:8000/docs
 
 2. AI Recommendation 선택 반영
    - 정책 문서 작성은 완료되었다: `docs/current/12_ai_recommendation_selective_apply_policy.md`
-   - 다음 작업 후보는 `applied_items_json` DB 스키마 보완이다.
-   - 이후 선택 반영 backend API와 frontend UI를 구현한다.
+   - `applied_items_json` DB 스키마 보완은 완료되었다.
+   - 다음 작업 후보는 선택 반영 backend API 구현이다.
+   - 이후 frontend 선택 반영 UI를 구현한다.
    - 1차 반영 위치는 `review_items`이며, `dictionary_candidates`는 후속 구조 확정 후 검토한다.
    - industry/domain/position은 1차 반영 대상에서 제외한다.
    - 기존 `unconfirmed`는 사용자가 선택 반영할 때만 `confirmed` 갱신한다.
