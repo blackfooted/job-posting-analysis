@@ -420,3 +420,38 @@
 - config JSON 수정은 원칙적으로 하지 않는다.
 - IATA 같은 제외 후보는 config에 넣는 것이 아니라 classification rule/filter에서 처리하는 방향을 우선한다.
 - 구현 후 기존 4개 공고를 재분석해 통과/실패 기준을 기록한다.
+
+### 6. Phase 3-A 구현 상태
+
+구현 상태:
+
+- `backend/app/classification.py`에 phase 3-A acronym filtering을 적용했다.
+- `IATA`는 기관명/인증명 약어 제외 값으로 처리해 skill 후보와 skill review item 후보에서 제외한다.
+- `IA`는 전역 stopword로 처리하지 않고, 직무 수행 맥락이 없으면 제외한다.
+- `IA`는 `Information Architecture`, `IA 설계`, `IA 작성`, `화면 IA`, `서비스 구조 설계`, `정보구조`, `정보 구조`, `메뉴 구조`, `화면 구조` 맥락에서만 skill 후보로 유지할 수 있다.
+- 기관명/인증명 맥락 필터는 `인증`, `인증명`, `기관`, `협회`, `Association`, `인증을 받은`, `국제항공운송협회` 주변의 대문자 약어에만 제한적으로 적용한다.
+- `EMR`, `HIS`, `OCS`, `SQL`, `API`, `ERD`, `AWS`, `RAG`는 보호 약어로 유지한다.
+- config JSON은 수정하지 않았다.
+- phase 3-B 후보인 회사 기술스택/Slack/HTML/CSS/직무 유형별 기술스택 필터는 구현하지 않았다.
+
+수행한 검증:
+
+- `python -m py_compile backend/app/classification.py`
+- helper-level 검증:
+  - `IATA 인증을 받은 여행사`에서 `IATA` 제외
+  - `IATA 국제항공운송협회`에서 `IATA` 제외
+  - `IA 설계 및 화면 구조 정의`에서 `IA` 유지 가능
+  - `IATA 인증`에서 `IA` 별도 skill 생성 방지
+  - `EMR/HIS/OCS` 제외되지 않음
+  - `SQL/ERD/API/AWS/RAG` 제외되지 않음
+- synthetic `analyze_posting` 검증:
+  - `IATA 인증을 받은 여행사`에서 extracted_skills 비어 있음
+  - tools 값 `IATA 인증`에서도 `IA` 또는 `IATA`가 extracted_skills로 생성되지 않음
+  - `EMR/HIS/OCS`는 extracted_skills에 유지됨
+  - `SQL/ERD/API/AWS/RAG`는 extracted_skills에 유지됨
+
+미수행 검증:
+
+- DB를 직접 수정하지 않는 작업 범위이므로 기존 `posting_id=13/14/16/17` 재분석은 수행하지 않았다.
+- API 호출 금지 조건에 따라 backend API 재분석 호출은 수행하지 않았다.
+- 기존 4개 공고 재분석 결과 기록은 사용자 로컬 검증 후 이 문서에 추가로 반영해야 한다.

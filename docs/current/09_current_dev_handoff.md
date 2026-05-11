@@ -559,3 +559,39 @@ http://127.0.0.1:8000/docs
 - config JSON 수정 금지
 - 정상 skill 약어 회귀 발생 시 실패로 판단
 - 구현 후 `classification_real_data_review.md`에 재분석 결과 기록
+
+### Classification Phase 3-A 구현 상태
+
+상태:
+
+- phase 3-A acronym filtering 구현 완료
+- 수정 파일: `backend/app/classification.py`
+- 문서 현행화: `docs/current/classification_real_data_review.md`, `docs/current/09_current_dev_handoff.md`
+
+처리 정책:
+
+- `IATA`는 기관명/인증명 약어 제외 값으로 처리한다.
+- `IATA`는 skill 후보, skill review item 후보, `IATA` 내부 문자열에서 잘린 `IA` 후보로 생성되지 않아야 한다.
+- `IA`는 전역 stopword가 아니며, 직무 수행 맥락이 명확할 때만 skill 후보로 유지한다.
+- `IA` 유지 가능 맥락은 `Information Architecture`, `IA 설계`, `IA 작성`, `화면 IA`, `서비스 구조 설계`, `정보구조`, `정보 구조`, `메뉴 구조`, `화면 구조`다.
+- 기관명/인증명 맥락 필터는 제한적으로 적용하며, 단순 대문자 약어 전체 제거는 하지 않는다.
+
+정상 약어 유지 기준:
+
+- `EMR`, `HIS`, `OCS`, `SQL`, `API`, `ERD`, `AWS`, `RAG`는 phase 3-A 필터로 제거되면 안 된다.
+- `UX/UI`, `Python` 등 기존 정상 기술/도구 추출도 phase 3-A로 제거되면 안 된다.
+
+검증 상태:
+
+- `python -m py_compile backend/app/classification.py` 통과
+- helper-level 검증으로 `IATA` 제외, 직무 맥락 있는 `IA` 유지 가능, 직무 맥락 없는 `IA` 제외를 확인
+- helper-level 검증으로 `EMR/HIS/OCS`, `SQL/ERD/API/AWS/RAG` 유지 확인
+- synthetic `analyze_posting` 검증으로 tools 값 `IATA 인증`에서 `IA`가 잘려 추출되지 않는 것을 확인
+- DB 직접 수정과 API 호출 금지 조건 때문에 기존 4개 공고 재분석은 수행하지 않음
+
+다음 작업 후보:
+
+1. 사용자 로컬에서 기존 4개 공고(`posting_id=13/14/16/17`) 재분석 검증
+2. 재분석 결과를 `docs/current/classification_real_data_review.md`에 통과/실패 기준별로 기록
+3. phase 3-A 회귀가 없으면 phase 3-B 적용 여부 판단
+4. phase 3-B 검토 시 회사 기술스택/Slack/HTML/CSS/직무 유형별 기술스택 필터는 별도 범위로 설계

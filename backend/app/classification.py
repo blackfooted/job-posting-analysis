@@ -256,6 +256,43 @@ NOISY_CONTEXT_PREFIX_WORDS = (
     "필요합니다",
 )
 
+ACRONYM_EXCLUSION_VALUES = {
+    "IATA",
+}
+
+PROTECTED_SKILL_ACRONYM_VALUES = {
+    "API",
+    "AWS",
+    "EMR",
+    "ERD",
+    "HIS",
+    "OCS",
+    "RAG",
+    "SQL",
+}
+
+ORGANIZATION_ACRONYM_CONTEXT_WORDS = (
+    "인증",
+    "인증명",
+    "기관",
+    "협회",
+    "Association",
+    "인증을 받은",
+    "국제항공운송협회",
+)
+
+IA_SKILL_CONTEXT_WORDS = (
+    "Information Architecture",
+    "IA 설계",
+    "IA 작성",
+    "화면 IA",
+    "서비스 구조 설계",
+    "정보구조",
+    "정보 구조",
+    "메뉴 구조",
+    "화면 구조",
+)
+
 MAX_CANDIDATE_LENGTH = 25
 MIN_CANDIDATE_LENGTH = 2
 REVIEW_ONLY_FIELD_SUFFIX = ":review"
@@ -427,6 +464,8 @@ def _append_candidates_from_segment(
     for acronym in re.findall(r"\b[A-Z][A-Z0-9+#.]{1,}\b", segment):
         if acronym == "QA" and not _is_allowed_qa_context(context):
             continue
+        if _should_exclude_acronym_skill_candidate(acronym, context):
+            continue
         _append_candidate(candidates, "skill", acronym)
 
     for keyword in STANDALONE_KEYWORD_CANDIDATES:
@@ -456,6 +495,12 @@ def _append_compound_candidate(
     phrase: str,
     context: str,
 ) -> None:
+    if (
+        _field_type_for_candidate(phrase) == "skill"
+        and _should_exclude_acronym_skill_candidate(phrase, context)
+    ):
+        return
+
     if phrase == "QA":
         if _is_allowed_qa_context(context):
             _append_candidate(candidates, "skill", phrase)
@@ -536,6 +581,55 @@ def _is_simple_qa_department_list(text: str) -> bool:
         "마케팅",
     }
     return all(part in department_words for part in parts)
+
+
+def _should_exclude_acronym_skill_candidate(value: str, text: str) -> bool:
+    normalized_value = value.strip().upper()
+    if not normalized_value:
+        return False
+
+    if normalized_value in ACRONYM_EXCLUSION_VALUES:
+        return True
+
+    if normalized_value == "IA":
+        return not _has_ia_skill_context(text)
+
+    if normalized_value in PROTECTED_SKILL_ACRONYM_VALUES:
+        return False
+
+    if not re.fullmatch(r"[A-Z][A-Z0-9+#.]{1,}", normalized_value):
+        return False
+
+    return _has_organization_acronym_context(normalized_value, text)
+
+
+def _should_exclude_skill_review_candidate(value: str) -> bool:
+    if _should_exclude_acronym_skill_candidate(value, value):
+        return True
+
+    return any(
+        _should_exclude_acronym_skill_candidate(acronym, value)
+        for acronym in re.findall(r"\b[A-Z][A-Z0-9+#.]{1,}\b", value)
+    )
+
+
+def _has_ia_skill_context(text: str) -> bool:
+    return _contains_any_text(text, IA_SKILL_CONTEXT_WORDS)
+
+
+def _has_organization_acronym_context(acronym: str, text: str) -> bool:
+    normalized_text = text or ""
+    for match in re.finditer(rf"\b{re.escape(acronym)}\b", normalized_text):
+        start = max(match.start() - 30, 0)
+        end = min(match.end() + 30, len(normalized_text))
+        if _contains_any_text(normalized_text[start:end], ORGANIZATION_ACRONYM_CONTEXT_WORDS):
+            return True
+    return False
+
+
+def _contains_any_text(text: str, values: tuple[str, ...]) -> bool:
+    normalized_text = text.casefold()
+    return any(value.casefold() in normalized_text for value in values)
 
 
 def _split_candidate_segments(value: str) -> list[str]:
@@ -775,6 +869,9 @@ def _match_multi_contains_alias(
     matched_values: list[str] = []
 
     for value in values:
+        if field_type == "skill" and _should_exclude_skill_review_candidate(value):
+            continue
+
         matches = _find_matches(value, dictionary, allow_contains=True)
         if len(matches) == 1:
             _append_unique(matched_values, matches[0])
