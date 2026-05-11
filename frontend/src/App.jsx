@@ -10,6 +10,8 @@ import {
   createAiRecommendationRun,
   fetchAiRecommendationHistory,
   fetchAiRecommendationHistoryDetail,
+  fetchAiRecommendationCategoryCandidates,
+  updateAiRecommendationCategoryCandidate,
 } from './api/aiRecommendationsApi'
 import {
   createPosting,
@@ -164,6 +166,21 @@ function App() {
   const [aiRecommendationApplyError, setAiRecommendationApplyError] =
     useState('')
   const [aiRecommendationApplyResult, setAiRecommendationApplyResult] =
+    useState(null)
+  const [aiCategoryCandidates, setAiCategoryCandidates] = useState([])
+  const [aiCategoryCandidatePagination, setAiCategoryCandidatePagination] =
+    useState(null)
+  const [aiCategoryCandidatePage, setAiCategoryCandidatePage] = useState(1)
+  const [aiCategoryCandidateStatusFilter, setAiCategoryCandidateStatusFilter] =
+    useState('')
+  const [aiCategoryCandidateTypeFilter, setAiCategoryCandidateTypeFilter] =
+    useState('')
+  const [aiCategoryCandidateLoading, setAiCategoryCandidateLoading] =
+    useState(false)
+  const [aiCategoryCandidateError, setAiCategoryCandidateError] = useState('')
+  const [aiCategoryCandidateMessage, setAiCategoryCandidateMessage] =
+    useState('')
+  const [aiCategoryCandidateUpdatingId, setAiCategoryCandidateUpdatingId] =
     useState(null)
 
   async function loadSummary(shouldUpdate = () => true) {
@@ -926,6 +943,18 @@ function App() {
     setAiRecommendationApplyResult(null)
   }
 
+  function resetAiCategoryCandidateState() {
+    setAiCategoryCandidates([])
+    setAiCategoryCandidatePagination(null)
+    setAiCategoryCandidatePage(1)
+    setAiCategoryCandidateStatusFilter('')
+    setAiCategoryCandidateTypeFilter('')
+    setAiCategoryCandidateLoading(false)
+    setAiCategoryCandidateError('')
+    setAiCategoryCandidateMessage('')
+    setAiCategoryCandidateUpdatingId(null)
+  }
+
   function handleAiRecommendationApplyToggle(runId, item) {
     const runKey = String(runId)
     setAiRecommendationApplyError('')
@@ -1002,6 +1031,43 @@ function App() {
       )
     } finally {
       setAiRecommendationApplyLoadingRunId(null)
+    }
+  }
+
+  async function handleAiCategoryCandidateUpdate(candidateId, status, note) {
+    if (aiCategoryCandidateUpdatingId) {
+      return
+    }
+
+    setAiCategoryCandidateUpdatingId(candidateId)
+    setAiCategoryCandidateError('')
+
+    try {
+      const result = await updateAiRecommendationCategoryCandidate(candidateId, {
+        status,
+        note,
+      })
+
+      if (result.error) {
+        setAiCategoryCandidateError(
+          result.error.message ||
+            '산업/도메인/직무 후보 상태 변경 중 오류가 발생했습니다.',
+        )
+        return
+      }
+
+      setAiCategoryCandidateMessage('후보 상태가 저장되었습니다.')
+      await fetchSelectedAiCategoryCandidates(
+        selectedAiPostingId,
+        aiCategoryCandidatePage,
+      )
+    } catch (requestError) {
+      setAiCategoryCandidateError(
+        requestError.message ||
+          '산업/도메인/직무 후보 상태 변경 중 오류가 발생했습니다.',
+      )
+    } finally {
+      setAiCategoryCandidateUpdatingId(null)
     }
   }
 
@@ -1094,6 +1160,94 @@ function App() {
     }
   }
 
+  async function fetchSelectedAiCategoryCandidates(
+    postingId,
+    page = 1,
+    status = aiCategoryCandidateStatusFilter,
+    categoryType = aiCategoryCandidateTypeFilter,
+  ) {
+    if (!postingId) {
+      resetAiCategoryCandidateState()
+      return
+    }
+
+    setAiCategoryCandidateLoading(true)
+    setAiCategoryCandidateError('')
+
+    try {
+      const result = await fetchAiRecommendationCategoryCandidates(postingId, {
+        page,
+        size: 10,
+        status: status || undefined,
+        categoryType: categoryType || undefined,
+      })
+
+      if (result.error) {
+        setAiCategoryCandidates([])
+        setAiCategoryCandidatePagination(null)
+        setAiCategoryCandidateError(
+          result.error.message ||
+            '산업/도메인/직무 후보 목록을 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setAiCategoryCandidates(result.data?.items || [])
+      setAiCategoryCandidatePagination(result.data?.pagination || null)
+    } catch (requestError) {
+      setAiCategoryCandidates([])
+      setAiCategoryCandidatePagination(null)
+      setAiCategoryCandidateError(
+        requestError.message ||
+          '산업/도메인/직무 후보 목록을 불러오지 못했습니다.',
+      )
+    } finally {
+      setAiCategoryCandidateLoading(false)
+    }
+  }
+
+  function handleAiCategoryCandidateStatusFilterChange(value) {
+    setAiCategoryCandidateStatusFilter(value)
+    setAiCategoryCandidatePage(1)
+    setAiCategoryCandidateMessage('')
+    setAiCategoryCandidateError('')
+
+    if (selectedAiPostingId) {
+      fetchSelectedAiCategoryCandidates(
+        selectedAiPostingId,
+        1,
+        value,
+        aiCategoryCandidateTypeFilter,
+      )
+    }
+  }
+
+  function handleAiCategoryCandidateTypeFilterChange(value) {
+    setAiCategoryCandidateTypeFilter(value)
+    setAiCategoryCandidatePage(1)
+    setAiCategoryCandidateMessage('')
+    setAiCategoryCandidateError('')
+
+    if (selectedAiPostingId) {
+      fetchSelectedAiCategoryCandidates(
+        selectedAiPostingId,
+        1,
+        aiCategoryCandidateStatusFilter,
+        value,
+      )
+    }
+  }
+
+  function handleAiCategoryCandidatePageChange(page) {
+    setAiCategoryCandidatePage(page)
+    setAiCategoryCandidateMessage('')
+    setAiCategoryCandidateError('')
+
+    if (selectedAiPostingId) {
+      fetchSelectedAiCategoryCandidates(selectedAiPostingId, page)
+    }
+  }
+
   function handleAiRecommendationCompareToggle(runId) {
     setAiRecommendationCompareError('')
     setAiRecommendationCompareDetails([])
@@ -1175,9 +1329,11 @@ function App() {
     resetAiRecommendationHistoryDetail()
     resetAiRecommendationHistoryCompare()
     resetAiRecommendationApplyState()
+    resetAiCategoryCandidateState()
 
     if (postingId) {
       fetchSelectedAiRecommendationHistory(postingId, 1)
+      fetchSelectedAiCategoryCandidates(postingId, 1)
     }
   }
 
@@ -1842,6 +1998,23 @@ function App() {
               aiRecommendation && (
                 <AiRecommendationResult result={aiRecommendation} />
               )}
+
+            {selectedAiPostingId && (
+              <AiCategoryCandidateList
+                items={aiCategoryCandidates}
+                pagination={aiCategoryCandidatePagination}
+                isLoading={aiCategoryCandidateLoading}
+                error={aiCategoryCandidateError}
+                message={aiCategoryCandidateMessage}
+                statusFilter={aiCategoryCandidateStatusFilter}
+                typeFilter={aiCategoryCandidateTypeFilter}
+                updatingId={aiCategoryCandidateUpdatingId}
+                onPageChange={handleAiCategoryCandidatePageChange}
+                onStatusFilterChange={handleAiCategoryCandidateStatusFilterChange}
+                onTypeFilterChange={handleAiCategoryCandidateTypeFilterChange}
+                onUpdate={handleAiCategoryCandidateUpdate}
+              />
+            )}
           </section>
         )}
       </main>
@@ -1897,6 +2070,197 @@ function AiRecommendationResult({ result }) {
       <AiRecommendationRunMeta run={result?.run} meta={result?.meta} />
       <AiRecommendationMeta meta={result?.meta} />
     </div>
+  )
+}
+
+function AiCategoryCandidateList({
+  items = [],
+  pagination,
+  isLoading,
+  error,
+  message,
+  statusFilter,
+  typeFilter,
+  updatingId,
+  onPageChange,
+  onStatusFilterChange,
+  onTypeFilterChange,
+  onUpdate,
+}) {
+  const [drafts, setDrafts] = useState({})
+
+  useEffect(() => {
+    const nextDrafts = items.reduce((acc, item) => {
+      acc[item.id] = {
+        status: item.status || 'pending',
+        note: item.note || '',
+      }
+      return acc
+    }, {})
+    setDrafts(nextDrafts)
+  }, [items])
+
+  function updateDraft(candidateId, field, value) {
+    setDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [candidateId]: {
+        ...currentDrafts[candidateId],
+        [field]: value,
+      },
+    }))
+  }
+
+  return (
+    <section className="ai-category-candidates">
+      <div className="ai-category-candidates-header">
+        <h2>산업/도메인/직무 후보 목록</h2>
+      </div>
+
+      <div className="ai-category-candidate-filters">
+        <label>
+          <span>상태</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => onStatusFilterChange(event.target.value)}
+          >
+            <option value="">전체</option>
+            <option value="pending">검토 대기</option>
+            <option value="accepted">후보 채택</option>
+            <option value="rejected">제외</option>
+          </select>
+        </label>
+        <label>
+          <span>항목 유형</span>
+          <select
+            value={typeFilter}
+            onChange={(event) => onTypeFilterChange(event.target.value)}
+          >
+            <option value="">전체</option>
+            <option value="industry">산업</option>
+            <option value="domain">도메인</option>
+            <option value="position">직무</option>
+          </select>
+        </label>
+      </div>
+
+      {message && <p className="success">{message}</p>}
+      {error && <p className="error">{error}</p>}
+
+      <div className="ai-category-candidate-table-wrap">
+        <table className="ai-category-candidate-table">
+          <thead>
+            <tr>
+              <th>후보 ID</th>
+              <th>항목 유형</th>
+              <th>추천값</th>
+              <th>확신도</th>
+              <th>판단 근거</th>
+              <th>상태</th>
+              <th>생성 시각</th>
+              <th>검토 시각</th>
+              <th>메모</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan="10">
+                  {isLoading
+                    ? '산업/도메인/직무 후보 목록을 불러오는 중입니다.'
+                    : '산업/도메인/직무 후보가 없습니다.'}
+                </td>
+              </tr>
+            ) : (
+              items.map((item) => {
+                const draft = drafts[item.id] || {
+                  status: item.status || 'pending',
+                  note: item.note || '',
+                }
+
+                return (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{formatAiCategoryType(item.category_type)}</td>
+                    <td>{formatValue(item.recommended_value)}</td>
+                    <td>{formatValue(item.confidence)}</td>
+                    <td>{formatValue(item.reason)}</td>
+                    <td>
+                      <span
+                        className={`ai-category-candidate-status-badge ai-category-candidate-status-${item.status}`}
+                      >
+                        {formatAiCategoryCandidateStatus(item.status)}
+                      </span>
+                    </td>
+                    <td>{formatValue(item.created_at)}</td>
+                    <td>{formatValue(item.reviewed_at)}</td>
+                    <td>
+                      <textarea
+                        value={draft.note}
+                        onChange={(event) =>
+                          updateDraft(item.id, 'note', event.target.value)
+                        }
+                        rows="2"
+                      />
+                    </td>
+                    <td className="ai-category-candidate-actions">
+                      <select
+                        value={draft.status}
+                        onChange={(event) =>
+                          updateDraft(item.id, 'status', event.target.value)
+                        }
+                      >
+                        <option value="pending">검토 대기</option>
+                        <option value="accepted">후보 채택</option>
+                        <option value="rejected">제외</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdate(item.id, draft.status, draft.note)
+                        }
+                        disabled={updatingId === item.id || isLoading}
+                      >
+                        상태 저장
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="ai-category-candidate-pagination">
+        <button
+          type="button"
+          disabled={!pagination || pagination.page <= 1 || isLoading}
+          onClick={() => onPageChange(Math.max(1, pagination.page - 1))}
+        >
+          이전
+        </button>
+        <span>
+          {pagination?.page || 0} / {pagination?.total_pages || 0}
+        </span>
+        <button
+          type="button"
+          disabled={
+            !pagination ||
+            pagination.page >= (pagination.total_pages || 0) ||
+            isLoading
+          }
+          onClick={() =>
+            onPageChange(Math.min(
+              pagination.total_pages || 1,
+              (pagination.page || 1) + 1,
+            ))
+          }
+        >
+          다음
+        </button>
+      </div>
+    </section>
   )
 }
 
@@ -3274,6 +3638,20 @@ function formatAiApplyAction(action) {
   }
 
   return actionLabels[action] || formatValue(action)
+}
+
+function formatAiCategoryType(categoryType) {
+  if (categoryType === 'industry') return '산업'
+  if (categoryType === 'domain') return '도메인'
+  if (categoryType === 'position') return '직무'
+  return categoryType || '-'
+}
+
+function formatAiCategoryCandidateStatus(status) {
+  if (status === 'pending') return '검토 대기'
+  if (status === 'accepted') return '후보 채택'
+  if (status === 'rejected') return '제외'
+  return status || '-'
 }
 
 function createReviewItemDrafts(items = []) {

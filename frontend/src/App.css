@@ -801,6 +801,151 @@ button { font-family: inherit; }
   margin-top: 22px;
 }
 
+.ai-category-candidates {
+  margin-top: 24px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.ai-category-candidates-header h2 {
+  margin-bottom: 16px;
+}
+
+.ai-category-candidate-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ai-category-candidate-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.ai-category-candidate-filters select {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.ai-category-candidate-table-wrap {
+  overflow-x: auto;
+}
+
+.ai-category-candidate-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+.ai-category-candidate-table th,
+.ai-category-candidate-table td {
+  border: 1px solid var(--gray-200);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-category-candidate-table th {
+  background: var(--gray-50);
+  font-weight: 700;
+}
+
+.ai-category-candidate-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-category-candidate-status-pending {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.ai-category-candidate-status-accepted {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.ai-category-candidate-status-rejected {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.ai-category-candidate-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-category-candidate-actions select,
+.ai-category-candidate-actions button,
+.ai-category-candidate-table textarea {
+  width: 100%;
+  font: inherit;
+}
+
+.ai-category-candidate-actions button {
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.ai-category-candidate-actions button:hover:not(:disabled) {
+  background: var(--brand-100);
+}
+
+.ai-category-candidate-actions button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.ai-category-candidate-table textarea {
+  min-height: 56px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: var(--gray-50);
+  resize: vertical;
+}
+
+.ai-category-candidate-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ai-category-candidate-pagination button {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-0);
+  color: var(--gray-700);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.ai-category-candidate-pagination button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+
 .ai-recommendation-source h2,
 .ai-recommendation-run-meta h2,
 .ai-recommendation-meta h2,

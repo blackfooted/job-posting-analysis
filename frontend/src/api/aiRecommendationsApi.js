@@ -59,3 +59,51 @@ export function applyAiRecommendationItems(runId, items) {
     },
   )
 }
+
+export function createAiRecommendationCategoryCandidates(runId, items) {
+  return requestAiRecommendations(
+    `/api/ai-recommendations/history/${runId}/category-candidates`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ items }),
+    },
+  )
+}
+
+export function fetchAiRecommendationCategoryCandidates(
+  postingId,
+  { page = 1, size = 10, status, categoryType } = {},
+) {
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  })
+
+  if (status) {
+    searchParams.append('status', status)
+  }
+
+  if (categoryType) {
+    searchParams.append('category_type', categoryType)
+  }
+
+  return requestAiRecommendations(
+    `/api/ai-recommendations/postings/${postingId}/category-candidates?${searchParams.toString()}`,
+  )
+}
+
+export function updateAiRecommendationCategoryCandidate(candidateId, payload) {
+  return requestAiRecommendations(
+    `/api/ai-recommendations/category-candidates/${candidateId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+}
