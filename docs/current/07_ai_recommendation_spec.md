@@ -1,5 +1,16 @@
 # AI Recommendation Spec
 
+## OpenAI Output Token 안정화 기준
+
+- OpenAI mode는 Responses API + Structured Outputs JSON을 사용한다.
+- `AI_RECOMMENDATION_MAX_OUTPUT_TOKENS` 1차 안정화 값은 `1800`이다.
+- 이전 기준인 `900`은 긴 추천 JSON에서 응답이 중간에 잘려 `AI_RESPONSE_PARSE_FAILED`를 유발할 수 있다.
+- 긴 공고의 추천 조회에서는 latency 최적화보다 Structured Outputs JSON 완성 안정성을 우선한다.
+- 추후 실제 응답 길이, latency, 비용을 보고 `max_output_tokens` 값을 다시 조정할 수 있다.
+- Responses API 호출에는 `max_output_tokens`를 사용하며, `max_tokens` 또는 `max_completion_tokens`는 사용하지 않는다.
+- debug 확인 시 `raw_text_endswith_json=false` 또는 `parse_candidate_endswith_json=false`이면 JSON 잘림 가능성이 높다.
+- debug 확인 시 `raw_text_empty=true`이면 Responses API 응답 텍스트 추출 문제 가능성을 우선 확인한다.
+
 ## Phase 구분
 
 ### Phase AI-1 — 완료

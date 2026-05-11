@@ -1,5 +1,17 @@
 # Current Dev Handoff
 
+## AI Recommendation Output Token 안정화
+
+- OpenAI mode에서 `posting_id=13`은 성공하지만 `posting_id=14`, `posting_id=16`, `posting_id=17` 호출 시 `AI_RESPONSE_PARSE_FAILED`가 발생한 이력이 있다.
+- 원인 후보는 `AI_RECOMMENDATION_MAX_OUTPUT_TOKENS=900`으로 인해 긴 Structured Outputs JSON이 중간에 잘리는 경우다.
+- `backend/app/ai_recommendations.py`의 `AI_RECOMMENDATION_MAX_OUTPUT_TOKENS`를 `1800`으로 상향했다.
+- Responses API 호출 방식은 유지하며 `max_output_tokens=AI_RECOMMENDATION_MAX_OUTPUT_TOKENS`만 사용한다.
+- `max_tokens` 또는 `max_completion_tokens`는 사용하지 않는다.
+- `AI_RECOMMENDATION_RESPONSE_SCHEMA`, API endpoint, 응답 구조는 변경하지 않았다.
+- debug 확인 시 `raw_text_endswith_json=false` 또는 `parse_candidate_endswith_json=false`이면 JSON 잘림 가능성이 높다.
+- debug 확인 시 `raw_text_empty=true`이면 Responses API 응답 텍스트 추출 문제 가능성을 우선 확인한다.
+- 사용자 로컬에서 OpenAI mode로 `posting_id=14`, `posting_id=16`, `posting_id=17` 재검증이 필요하다.
+
 ## 사용 기준
 
 새 작업을 시작할 때 가장 먼저 읽는 문서다. "현재 구현" 판단은 확인한 소스코드 기준으로 한다. 구성안과 코드가 다르면 그 차이를 이 문서에 기록한다.

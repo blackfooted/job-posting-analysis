@@ -1,5 +1,14 @@
 # AI Recommendation History Plan
 
+## Output Token 안정화와 History 저장 기준
+
+- `POST /api/ai-recommendations/postings/{posting_id}/runs`와 history 저장은 OpenAI 응답 JSON parse 안정성을 우선한다.
+- OpenAI Structured Outputs JSON이 완성되지 않으면 run 저장과 history 비교의 기준 데이터가 불안정해진다.
+- output token 제한은 history 저장 안정성을 해치지 않는 범위에서 조정한다.
+- 현재 1차 안정화 값은 `AI_RECOMMENDATION_MAX_OUTPUT_TOKENS=1800`이다.
+- 이전 값 `900`은 긴 추천 JSON에서 `AI_RESPONSE_PARSE_FAILED`를 유발할 수 있어 상향했다.
+- 실제 응답 길이, latency, 비용 확인 후 후속 단계에서 재조정할 수 있다.
+
 ## 1. 문서 목적
 
 이 문서는 AI 추천 결과를 저장하고, 모델/prompt 변경 전후 결과를 비교하며, 사용자가 실제로 확인한 추천 이력을 관리하기 위한 설계 문서다.
