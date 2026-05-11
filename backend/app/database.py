@@ -72,6 +72,33 @@ CREATE TABLE IF NOT EXISTS ai_recommendation_runs (
 
 CREATE INDEX IF NOT EXISTS idx_ai_recommendation_runs_posting_id_created_at
 ON ai_recommendation_runs(posting_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS ai_recommendation_category_candidates (
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id              INTEGER NOT NULL,
+  posting_id          INTEGER NOT NULL,
+  category_type       TEXT NOT NULL CHECK (category_type IN ('industry', 'domain', 'position')),
+  source_path         TEXT NOT NULL,
+  recommended_value   TEXT NOT NULL,
+  confidence          TEXT CHECK (confidence IN ('high', 'medium', 'low')),
+  reason              TEXT,
+  status              TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'accepted', 'rejected')),
+  created_at          TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
+  reviewed_at         TEXT,
+  note                TEXT,
+  FOREIGN KEY (run_id) REFERENCES ai_recommendation_runs(id),
+  FOREIGN KEY (posting_id) REFERENCES postings(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_posting_id_created_at
+ON ai_recommendation_category_candidates(posting_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_run_id
+ON ai_recommendation_category_candidates(run_id);
+
+CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_status
+ON ai_recommendation_category_candidates(status);
 """
 
 
@@ -90,6 +117,7 @@ def initialize_database(db_path: Path | str = DEFAULT_DB_PATH) -> Path:
     with get_connection(db_path) as connection:
         connection.executescript(SCHEMA_SQL)
         _ensure_ai_recommendation_runs_schema(connection)
+        _ensure_ai_recommendation_category_candidates_schema(connection)
 
     return db_path
 
@@ -143,5 +171,84 @@ def _ensure_ai_recommendation_runs_schema(
         """
         CREATE INDEX IF NOT EXISTS idx_ai_recommendation_runs_posting_id_created_at
         ON ai_recommendation_runs(posting_id, created_at DESC)
+        """
+    )
+
+
+def _ensure_ai_recommendation_category_candidates_schema(
+    connection: sqlite3.Connection,
+) -> None:
+    columns = {
+        row[1]
+        for row in connection.execute(
+            "PRAGMA table_info(ai_recommendation_category_candidates)"
+        ).fetchall()
+    }
+    column_sql = {
+        "run_id": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN run_id INTEGER"
+        ),
+        "posting_id": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN posting_id INTEGER"
+        ),
+        "category_type": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN category_type TEXT"
+        ),
+        "source_path": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN source_path TEXT"
+        ),
+        "recommended_value": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN recommended_value TEXT"
+        ),
+        "confidence": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN confidence TEXT"
+        ),
+        "reason": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN reason TEXT"
+        ),
+        "status": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN status TEXT DEFAULT 'pending'"
+        ),
+        "created_at": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN created_at TEXT"
+        ),
+        "reviewed_at": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN reviewed_at TEXT"
+        ),
+        "note": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN note TEXT"
+        ),
+    }
+    for column, sql in column_sql.items():
+        if column not in columns:
+            connection.execute(sql)
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_posting_id_created_at
+        ON ai_recommendation_category_candidates(posting_id, created_at DESC)
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_run_id
+        ON ai_recommendation_category_candidates(run_id)
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_ai_category_candidates_status
+        ON ai_recommendation_category_candidates(status)
         """
     )

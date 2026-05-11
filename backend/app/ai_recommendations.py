@@ -31,6 +31,10 @@ AI_RECOMMENDATION_APPLY_FIELD_TYPES = {"skill", "competency"}
 AI_RECOMMENDATION_APPLY_SOURCE_PATH_PATTERN = re.compile(
     r"^(skills|competencies|review_item_candidates)\[(\d+)\]$"
 )
+AI_RECOMMENDATION_CATEGORY_FIELD_TYPES = {"industry", "domain", "position"}
+AI_RECOMMENDATION_CATEGORY_SOURCE_PATH_PATTERN = re.compile(
+    r"^review_item_candidates\[(\d+)\]$"
+)
 POSTING_PROMPT_FIELDS = (
     "company",
     "position",
@@ -440,6 +444,183 @@ def get_ai_recommendation_history_run(run_id: int) -> Any:
     )
 
 
+@router.post("/history/{run_id}/category-candidates", response_model=None)
+def create_ai_recommendation_category_candidates(
+    run_id: int,
+    payload: dict[str, Any] | None = Body(default=None),
+) -> Any:
+    initialize_database()
+    items = payload.get("items") if isinstance(payload, dict) else None
+    if not isinstance(items, list) or len(items) == 0:
+        return _invalid_category_candidate_request_response()
+
+    connection = _connection()
+    try:
+        try:
+            row = _fetch_ai_recommendation_run(connection, run_id)
+            if row is None:
+                return JSONResponse(
+                    status_code=404,
+                    content=_error_response(
+                        "AI_RECOMMENDATION_RUN_NOT_FOUND",
+                        "AI 추천 이력을 찾을 수 없습니다.",
+                    ),
+                )
+
+            recommendation = _deserialize_recommendation_json(
+                row["recommendation_json"],
+            )
+            targets = _build_category_candidate_targets(
+                recommendation=recommendation,
+                request_items=items,
+            )
+        except AIRecommendationParseError:
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_RESPONSE_PARSE_FAILED",
+                    "AI 추천 이력 JSON을 해석할 수 없습니다.",
+                ),
+            )
+        except ValueError:
+            return _invalid_category_candidate_request_response()
+
+        try:
+            created_items, skipped_items = _create_category_candidate_targets(
+                connection=connection,
+                run_id=run_id,
+                posting_id=row["posting_id"],
+                targets=targets,
+            )
+            connection.commit()
+        except sqlite3.Error:
+            connection.rollback()
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_CATEGORY_CANDIDATE_SAVE_FAILED",
+                    "AI category 후보 저장 중 오류가 발생했습니다.",
+                ),
+            )
+    finally:
+        connection.close()
+
+    return _success(
+        {
+            "created_items": created_items,
+            "skipped_items": skipped_items,
+        }
+    )
+
+
+@router.get("/postings/{posting_id}/category-candidates", response_model=None)
+def list_ai_recommendation_category_candidates_for_posting(
+    posting_id: int,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=10, ge=1, le=100),
+    status: str | None = Query(default=None),
+    category_type: str | None = Query(default=None),
+) -> Any:
+    initialize_database()
+    if status is not None and status not in {"pending", "accepted", "rejected"}:
+        return _invalid_category_candidate_request_response()
+    if (
+        category_type is not None
+        and category_type not in AI_RECOMMENDATION_CATEGORY_FIELD_TYPES
+    ):
+        return _invalid_category_candidate_request_response()
+
+    with _connection() as connection:
+        posting = _fetch_posting(connection, posting_id)
+        if posting is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "POSTING_NOT_FOUND",
+                    "공고를 찾을 수 없습니다.",
+                ),
+            )
+
+        rows, total = _fetch_category_candidates(
+            connection=connection,
+            posting_id=posting_id,
+            page=page,
+            size=size,
+            status=status,
+            category_type=category_type,
+        )
+
+    total_pages = (total + size - 1) // size if total else 0
+    return _success(
+        {
+            "items": [_serialize_category_candidate(row) for row in rows],
+            "pagination": {
+                "page": page,
+                "size": size,
+                "total": total,
+                "total_pages": total_pages,
+            },
+        }
+    )
+
+
+@router.patch("/category-candidates/{candidate_id}", response_model=None)
+def update_ai_recommendation_category_candidate(
+    candidate_id: int,
+    payload: dict[str, Any] | None = Body(default=None),
+) -> Any:
+    initialize_database()
+    if not isinstance(payload, dict):
+        return _invalid_category_candidate_request_response()
+
+    status = payload.get("status")
+    if status not in {"pending", "accepted", "rejected"}:
+        return _invalid_category_candidate_request_response()
+
+    note = payload.get("note") if "note" in payload else None
+    if note is not None:
+        note = str(note)
+
+    connection = _connection()
+    try:
+        candidate = _fetch_category_candidate(connection, candidate_id)
+        if candidate is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "AI_CATEGORY_CANDIDATE_NOT_FOUND",
+                    "AI category 후보를 찾을 수 없습니다.",
+                ),
+            )
+
+        try:
+            updated_candidate = _update_category_candidate_status(
+                connection=connection,
+                candidate_id=candidate_id,
+                status=status,
+                note=note,
+                should_update_note="note" in payload,
+            )
+            connection.commit()
+        except sqlite3.Error:
+            connection.rollback()
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "AI_CATEGORY_CANDIDATE_UPDATE_FAILED",
+                    "AI category 후보 상태 변경 중 오류가 발생했습니다.",
+                ),
+            )
+    finally:
+        connection.close()
+
+    return _success(
+        {
+            "candidate": _serialize_category_candidate(updated_candidate),
+        }
+    )
+
+
 @router.post("/history/{run_id}/apply", response_model=None)
 def apply_ai_recommendation_history_run(
     run_id: int,
@@ -733,6 +914,348 @@ def _invalid_apply_request_response() -> JSONResponse:
             "선택 반영 요청이 올바르지 않습니다.",
         ),
     )
+
+
+def _invalid_category_candidate_request_response() -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content=_error_response(
+            "AI_CATEGORY_CANDIDATE_INVALID_REQUEST",
+            "AI category 후보 저장 요청이 올바르지 않습니다.",
+        ),
+    )
+
+
+def _build_category_candidate_targets(
+    *,
+    recommendation: dict[str, Any],
+    request_items: list[Any],
+) -> list[dict[str, Any]]:
+    targets = []
+    for request_item in request_items:
+        if not isinstance(request_item, dict):
+            raise ValueError("Invalid category candidate request item.")
+
+        source_path = request_item.get("source_path")
+        requested_category_type = request_item.get("category_type")
+        if (
+            not isinstance(source_path, str)
+            or requested_category_type not in AI_RECOMMENDATION_CATEGORY_FIELD_TYPES
+        ):
+            raise ValueError("Invalid category candidate request item.")
+
+        stored_item = _resolve_category_candidate_source_item(
+            recommendation,
+            source_path,
+        )
+        target = _build_category_candidate_from_source(
+            source_path=source_path,
+            stored_item=stored_item,
+        )
+        if target["category_type"] != requested_category_type:
+            raise ValueError("Requested category_type does not match source item.")
+        targets.append(target)
+
+    return targets
+
+
+def _resolve_category_candidate_source_item(
+    recommendation: dict[str, Any],
+    source_path: str,
+) -> dict[str, Any]:
+    if source_path in {
+        "industry_category",
+        "primary_domain_category",
+        "position_category",
+    }:
+        stored_item = recommendation.get(source_path)
+        if not isinstance(stored_item, dict):
+            raise ValueError("Invalid category source item.")
+        return stored_item
+
+    match = AI_RECOMMENDATION_CATEGORY_SOURCE_PATH_PATTERN.match(source_path)
+    if match is None:
+        raise ValueError("Invalid category source_path.")
+
+    source_index = int(match.group(1))
+    source_items = recommendation.get("review_item_candidates")
+    if not isinstance(source_items, list) or source_index >= len(source_items):
+        raise ValueError("Invalid category source_path index.")
+
+    stored_item = source_items[source_index]
+    if not isinstance(stored_item, dict):
+        raise ValueError("Invalid category source item.")
+    return stored_item
+
+
+def _build_category_candidate_from_source(
+    *,
+    source_path: str,
+    stored_item: dict[str, Any],
+) -> dict[str, Any]:
+    if source_path == "industry_category":
+        category_type = "industry"
+        recommended_value = _clean_category_candidate_value(stored_item.get("value"))
+    elif source_path == "primary_domain_category":
+        category_type = "domain"
+        recommended_value = _clean_category_candidate_value(stored_item.get("value"))
+    elif source_path == "position_category":
+        category_type = "position"
+        recommended_value = _clean_category_candidate_value(stored_item.get("value"))
+    else:
+        category_type = stored_item.get("field_type")
+        if category_type not in AI_RECOMMENDATION_CATEGORY_FIELD_TYPES:
+            raise ValueError("Unsupported category candidate field_type.")
+        recommended_value = _clean_category_candidate_value(
+            stored_item.get("suggested_value") or stored_item.get("raw_value")
+        )
+
+    confidence = stored_item.get("confidence")
+    if confidence not in CONFIDENCE_VALUES:
+        confidence = None
+
+    reason = stored_item.get("reason")
+    if reason is not None:
+        reason = str(reason)
+
+    return {
+        "source_path": source_path,
+        "category_type": category_type,
+        "recommended_value": recommended_value,
+        "confidence": confidence,
+        "reason": reason,
+    }
+
+
+def _create_category_candidate_targets(
+    *,
+    connection: sqlite3.Connection,
+    run_id: int,
+    posting_id: int,
+    targets: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    created_items = []
+    skipped_items = []
+
+    for target in targets:
+        if not target["recommended_value"]:
+            skipped_items.append(
+                {
+                    "source_path": target["source_path"],
+                    "category_type": target["category_type"],
+                    "recommended_value": target["recommended_value"],
+                    "action": "skipped_empty_value",
+                    "candidate_id": None,
+                    "result": "skipped",
+                    "reason": "저장할 category 후보 값이 비어 있습니다.",
+                }
+            )
+            continue
+
+        existing_candidate = _fetch_matching_category_candidate(
+            connection=connection,
+            posting_id=posting_id,
+            category_type=target["category_type"],
+            recommended_value=target["recommended_value"],
+        )
+        if existing_candidate is not None:
+            skipped_items.append(
+                {
+                    "source_path": target["source_path"],
+                    "category_type": target["category_type"],
+                    "recommended_value": target["recommended_value"],
+                    "action": "skipped_duplicate_candidate",
+                    "candidate_id": existing_candidate["id"],
+                    "result": "skipped",
+                    "reason": "동일 category 후보가 이미 존재합니다.",
+                }
+            )
+            continue
+
+        created_items.append(
+            _create_category_candidate(
+                connection=connection,
+                run_id=run_id,
+                posting_id=posting_id,
+                target=target,
+            )
+        )
+
+    return created_items, skipped_items
+
+
+def _fetch_matching_category_candidate(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    category_type: str,
+    recommended_value: str,
+) -> sqlite3.Row | None:
+    normalized_value = _normalize_category_candidate_value(recommended_value)
+    rows = connection.execute(
+        """
+        SELECT *
+        FROM ai_recommendation_category_candidates
+        WHERE posting_id = ?
+          AND category_type = ?
+        """,
+        (posting_id, category_type),
+    ).fetchall()
+    for row in rows:
+        if _normalize_category_candidate_value(row["recommended_value"]) == normalized_value:
+            return row
+    return None
+
+
+def _create_category_candidate(
+    *,
+    connection: sqlite3.Connection,
+    run_id: int,
+    posting_id: int,
+    target: dict[str, Any],
+) -> dict[str, Any]:
+    cursor = connection.execute(
+        """
+        INSERT INTO ai_recommendation_category_candidates (
+          run_id,
+          posting_id,
+          category_type,
+          source_path,
+          recommended_value,
+          confidence,
+          reason,
+          status,
+          created_at,
+          reviewed_at,
+          note
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, NULL, NULL)
+        """,
+        (
+            run_id,
+            posting_id,
+            target["category_type"],
+            target["source_path"],
+            target["recommended_value"],
+            target["confidence"],
+            target["reason"],
+            _current_kst_isoformat(),
+        ),
+    )
+    row = _fetch_category_candidate(connection, cursor.lastrowid)
+    if row is None:
+        raise sqlite3.Error("AI category candidate insert failed.")
+    return _serialize_category_candidate(row)
+
+
+def _fetch_category_candidates(
+    *,
+    connection: sqlite3.Connection,
+    posting_id: int,
+    page: int,
+    size: int,
+    status: str | None,
+    category_type: str | None,
+) -> tuple[list[sqlite3.Row], int]:
+    offset = (page - 1) * size
+    conditions = ["posting_id = ?"]
+    params: list[Any] = [posting_id]
+    if status is not None:
+        conditions.append("status = ?")
+        params.append(status)
+    if category_type is not None:
+        conditions.append("category_type = ?")
+        params.append(category_type)
+
+    where_sql = " AND ".join(conditions)
+    total = connection.execute(
+        f"""
+        SELECT COUNT(*)
+        FROM ai_recommendation_category_candidates
+        WHERE {where_sql}
+        """,
+        params,
+    ).fetchone()[0]
+    rows = connection.execute(
+        f"""
+        SELECT *
+        FROM ai_recommendation_category_candidates
+        WHERE {where_sql}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ? OFFSET ?
+        """,
+        [*params, size, offset],
+    ).fetchall()
+    return rows, total
+
+
+def _fetch_category_candidate(
+    connection: sqlite3.Connection,
+    candidate_id: int,
+) -> sqlite3.Row | None:
+    return connection.execute(
+        """
+        SELECT *
+        FROM ai_recommendation_category_candidates
+        WHERE id = ?
+        """,
+        (candidate_id,),
+    ).fetchone()
+
+
+def _update_category_candidate_status(
+    *,
+    connection: sqlite3.Connection,
+    candidate_id: int,
+    status: str,
+    note: str | None,
+    should_update_note: bool,
+) -> sqlite3.Row:
+    existing = _fetch_category_candidate(connection, candidate_id)
+    if existing is None:
+        raise sqlite3.Error("AI category candidate not found.")
+
+    reviewed_at = None if status == "pending" else _current_kst_isoformat()
+    note_value = note if should_update_note else existing["note"]
+    connection.execute(
+        """
+        UPDATE ai_recommendation_category_candidates
+        SET status = ?,
+            reviewed_at = ?,
+            note = ?
+        WHERE id = ?
+        """,
+        (status, reviewed_at, note_value, candidate_id),
+    )
+    row = _fetch_category_candidate(connection, candidate_id)
+    if row is None:
+        raise sqlite3.Error("AI category candidate update failed.")
+    return row
+
+
+def _serialize_category_candidate(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "run_id": row["run_id"],
+        "posting_id": row["posting_id"],
+        "category_type": row["category_type"],
+        "source_path": row["source_path"],
+        "recommended_value": row["recommended_value"],
+        "confidence": row["confidence"],
+        "reason": row["reason"],
+        "status": row["status"],
+        "created_at": row["created_at"],
+        "reviewed_at": row["reviewed_at"],
+        "note": row["note"],
+    }
+
+
+def _normalize_category_candidate_value(value: Any) -> str:
+    return "".join(str(value or "").split())
+
+
+def _clean_category_candidate_value(value: Any) -> str:
+    return "" if value is None else str(value).strip()
 
 
 def _build_apply_targets(

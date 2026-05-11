@@ -162,7 +162,11 @@ ai_recommendation_category_candidates
 
 - category 후보 저장 구조 설계 문서: `docs/current/15_ai_recommendation_category_candidate_storage.md`
 - 단기 권장 구조가 별도 category 후보 테이블로 구체화되었다.
-- 다음 구현 후보는 `ai_recommendation_category_candidates` DB schema다.
+- 단기 권장 구조인 별도 category 후보 테이블이 schema 단계에서 구현되었다.
+- category 후보 backend API 1차 구현이 완료되어 `pending`/`accepted`/`rejected` 상태 관리가 가능하다.
+- `pending`으로 되돌릴 때 `reviewed_at=null`로 초기화하는 것은 의도된 정책이다.
+- analysis_results 즉시 갱신 제외 정책은 유지한다.
+- 다음 구현 후보는 frontend category 후보 UI다.
 
 ## 7. 핵심 결정 2 — analysis_results 즉시 갱신 vs 후보 관리
 

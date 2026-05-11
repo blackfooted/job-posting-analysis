@@ -23,6 +23,16 @@
 - 단기 권장 구조는 별도 category 후보 테이블이다.
 - 장기적으로 dictionary_candidates 또는 config 후보 관리 구조와 통합 가능성을 검토한다.
 
+DB schema 1차 구현 상태:
+
+- `ai_recommendation_category_candidates` 테이블 schema 구현 완료
+- `category_type`, `status`, `confidence` CHECK 제약은 신규 DB schema 기준으로 적용
+- `run_id`, `posting_id` foreign key 추가
+- category 후보 관련 index 3개 추가
+- 기존 DB 보강 로직 추가
+- category 후보 저장/조회/상태 변경 backend API 1차 구현 완료
+- frontend category 후보 UI는 후속
+
 ## 3. 저장 대상
 
 저장 대상 category는 아래로 제한한다.
@@ -235,9 +245,9 @@ normalized 기준:
 - 현재 단계에서 analysis_results.domain_category를 복수값으로 변경하지 않는다.
 - dashboard 집계 기준도 변경하지 않는다.
 
-## 11. API 설계 초안
+## 11. API 설계 및 구현 상태
 
-이번 문서에서는 구현하지 않고 API 초안만 작성한다.
+backend 1차 구현이 완료되었다.
 
 ### 11-1. category 후보 저장
 
@@ -351,6 +361,7 @@ PATCH /api/ai-recommendations/category-candidates/{candidate_id}
 
 - status는 pending/accepted/rejected만 허용
 - accepted/rejected 처리 시 reviewed_at 갱신
+- pending으로 되돌릴 때 reviewed_at은 null로 초기화
 - analysis_results는 갱신하지 않음
 
 ## 12. 에러 코드 초안
@@ -435,15 +446,15 @@ PATCH /api/ai-recommendations/category-candidates/{candidate_id}
 
 ### Phase CAT-2B — DB schema 구현
 
-- ai_recommendation_category_candidates 테이블 추가
-- 기존 DB 보강 로직 추가
-- index 추가
+- ai_recommendation_category_candidates 테이블 추가 완료
+- 기존 DB 보강 로직 추가 완료
+- index 추가 완료
 
 ### Phase CAT-2C — backend 저장/조회 API 구현
 
-- POST category-candidates
-- GET posting category-candidates
-- PATCH category-candidates status
+- POST category-candidates 완료
+- GET posting category-candidates 완료
+- PATCH category-candidates status 완료
 
 ### Phase CAT-2D — frontend category 후보 UI 구현
 
@@ -476,8 +487,6 @@ PATCH /api/ai-recommendations/category-candidates/{candidate_id}
 
 다음 Codex 작업 후보:
 
-- ai_recommendation_category_candidates DB schema 구현
-- category 후보 저장 backend API 구현
 - category 후보 frontend UI 구현
 - accepted category 후보의 analysis_results 반영 정책 설계
 - dictionary_candidates 구조 설계

@@ -28,13 +28,20 @@ Classification Phase 3-A 회귀 검증 완료:
 
 다음 작업 후보:
 
-1. category 후보 저장 DB schema 구현
+1. frontend category 후보 UI 구현
    - 설계 문서 위치: `docs/current/15_ai_recommendation_category_candidate_storage.md`
-   - 권장 구조: `ai_recommendation_category_candidates` 별도 테이블
+   - `ai_recommendation_category_candidates` table 추가 완료
+   - category 후보 관련 index 추가 완료
+   - 기존 DB 보강 로직 추가 완료
+   - category 후보 backend API 구현 완료
+   - 중복 후보는 `skipped_duplicate_candidate`로 처리
+   - accepted/rejected는 후보 상태일 뿐 analysis_results 반영이 아님
+   - `pending`으로 되돌릴 때 `reviewed_at=null` 초기화는 의도된 정책
+   - 이력 추적이 필요하면 후속 phase에서 별도 상태 변경 이력 구조 검토
    - analysis_results 즉시 갱신 제외
    - 복수 domain 후보 저장 가능
    - dictionary_candidates는 후속 통합
-2. category 후보 저장 backend API 구현
+2. accepted category 후보의 analysis_results 반영 정책 설계
 3. dictionary_candidates 구조 설계
 4. AI 추천 품질 검증
    - 공고 20개 이상 누적 후 정량 검증
