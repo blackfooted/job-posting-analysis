@@ -524,3 +524,38 @@ http://127.0.0.1:8000/docs
 - 검증 대상은 기존 4개 공고인 누아, 슈퍼진, 세나, 바티에이아이부터 시작한다.
 - 필요 시 금융/핀테크, 교육/에듀테크, 문맥 의존 표현이 많은 공고 중 2~3개를 추가한다.
 - 후속 순서는 품질 검증 → classification phase 3 → 선택 반영 결과 표시 고도화 → dictionary_candidates 구조 설계다.
+
+## Classification Phase 3-A 안전 개선
+
+다음 classification 구현 작업 후보는 Phase 3 전체가 아니라 Phase 3-A 안전 개선으로 한정한다. 이 범위는 `docs/current/classification_real_data_review.md`의 `Classification Phase 3 후보 범위 분리` 기준을 따른다.
+
+목표:
+
+- `IATA` 같은 기관명/인증명 약어가 skill/competency로 추출되지 않게 한다.
+- `IA`는 직무 수행 맥락이 없으면 skill로 추출되지 않게 한다.
+- 정상 약어/기술인 `EMR`, `HIS`, `OCS`, `SQL`, `ERD`, `AWS`, `RAG`, `API`는 유지한다.
+
+범위:
+
+- 즉시 구현 대상:
+  - IATA/기관명/인증명 stopword 또는 맥락 필터
+  - 대문자 약어 추출 맥락 조건 강화
+
+- 보류 대상:
+  - 회사 기술스택과 직무 직접 요구 기술 구분
+  - Slack/HTML/CSS 일괄 필터링
+  - 직무 유형별 기술스택 필터
+
+검증 기준:
+
+- 누아: `IATA`, 직무 맥락 없는 `IA` 제거
+- 세나: `EMR`, `HIS`, `OCS` 유지
+- 슈퍼진: `UX/UI` 유지
+- 바티에이아이: `SQL`, `ERD`, `AWS`, `RAG`, `API` 유지
+
+주의:
+
+- 단순 대문자 약어 전체 제거 금지
+- config JSON 수정 금지
+- 정상 skill 약어 회귀 발생 시 실패로 판단
+- 구현 후 `classification_real_data_review.md`에 재분석 결과 기록

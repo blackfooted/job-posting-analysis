@@ -316,3 +316,107 @@
 |---:|---|---|---|---|---|---|
 | 1 | 슈퍼진 / 글로벌 서비스 기획/운영 (`posting_id=16`) | yes | `position_category=서비스 기획`, `extracted_skills=UX/UI`, `extracted_competencies=기능 정의`, `unconfirmed_count=27` | `industry_category=null`, `domain_category=null`, `position_category=서비스 기획`, `extracted_skills=UX/UI`, `extracted_competencies=기능 정의, 서비스 운영`, `unconfirmed_count=26`, `analyzed_at=2026-05-04 14:10:34` | partial | phase 2 safe config 반영 후 `서비스 운영` competency가 추가 추출되고 unconfirmed_count가 1 감소했다. 다만 industry/domain은 여전히 null이고 FAQ, VOC, 운영 가이드 등 일부 슈퍼진 누락 후보가 남아 있어 partial 유지 |
 | 2 | 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자 (`posting_id=17`) | yes | phase 2 safe config 반영 전 기준: ERP/WMS 등 일부 safe skill 후보가 config 미반영 상태 | 사용자 직접 재분석 검증 결과 phase 2 safe config 반영 기준 pass | pass | phase 2 safe config 반영 후 검증 대상 공고로 확인됨. industry/domain/position 보류 후보와 Pandas 정책 검토는 별도 후속 작업으로 유지 |
+
+## Classification Phase 3 후보 범위 분리
+
+이번 섹션은 classification phase 3 구현 전에 안전 적용 후보와 보류 후보를 분리하기 위한 기준이다. 이 문서화 작업에서는 backend/frontend/config/DB를 수정하지 않고, API 호출도 실행하지 않는다.
+
+### 1. Phase 3-A — 즉시 안전 개선 후보
+
+- `IATA` 같은 기관명/인증명 stopword 처리
+- 회사 소개/인증/기관명 맥락에서 등장한 대문자 약어를 skill 후보에서 제외
+- `IA`는 원문에 Information Architecture 또는 화면설계/IA 산출물/서비스 구조 설계 맥락이 명확하지 않으면 제외
+
+#### Phase 3-A 적용 이유
+
+- `IATA`는 국제항공운송협회(International Air Transport Association)의 약어로, 누아 원문에서는 회사 소개/인증 기관명 맥락이다.
+- 채용 직무 수행 skill/competency가 아니므로 추출 대상이 아니다.
+- 기관명/인증명 약어는 skill로 반영될 가능성이 낮고 오탐 위험이 명확하다.
+- 다만 정상 직무 약어까지 제거하지 않도록 제한적으로 적용해야 한다.
+
+#### Phase 3-A 구현 원칙
+
+- 단순 대문자 약어 전체 제거 금지
+- 특정 stopword 또는 문맥 조건 기반으로만 제외
+- 정상 skill 약어 유지
+- 기존 config 정상 추출을 훼손하지 않음
+
+### 2. Phase 3-B — 실테스트 후 적용 후보
+
+아래 항목은 즉시 구현하지 않고 보류 후보로 분리한다.
+
+- 회사 기술스택과 직무 직접 요구 기술 구분
+- Slack, HTML/CSS 같은 범용/비핵심 skill 오추출 필터링
+- 직무 유형별 기술스택 필터
+
+#### Phase 3-B 보류 이유
+
+- 같은 기술이라도 직무에 따라 유효/무효가 달라진다.
+- SQL/API/ERD는 기획자에게도 유효할 수 있다.
+- HTML/CSS도 웹기획 공고에서는 이해 역량으로 볼 수 있다.
+- Slack은 일반 협업도구지만 특정 운영/협업 툴 역량으로 요구될 수도 있다.
+- 단순 제외 시 정상 추출까지 제거할 위험이 있다.
+- 실사용 공고와 removed/review_items 데이터가 더 쌓인 뒤 반복 오추출 패턴 기준으로 설계한다.
+
+### 3. 회귀 검증 통과 기준
+
+#### posting_id=13 / 누아 / 웹서비스 기획자
+
+통과 기준:
+
+- `IATA`가 extracted_skills 또는 review_items에서 skill/competency 후보로 생성되지 않아야 한다.
+- `IA`도 원문에 직무 수행 맥락이 없으면 skill로 추출되지 않아야 한다.
+- 단, 향후 다른 공고에서 `IA`가 Information Architecture 또는 화면설계/서비스 구조 설계 맥락으로 명확히 등장하면 추출 가능해야 한다.
+
+실패 기준:
+
+- `IATA`가 skill/competency 후보로 계속 생성되면 실패
+- `IA`가 직무 맥락 없이 계속 생성되면 실패
+
+#### posting_id=14 / 세나 / 서비스 기획 주니어
+
+통과 기준:
+
+- extracted_skills에 `EMR`, `HIS`, `OCS`가 계속 포함되어야 한다.
+- `UX/UI`, `스토리보드`, `와이어프레임` 등 기존 정상 추출도 유지되어야 한다.
+
+실패 기준:
+
+- phase 3-A 적용 후 `EMR`, `HIS`, `OCS`가 사라지면 회귀 실패
+
+#### posting_id=16 / 슈퍼진 / 글로벌 서비스 기획/운영
+
+통과 기준:
+
+- extracted_skills에 `UX/UI`가 계속 포함되어야 한다.
+- `와이어프레임`이 config/rule에 의해 잡히는 경우 제거되면 안 된다.
+
+실패 기준:
+
+- phase 3-A 적용 후 `UX/UI`가 사라지면 회귀 실패
+
+#### posting_id=17 / 바티에이아이 / 커머스 데이터 솔루션 - 기술 기획자
+
+통과 기준:
+
+- extracted_skills에 `SQL`, `ERD`, `AWS`, `RAG`가 계속 포함되어야 한다.
+- `API`, `Python` 등 기존 정상 기술 추출도 제거되면 안 된다.
+
+실패 기준:
+
+- phase 3-A 적용 후 `SQL`, `ERD`, `AWS`, `RAG`, `API` 등 직무 수행 맥락이 명확한 약어/기술이 사라지면 회귀 실패
+
+### 4. 공통 실패 기준
+
+- `IA/IATA` 오추출은 줄었지만 정상 약어가 함께 제거되면 실패
+- `EMR`, `HIS`, `OCS`, `SQL`, `ERD`, `AWS`, `RAG`, `API`처럼 직무 수행 맥락이 명확한 약어/기술이 사라지면 회귀 실패
+- 실패 시 stopword/맥락 조건을 더 좁혀 재적용한다.
+- phase 3-A는 정상 skill 약어를 줄이는 방식이 아니라, 기관명/인증명/회사소개 맥락 오추출만 줄이는 방향이어야 한다.
+
+### 5. Phase 3-A 구현 전제
+
+- 이번 문서화 작업에서는 구현하지 않는다.
+- 다음 Codex 작업에서 `backend/app/classification.py` 또는 관련 classification helper를 확인해 최소 수정한다.
+- config JSON 수정은 원칙적으로 하지 않는다.
+- IATA 같은 제외 후보는 config에 넣는 것이 아니라 classification rule/filter에서 처리하는 방향을 우선한다.
+- 구현 후 기존 4개 공고를 재분석해 통과/실패 기준을 기록한다.
