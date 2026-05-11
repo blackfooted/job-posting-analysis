@@ -4,31 +4,39 @@
 
 - classification phase 3-A 재분석 판단은 사용자 로컬 재분석 결과 기반으로 기록한다.
 - Codex는 재분석을 직접 수행하지 않고, backend 서버 실행, DB 조회, API 호출도 수행하지 않는다.
-- 현재 이 문서 작업 시점에는 `posting_id=13/14/16/17` 재분석 결과가 제공되지 않았다.
+- 사용자 로컬 재분석 기준 `posting_id=13/14/16/17` 4개 공고 모두 pass로 판단한다.
 
 요약:
 
 | posting_id | 회사 | 핵심 확인 항목 | 판단 |
 |---:|---|---|---|
-| 13 | 누아 | IATA/IA 오추출 제거 | 사용자 입력 필요 |
-| 14 | 세나 | EMR/HIS/OCS 정상 유지 | 사용자 입력 필요 |
-| 16 | 슈퍼진 | UX/UI 정상 유지 | 사용자 입력 필요 |
-| 17 | 바티에이아이 | SQL/ERD/AWS/RAG/API 정상 유지 | 사용자 입력 필요 |
+| 13 | 누아 | IATA 미추출, 직무 맥락 없는 IA 미추출 | pass |
+| 14 | 세나 | EMR/HIS/OCS, UX/UI, 스토리보드, 와이어프레임 유지 | pass |
+| 16 | 슈퍼진 | UX/UI 유지 | pass |
+| 17 | 바티에이아이 | SQL/ERD/API/AWS/RAG/Python 유지 | pass |
 
-판단 방식:
+Classification Phase 3-A 회귀 검증 완료:
 
-- 사용자가 제공한 재분석 결과가 있으면 pass/partial/fail로 판단한다.
-- 재분석 결과가 없는 공고는 `사용자 입력 필요`로 유지한다.
-- 상세 `analysis_results` 전체 JSON을 붙이지 않고, 회귀 검증 핵심 항목 중심으로 기록한다.
-- 정상 약어 회귀가 있으면 phase 3-A 조건을 즉시 좁혀 보완한다.
+- 사용자 로컬 재분석 기준 4개 공고 모두 pass
+- posting_id=13 누아: IATA 미추출, 직무 맥락 없는 IA 미추출
+- posting_id=14 세나: EMR/HIS/OCS, UX/UI, 스토리보드, 와이어프레임 유지
+- posting_id=16 슈퍼진: UX/UI 유지
+- posting_id=17 바티에이아이: SQL/ERD/API/AWS/RAG/Python 유지
+- 정상 약어/기술 추출 회귀 없음
+- phase 3-A 추가 보완은 현재 불필요
+- phase 3-B는 실사용 데이터 추가 누적 후 판단
 
 다음 작업 후보:
 
-1. 사용자 로컬에서 `posting_id=13/14/16/17` 재분석 결과 공유
-2. phase 3-A 판단 결과가 모두 pass면 phase 3-B는 보류 유지
-3. partial/fail이 있으면 phase 3-A 조건을 좁혀 보완
-4. 정상 약어 회귀가 있으면 즉시 보완
-5. AI 추천 품질 검증은 공고 결과가 더 누적된 뒤 진행
+1. AI recommendation category apply policy 문서화
+   - industry/domain/position 후보 저장 정책 확정
+   - review_items 확장 vs 별도 테이블 vs dictionary_candidates 연계 방향 결정
+   - analysis_results 즉시 갱신은 1차 제외로 명시
+   - domain 단일값/복수값 정책 방향 정리
+2. category 후보 저장 구조 설계
+3. dictionary_candidates 구조 설계
+4. AI 추천 품질 검증
+   - 공고 20개 이상 누적 후 정량 검증
 
 ## AI Recommendation Output Token 안정화
 
