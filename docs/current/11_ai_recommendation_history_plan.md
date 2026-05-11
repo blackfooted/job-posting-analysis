@@ -297,6 +297,9 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - 공고 변경, history page 이동, history refresh, POST `/runs` 성공 후 refresh 시 compare 상태를 초기화한다.
 - 선택 반영 UI는 history 상세/비교 화면에 1차 연결되었다.
 - 기존 GET endpoint는 호환 유지한다.
+- history의 `industry_category`, `primary_domain_category`, `position_category` 값은 현재 보기/비교용이다.
+- category 후보 저장은 `docs/current/14_ai_recommendation_category_apply_policy.md` 기준으로 후속 진행한다.
+- category 후보를 저장하더라도 analysis_results는 즉시 갱신하지 않는다.
 
 초기 UI 후보:
 

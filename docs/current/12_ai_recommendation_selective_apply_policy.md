@@ -60,6 +60,11 @@
 - `recommendation.position_category`
 - `review_item_candidates` 중 `field_type`이 `industry`, `domain`, `position`인 항목
 
+industry/domain/position은 별도 category apply policy 문서에서 다룬다.
+
+- category 후보 저장/반영 정책 문서: `docs/current/14_ai_recommendation_category_apply_policy.md`
+- 기존 selective apply는 skill/competency 중심으로 유지한다.
+
 ## 5. industry/domain/position 제외 이유
 
 industry/domain/position을 초기 반영 대상에서 제외하는 이유:
