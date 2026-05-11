@@ -71,12 +71,15 @@
 
 - 선택 반영 정책 문서: `docs/current/12_ai_recommendation_selective_apply_policy.md`
 - category 후보 저장/반영 정책 문서: `docs/current/14_ai_recommendation_category_apply_policy.md`
+- category 후보 저장 구조 설계 문서: `docs/current/15_ai_recommendation_category_candidate_storage.md`
 - 1차 반영 위치는 `review_items`로 제한하고 `dictionary_candidates`는 후속 검토
 - 1차 선택 반영 대상은 skills/competencies와 review_item_candidates 중 `skill`/`competency`
 - industry/domain/position은 1차 반영 대상에서 제외
 - industry/domain/position은 현재 선택 반영 대상에서 제외되어 있으나, category 후보 저장 정책을 별도 설계한다.
+- category 후보는 별도 테이블 설계를 우선한다.
 - category 후보는 후보로 저장하고 사용자 검토 후 후속 반영하는 방향을 우선한다.
 - analysis_results 즉시 갱신은 1차 제외한다.
+- dashboard 집계 반영은 후속이다.
 - 기존 `unconfirmed`는 AI 추천만으로 자동 `confirmed` 처리하지 않고, 사용자가 선택 반영할 때만 `confirmed` 갱신 검토
 - 기존 `removed` 이력은 존중하며 되살리지 않음
 - `applied_items_json`은 선택 반영 결과 추적용으로 추가 완료

@@ -299,6 +299,9 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 - 기존 GET endpoint는 호환 유지한다.
 - history의 `industry_category`, `primary_domain_category`, `position_category` 값은 현재 보기/비교용이다.
 - category 후보 저장은 `docs/current/14_ai_recommendation_category_apply_policy.md` 기준으로 후속 진행한다.
+- category 후보 저장 구조 상세 설계는 `docs/current/15_ai_recommendation_category_candidate_storage.md`를 따른다.
+- history의 category 값은 category 후보 저장 구조로 확장 예정이다.
+- 저장된 recommendation_json에서 category 후보를 선택 저장할 수 있다.
 - category 후보를 저장하더라도 analysis_results는 즉시 갱신하지 않는다.
 
 초기 UI 후보:

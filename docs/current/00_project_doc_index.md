@@ -25,6 +25,7 @@ Codex 작업을 시작할 때는 전체 문서를 읽기보다, 작업 범위에
    - AI recommendation selective apply: `12_ai_recommendation_selective_apply_policy.md`
    - AI recommendation quality validation: `13_ai_recommendation_quality_validation.md`
    - AI recommendation category apply: `14_ai_recommendation_category_apply_policy.md`
+   - AI recommendation category candidate storage: `15_ai_recommendation_category_candidate_storage.md`
 5. `08_future_roadmap.md`
    - 현재 구현 범위를 넘는 후속 계획 확인용 문서
 
@@ -83,7 +84,8 @@ Codex 작업 지시문에는 아래 항목을 포함한다.
 | AI recommendation 기능 변경 | `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md`, `12_ai_recommendation_selective_apply_policy.md` |
 | AI recommendation history 저장/조회 변경 | `11_ai_recommendation_history_plan.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
 | AI recommendation 선택 반영 변경 | `12_ai_recommendation_selective_apply_policy.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md` |
-| AI recommendation category 후보/반영 변경 | `14_ai_recommendation_category_apply_policy.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md`, `12_ai_recommendation_selective_apply_policy.md` |
+| AI recommendation category 후보/반영 변경 | `14_ai_recommendation_category_apply_policy.md`, `15_ai_recommendation_category_candidate_storage.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md`, `12_ai_recommendation_selective_apply_policy.md` |
+| AI recommendation category 후보 저장 구조 변경 | `15_ai_recommendation_category_candidate_storage.md`, `14_ai_recommendation_category_apply_policy.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md`, `11_ai_recommendation_history_plan.md` |
 | AI recommendation 품질 검증/평가 변경 | 품질 검증 문서, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
 | DB 스키마 변경 | `02_architecture_current_state.md`와 연관 기능 spec |
 | 복수 도메인 구조 도입 | `02_architecture_current_state.md`, `03_postings_feature_spec.md`, `05_classification_and_config_spec.md`, `06_dashboard_spec.md`, `07_ai_recommendation_spec.md`, `09_current_dev_handoff.md` |
@@ -97,3 +99,8 @@ Codex 작업 지시문에는 아래 항목을 포함한다.
 
 - AI recommendation category 후보 저장/반영 정책 문서: `docs/current/14_ai_recommendation_category_apply_policy.md`
 - industry/domain/position 후보 저장, analysis_results 반영, domain 단일값/복수값, dictionary_candidates 연계 정책 변경 시 함께 확인한다.
+
+## AI Recommendation Category Candidate Storage 문서
+
+- AI recommendation category 후보 저장 구조 설계 문서: `docs/current/15_ai_recommendation_category_candidate_storage.md`
+- ai_recommendation_category_candidates 테이블, category 후보 저장/조회/상태 변경 API, category 후보 UI 변경 시 함께 확인한다.

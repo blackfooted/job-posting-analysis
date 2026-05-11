@@ -158,6 +158,12 @@ ai_recommendation_category_candidates
 
 단, 구현 속도를 최우선으로 할 경우 review_items 확장도 임시 선택지로 남긴다.
 
+구체화된 저장 구조 설계:
+
+- category 후보 저장 구조 설계 문서: `docs/current/15_ai_recommendation_category_candidate_storage.md`
+- 단기 권장 구조가 별도 category 후보 테이블로 구체화되었다.
+- 다음 구현 후보는 `ai_recommendation_category_candidates` DB schema다.
+
 ## 7. 핵심 결정 2 — analysis_results 즉시 갱신 vs 후보 관리
 
 ### 선택지 A. analysis_results 즉시 갱신

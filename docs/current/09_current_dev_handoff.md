@@ -28,13 +28,13 @@ Classification Phase 3-A 회귀 검증 완료:
 
 다음 작업 후보:
 
-1. category 후보 저장 구조 설계
-   - policy 문서 위치: `docs/current/14_ai_recommendation_category_apply_policy.md`
-   - 단기 권장: 별도 category 후보 테이블
+1. category 후보 저장 DB schema 구현
+   - 설계 문서 위치: `docs/current/15_ai_recommendation_category_candidate_storage.md`
+   - 권장 구조: `ai_recommendation_category_candidates` 별도 테이블
    - analysis_results 즉시 갱신 제외
-   - domain 복수 후보 저장부터 검토
+   - 복수 domain 후보 저장 가능
    - dictionary_candidates는 후속 통합
-2. 별도 category 후보 테이블 설계
+2. category 후보 저장 backend API 구현
 3. dictionary_candidates 구조 설계
 4. AI 추천 품질 검증
    - 공고 20개 이상 누적 후 정량 검증
