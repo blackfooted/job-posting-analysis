@@ -1,5 +1,16 @@
 # Architecture Current State
 
+## Deployment Target Architecture Note
+
+- 현재 구조는 local development architecture 기준이다.
+- 배포 목표 architecture는 frontend/backend subdomain 분리를 전제로 한다.
+- 1차 후보는 Render Static Site + Render Web Service 조합이다.
+- Render 무료 플랜 사용 시 Web Service sleep/cold start 지연을 운영 제약으로 고려해야 한다.
+- SQLite 운영 시 persistent disk 사용 또는 PostgreSQL 전환을 검토해야 한다.
+- 배포 전 `DB_PATH` 또는 `DATABASE_URL` 환경변수화 필요성을 확인한다.
+- backend production start command는 `0.0.0.0` bind와 `$PORT` 사용을 기준으로 검토한다.
+- 상세 계획은 `docs/current/17_deployment_and_domain_plan.md`를 따른다.
+
 ## 기술 스택
 
 소스코드에서 확인한 현재 구현:

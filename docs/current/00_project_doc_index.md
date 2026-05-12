@@ -1,5 +1,10 @@
 # Project Document Index
 
+## Deployment and Domain Plan 문서
+
+- 배포/도메인 계획 문서: `docs/current/17_deployment_and_domain_plan.md`
+- deployment/domain 변경 시 `17_deployment_and_domain_plan.md`, `02_architecture_current_state.md`, `09_current_dev_handoff.md`, 필요 시 `01_product_overview.md`를 함께 확인한다.
+
 ## 문서 목적
 
 이 문서는 현재 프로젝트의 기준 문서 세트와 문서 우선순위를 정의한다.
@@ -27,6 +32,7 @@ Codex 작업을 시작할 때는 전체 문서를 읽기보다, 작업 범위에
    - AI recommendation category apply: `14_ai_recommendation_category_apply_policy.md`
    - AI recommendation category candidate storage: `15_ai_recommendation_category_candidate_storage.md`
    - AI recommendation category candidate analysis apply: `16_category_candidate_analysis_apply_policy.md`
+   - deployment/domain plan: `17_deployment_and_domain_plan.md`
 5. `08_future_roadmap.md`
    - 현재 구현 범위를 넘는 후속 계획 확인용 문서
 

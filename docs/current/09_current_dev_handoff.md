@@ -1,5 +1,24 @@
 # Current Dev Handoff
 
+## Deployment and Domain Plan 완료
+
+- 배포/도메인 계획 문서 `docs/current/17_deployment_and_domain_plan.md`를 추가했다.
+- 1차 권장 방향은 Render Static Site + Render Web Service다.
+- frontend/backend는 subdomain으로 분리하는 방향을 권장한다.
+- OpenAI API key는 frontend가 아니라 backend secret env에서만 관리한다.
+- DB는 단기 SQLite + persistent disk 또는 PostgreSQL을 검토한다.
+- Render 무료 플랜 사용 시 sleep/cold start 지연을 감수해야 한다.
+- backend start command는 production uvicorn 기준으로 `--host 0.0.0.0 --port $PORT` 전환이 필요하다.
+- `DB_PATH` 또는 `DATABASE_URL` 환경변수화 검토가 필요하다.
+- 실제 배포, DNS 설정, API 호출은 아직 수행하지 않았다.
+
+다음 deployment 작업:
+
+1. backend deployment readiness check
+2. frontend deployment readiness check
+3. CORS/DB_PATH 환경변수화 검토
+4. Render 배포 설정 checklist 확정
+
 ## Dashboard Recharts PieChart 전환 상태
 
 - Dashboard 차트 표현을 CSS 기반 원형 차트에서 Recharts `PieChart` 기반으로 교체했다.
