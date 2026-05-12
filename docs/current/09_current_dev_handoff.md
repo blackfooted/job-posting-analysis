@@ -1,5 +1,22 @@
 # Current Dev Handoff
 
+## Dashboard Recharts PieChart 전환 상태
+
+- Dashboard 차트 표현을 CSS 기반 원형 차트에서 Recharts `PieChart` 기반으로 교체했다.
+- Recharts 설치 상태는 `recharts@3.8.1`이다.
+- package 변경은 기존 Recharts 설치 변경분만 존재하며, 이번 작업에서 package 파일은 추가 수정하지 않았다.
+- 현재 dashboard API가 제공하는 `industry_distribution`, `position_distribution`, `top_skills`, `top_competencies`만 차트 대상으로 사용한다.
+- `domain_distribution`은 현재 dashboard charts API에서 제공하지 않으므로 후속 API 확장 대상으로 둔다.
+- 각 차트는 상위 10개와 `기타` 합산 항목으로 표시한다.
+- Tooltip과 legend/list에서 항목명, 건수, 비율을 함께 표시한다.
+- backend/API/DB/config 수정 없음.
+
+다음 단계:
+
+1. 공고 누적
+2. 데이터 정제
+3. AI 추천 품질 개선
+
 ## Dashboard UI/UX 개선 상태
 
 - Dashboard 화면 제목을 `대시보드`로 한글화하고 보조 설명을 추가했다.
@@ -11,16 +28,6 @@
 - 새로고침은 아이콘형 버튼으로 정리하고, 좌측에 `YYYY-MM-DD HH:MM:SS 기준` 형식의 기준일시를 표시한다.
 - dashboard fetch 성공 및 새로고침 성공 시 기준일시를 갱신한다.
 - backend/API/DB/config 수정 없음.
-- Recharts 설치는 `npm.cmd install recharts`로 시도했으나 sandbox registry 접근이 `EACCES`로 실패해 package 변경은 발생하지 않았다. sandbox 밖 재실행 요청은 하지 않았다.
-- Recharts 도입은 네트워크 설치 가능 환경에서 후속으로 재시도한다. 현재 구현은 build 유지를 위해 CSS 기반 원형 차트 표현으로 제한했다.
-
-다음 단계:
-
-1. Recharts 설치 가능 환경에서 원형 차트 컴포넌트 전환
-2. 공고 누적
-3. 데이터 정제
-4. AI 추천 품질 개선
-
 ## AI 추천 관리 화면 UI/UX 개선 완료
 
 - AI 추천 관리 화면의 가독성, 정보 구조, 상태 인지 개선을 완료했다.

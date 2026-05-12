@@ -1,4 +1,11 @@
 ﻿import { useEffect, useState } from 'react'
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts'
 import './App.css'
 import {
   fetchDashboardCharts,
@@ -3819,7 +3826,6 @@ function AiRecommendationHistoryDetail({
 function ChartList({ title, items = [] }) {
   const chartItems = getDashboardChartItems(items)
   const total = chartItems.reduce((sum, item) => sum + item.count, 0)
-  const gradient = createDashboardPieGradient(chartItems, total)
 
   return (
     <article className="chart-list">
@@ -3828,13 +3834,34 @@ function ChartList({ title, items = [] }) {
         <p className="dashboard-empty-state">표시할 데이터가 없습니다.</p>
       ) : (
         <div className="dashboard-pie-layout">
-          <div
-            className="dashboard-pie-chart"
-            style={{ background: gradient }}
-            role="img"
-            aria-label={`${title} 원형 차트`}
-          >
-            <span>{total}건</span>
+          <div className="dashboard-pie-chart" aria-label={`${title} 원형 차트`}>
+            <ResponsiveContainer width="100%" height={170}>
+              <PieChart>
+                <Pie
+                  data={chartItems}
+                  dataKey="count"
+                  nameKey="name"
+                  innerRadius={46}
+                  outerRadius={72}
+                  paddingAngle={1}
+                  stroke="var(--gray-0)"
+                  strokeWidth={2}
+                >
+                  {chartItems.map((item) => (
+                    <Cell key={item.name} fill={item.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => (
+                    <DashboardPieTooltip
+                      active={active}
+                      payload={payload}
+                      total={total}
+                    />
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
           <ul className="dashboard-chart-legend">
             {chartItems.map((item) => (
@@ -3853,6 +3880,26 @@ function ChartList({ title, items = [] }) {
         </div>
       )}
     </article>
+  )
+}
+
+function DashboardPieTooltip({ active, payload, total }) {
+  if (!active || !payload?.length) {
+    return null
+  }
+
+  const item = payload[0]?.payload
+  if (!item) {
+    return null
+  }
+
+  return (
+    <div className="dashboard-chart-tooltip">
+      <strong>{item.name}</strong>
+      <span>
+        {item.count}건 · {formatPercent(item.count, total)}
+      </span>
+    </div>
   )
 }
 
@@ -4237,17 +4284,16 @@ function RecommendationSummaryList({ items = [] }) {
 }
 
 const dashboardChartColors = [
-  '#6d28d9',
-  '#7c3aed',
-  '#a78bfa',
-  '#15803d',
-  '#0f766e',
-  '#2563eb',
-  '#dc2626',
-  '#d97706',
-  '#4f46e5',
-  '#64748b',
-  '#94a3b8',
+  '#3b0764',
+  '#581c87',
+  '#6b21a8',
+  '#7e22ce',
+  '#9333ea',
+  '#a855f7',
+  '#c084fc',
+  '#d8b4fe',
+  '#e9d5ff',
+  '#f3e8ff',
 ]
 
 function getDashboardChartItems(items = []) {
@@ -4282,22 +4328,6 @@ function getDashboardChartItems(items = []) {
     ...item,
     color: dashboardChartColors[index % dashboardChartColors.length],
   }))
-}
-
-function createDashboardPieGradient(items, total) {
-  if (!items.length || total <= 0) {
-    return 'var(--gray-100)'
-  }
-
-  let current = 0
-  const stops = items.map((item) => {
-    const start = current
-    const value = (item.count / total) * 100
-    current += value
-    return `${item.color} ${start}% ${current}%`
-  })
-
-  return `conic-gradient(${stops.join(', ')})`
 }
 
 function formatPercent(value, total) {

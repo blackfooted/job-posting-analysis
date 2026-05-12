@@ -372,31 +372,10 @@ button { font-family: inherit; }
 }
 
 .dashboard-pie-chart {
-  align-items: center;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  display: inline-flex;
-  justify-content: center;
   justify-self: center;
-  max-width: 140px;
-  position: relative;
-  width: 100%;
-}
-
-.dashboard-pie-chart::after {
-  background: var(--gray-0);
-  border-radius: 50%;
-  content: '';
-  inset: 32%;
-  position: absolute;
-}
-
-.dashboard-pie-chart span {
-  color: var(--gray-700);
-  font-size: 13px;
-  font-weight: 800;
-  position: relative;
-  z-index: 1;
+  height: 170px;
+  min-width: 0;
+  width: 170px;
 }
 
 .dashboard-chart-legend strong,
@@ -419,6 +398,27 @@ button { font-family: inherit; }
   display: inline-block;
   height: 10px;
   width: 10px;
+}
+
+.dashboard-chart-tooltip {
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+}
+
+.dashboard-chart-tooltip strong {
+  color: var(--gray-700);
+  font-size: 13px;
+}
+
+.dashboard-chart-tooltip span {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .dashboard-empty-state,
@@ -2071,7 +2071,7 @@ button { font-family: inherit; }
   }
 
   .dashboard-pie-chart {
-    max-width: 132px;
+    width: 160px;
   }
 
   .ai-recommendation-item-list,
