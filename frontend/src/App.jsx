@@ -63,6 +63,7 @@ function App() {
   const [comparison, setComparison] = useState(null)
   const [comparisonLoading, setComparisonLoading] = useState(true)
   const [comparisonError, setComparisonError] = useState('')
+  const [dashboardRefreshedAt, setDashboardRefreshedAt] = useState(null)
   const [postings, setPostings] = useState([])
   const [postingsLoading, setPostingsLoading] = useState(true)
   const [postingsError, setPostingsError] = useState('')
@@ -221,6 +222,7 @@ function App() {
       }
 
       setSummary(result.data)
+      setDashboardRefreshedAt(new Date())
     } catch (requestError) {
       if (shouldUpdate()) {
         setError(requestError.message || 'Failed to load dashboard summary.')
@@ -1722,52 +1724,74 @@ function App() {
         {activePage === 'dashboard' && (
           <>
             <div className="dashboard-header">
-              <h1>Dashboard Summary</h1>
-              <button
-                type="button"
-                onClick={handleRefreshDashboard}
-                disabled={isDashboardRefreshing}
-              >
-                {isDashboardRefreshing ? '새로고침 중...' : '새로고침'}
-              </button>
+              <div>
+                <h1>대시보드</h1>
+                <p>누적 공고와 정제 현황을 확인합니다.</p>
+              </div>
+              <div className="dashboard-refresh-control">
+                <span>{formatDashboardReferenceTime(dashboardRefreshedAt)}</span>
+                <button
+                  type="button"
+                  onClick={handleRefreshDashboard}
+                  disabled={isDashboardRefreshing}
+                  aria-label="대시보드 새로고침"
+                  title="대시보드 새로고침"
+                >
+                  ↻
+                </button>
+              </div>
             </div>
 
-            {loading && <p>Loading dashboard summary...</p>}
+            {loading && (
+              <p className="dashboard-state-message">
+                대시보드 데이터를 불러오는 중입니다.
+              </p>
+            )}
 
-            {!loading && error && <p className="error">{error}</p>}
+            {!loading && error && (
+              <p className="error">
+                대시보드 데이터를 불러오지 못했습니다.
+              </p>
+            )}
 
             {!loading && !error && summary && (
               <section className="summary-grid" aria-label="Dashboard summary">
                 <article>
-                  <span>전체 공고 수</span>
+                  <span>전체 공고</span>
                   <strong>{summary.total_postings}</strong>
                 </article>
                 <article>
-                  <span>산업 카테고리 수</span>
+                  <span>산업 카테고리</span>
                   <strong>{summary.total_industry_categories}</strong>
                 </article>
                 <article>
-                  <span>도메인 카테고리 수</span>
+                  <span>도메인 카테고리</span>
                   <strong>{summary.total_domain_categories}</strong>
                 </article>
                 <article>
-                  <span>직무 카테고리 수</span>
+                  <span>직무 카테고리</span>
                   <strong>{summary.total_position_categories}</strong>
                 </article>
                 <article>
-                  <span>미확정 정제 항목 수</span>
+                  <span>정제 대기</span>
                   <strong>{summary.total_unconfirmed_items}</strong>
                 </article>
               </section>
             )}
 
             <section className="charts" aria-label="Dashboard charts">
-              <h2>Dashboard Charts</h2>
+              <h2>분포 현황</h2>
 
-              {chartsLoading && <p>Loading dashboard charts...</p>}
+              {chartsLoading && (
+                <p className="dashboard-state-message">
+                  차트 데이터를 불러오는 중입니다.
+                </p>
+              )}
 
               {!chartsLoading && chartsError && (
-                <p className="error">{chartsError}</p>
+                <p className="error">
+                  대시보드 차트 데이터를 불러오지 못했습니다.
+                </p>
               )}
 
               {!chartsLoading && !chartsError && charts && (
@@ -1780,19 +1804,25 @@ function App() {
                     title="직무 분포"
                     items={charts.position_distribution}
                   />
-                  <ChartList title="상위 역량" items={charts.top_competencies} />
-                  <ChartList title="상위 기술/툴" items={charts.top_skills} />
+                  <ChartList title="기술/도구 상위 항목" items={charts.top_skills} />
+                  <ChartList title="역량 상위 항목" items={charts.top_competencies} />
                 </div>
               )}
             </section>
 
             <section className="comparison" aria-label="Dashboard comparison">
-              <h2>Dashboard Comparison</h2>
+              <h2>공고별 비교</h2>
 
-              {comparisonLoading && <p>Loading dashboard comparison...</p>}
+              {comparisonLoading && (
+                <p className="dashboard-state-message">
+                  공고별 비교 데이터를 불러오는 중입니다.
+                </p>
+              )}
 
               {!comparisonLoading && comparisonError && (
-                <p className="error">{comparisonError}</p>
+                <p className="error">
+                  공고별 비교 데이터를 불러오지 못했습니다.
+                </p>
               )}
 
               {!comparisonLoading && !comparisonError && comparison && (
@@ -3787,20 +3817,40 @@ function AiRecommendationHistoryDetail({
 }
 
 function ChartList({ title, items = [] }) {
+  const chartItems = getDashboardChartItems(items)
+  const total = chartItems.reduce((sum, item) => sum + item.count, 0)
+  const gradient = createDashboardPieGradient(chartItems, total)
+
   return (
     <article className="chart-list">
       <h3>{title}</h3>
-      {items.length === 0 ? (
-        <p>No data</p>
+      {chartItems.length === 0 ? (
+        <p className="dashboard-empty-state">표시할 데이터가 없습니다.</p>
       ) : (
-        <ul>
-          {items.map((item) => (
-            <li key={item.name}>
-              <span>{item.name}</span>
-              <strong>{item.count}</strong>
-            </li>
-          ))}
-        </ul>
+        <div className="dashboard-pie-layout">
+          <div
+            className="dashboard-pie-chart"
+            style={{ background: gradient }}
+            role="img"
+            aria-label={`${title} 원형 차트`}
+          >
+            <span>{total}건</span>
+          </div>
+          <ul className="dashboard-chart-legend">
+            {chartItems.map((item) => (
+              <li key={item.name}>
+                <span
+                  className="dashboard-chart-color"
+                  style={{ background: item.color }}
+                  aria-hidden="true"
+                />
+                <span className="dashboard-chart-name">{item.name}</span>
+                <strong>{item.count}건</strong>
+                <em>{formatPercent(item.count, total)}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </article>
   )
@@ -4184,6 +4234,86 @@ function RecommendationSummaryList({ items = [] }) {
       ))}
     </ul>
   )
+}
+
+const dashboardChartColors = [
+  '#6d28d9',
+  '#7c3aed',
+  '#a78bfa',
+  '#15803d',
+  '#0f766e',
+  '#2563eb',
+  '#dc2626',
+  '#d97706',
+  '#4f46e5',
+  '#64748b',
+  '#94a3b8',
+]
+
+function getDashboardChartItems(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return []
+  }
+
+  const normalizedItems = items
+    .map((item, index) => ({
+      name: item?.name || '-',
+      count: Number(item?.count || 0),
+      originalIndex: index,
+    }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count
+      }
+      return a.originalIndex - b.originalIndex
+    })
+
+  const topItems = normalizedItems.slice(0, 10)
+  const otherCount = normalizedItems
+    .slice(10)
+    .reduce((sum, item) => sum + item.count, 0)
+  const displayItems =
+    otherCount > 0
+      ? [...topItems, { name: '기타', count: otherCount }]
+      : topItems
+
+  return displayItems.map((item, index) => ({
+    ...item,
+    color: dashboardChartColors[index % dashboardChartColors.length],
+  }))
+}
+
+function createDashboardPieGradient(items, total) {
+  if (!items.length || total <= 0) {
+    return 'var(--gray-100)'
+  }
+
+  let current = 0
+  const stops = items.map((item) => {
+    const start = current
+    const value = (item.count / total) * 100
+    current += value
+    return `${item.color} ${start}% ${current}%`
+  })
+
+  return `conic-gradient(${stops.join(', ')})`
+}
+
+function formatPercent(value, total) {
+  if (!total) {
+    return '0%'
+  }
+
+  return `${Math.round((value / total) * 100)}%`
+}
+
+function formatDashboardReferenceTime(value) {
+  if (!value) {
+    return '- 기준'
+  }
+
+  return `${formatDateTime(value)} 기준`
 }
 
 function formatDateTime(value) {

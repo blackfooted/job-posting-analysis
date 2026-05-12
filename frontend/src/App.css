@@ -72,9 +72,13 @@ button { font-family: inherit; }
   flex: 0 0 var(--lnb-width);
   display: flex;
   flex-direction: column;
+  align-self: flex-start;
   background: linear-gradient(180deg, var(--brand-600) 0%, var(--brand-700) 100%);
+  height: 100vh;
+  overflow-y: auto;
   padding: 28px 16px;
-  min-height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
 .lnb::before {
@@ -200,10 +204,10 @@ button { font-family: inherit; }
    ============================================================ */
 .dashboard-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  width: min(100%, 800px);
+  width: min(100%, 1040px);
 }
 
 .dashboard-header h1 {
@@ -211,26 +215,51 @@ button { font-family: inherit; }
   color: var(--gray-900);
 }
 
-.dashboard-header button {
+.dashboard-header p {
+  color: var(--gray-500);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.dashboard-refresh-control {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.dashboard-refresh-control span {
+  color: var(--gray-500);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dashboard-refresh-control button {
+  align-items: center;
   border: 1px solid var(--brand-200);
   border-radius: var(--radius-sm);
   background: var(--brand-50);
   color: var(--brand-600);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 16px;
+  font-size: 18px;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
   transition: background .15s, box-shadow .15s;
+  width: 36px;
   white-space: nowrap;
 }
 
-.dashboard-header button:hover:not(:disabled) {
+.dashboard-refresh-control button:hover:not(:disabled) {
   background: var(--brand-100);
   box-shadow: var(--shadow-xs);
 }
 
-.dashboard-header button:disabled {
+.dashboard-refresh-control button:disabled {
   cursor: not-allowed;
   opacity: .5;
 }
@@ -240,10 +269,10 @@ button { font-family: inherit; }
    ============================================================ */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
   gap: 14px;
   margin-top: 24px;
-  width: min(100%, 800px);
+  width: min(100%, 1040px);
 }
 
 .summary-grid article {
@@ -251,7 +280,8 @@ button { font-family: inherit; }
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 20px 18px;
+  min-width: 0;
+  padding: 18px;
   transition: box-shadow .2s, transform .2s;
 }
 
@@ -264,7 +294,10 @@ button { font-family: inherit; }
   display: block;
   color: var(--gray-500);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .summary-grid strong {
@@ -281,18 +314,18 @@ button { font-family: inherit; }
    ============================================================ */
 .charts {
   margin-top: 28px;
-  width: min(100%, 800px);
+  width: min(100%, 1040px);
 }
 
 .charts > h2 {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--gray-700);
   margin-bottom: 14px;
 }
 
 .chart-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   text-align: left;
 }
@@ -300,7 +333,7 @@ button { font-family: inherit; }
 .chart-list {
   background: var(--gray-0);
   border: 1px solid var(--gray-200);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: 18px;
 }
@@ -316,23 +349,82 @@ button { font-family: inherit; }
 
 .chart-list ul {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .chart-list li {
-  display: flex;
-  justify-content: space-between;
+  align-items: center;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
   gap: 8px;
   font-size: 13px;
   color: var(--gray-700);
 }
 
-.chart-list li span:last-child {
+.dashboard-pie-layout {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 140px minmax(0, 1fr);
+}
+
+.dashboard-pie-chart {
+  align-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  justify-self: center;
+  max-width: 140px;
+  position: relative;
+  width: 100%;
+}
+
+.dashboard-pie-chart::after {
+  background: var(--gray-0);
+  border-radius: 50%;
+  content: '';
+  inset: 32%;
+  position: absolute;
+}
+
+.dashboard-pie-chart span {
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-chart-legend strong,
+.dashboard-chart-legend em {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-style: normal;
   font-weight: 700;
-  color: var(--brand-500);
+  white-space: nowrap;
+}
+
+.dashboard-chart-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-chart-color {
+  border-radius: 999px;
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+}
+
+.dashboard-empty-state,
+.dashboard-state-message {
+  color: var(--gray-500);
+  font-size: 13px;
 }
 
 /* ============================================================
@@ -340,11 +432,11 @@ button { font-family: inherit; }
    ============================================================ */
 .comparison {
   margin-top: 28px;
-  width: min(100%, 1120px);
+  width: min(100%, 1040px);
 }
 
 .comparison > h2 {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--gray-700);
   margin-bottom: 14px;
   text-align: left;
@@ -1953,6 +2045,10 @@ button { font-family: inherit; }
 @media (max-width: 900px) {
   .lnb { flex: 0 0 200px; }
 
+  .chart-groups {
+    grid-template-columns: 1fr;
+  }
+
   .ai-recommendation-item-list,
   .ai-recommendation-history-detail-item-list,
   .ai-recommendation-apply-list {
@@ -1961,6 +2057,23 @@ button { font-family: inherit; }
 }
 
 @media (max-width: 640px) {
+  .dashboard-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-refresh-control {
+    justify-content: flex-end;
+  }
+
+  .dashboard-pie-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-pie-chart {
+    max-width: 132px;
+  }
+
   .ai-recommendation-item-list,
   .ai-recommendation-history-detail-item-list,
   .ai-recommendation-apply-list {
