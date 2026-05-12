@@ -1,5 +1,13 @@
 # AI Recommendation Category Apply Policy
 
+## Category 후보 관리 UI/UX 개선 상태
+
+- category 후보 저장/관리 UI의 가로 가독성을 개선했다.
+- 후보 채택과 분석 결과 반영은 화면에서 별도 상태와 별도 액션으로 계속 구분한다.
+- 판단 근거는 아코디언으로 접고, confidence는 badge로 표시한다.
+- 저장된 산업/도메인/직무 후보 목록의 작업 컬럼은 상태 select, 상태 저장, 분석 결과 반영 버튼을 한 줄로 배치한다.
+- accepted 상태만으로 dashboard가 변경되지 않고, analysis_results 반영 이후에만 dashboard 영향이 가능하다는 정책은 유지한다.
+
 ## Analysis Apply Tracking Schema Current Update
 
 - category 후보 저장 구조에 analysis apply 추적 컬럼이 추가되었다.
@@ -10,7 +18,7 @@
 - 신규 공고 기준 사용자 로컬 검증에서 accepted 후보의 `analysis_results` 반영과 frontend 화면 반영 흐름이 pass로 확인되었다.
 - accepted는 후보 채택, `applied_to_analysis`는 분석 결과 반영이라는 구분이 UI 흐름에서 확인되었다.
 - dashboard 반영은 category 후보 accepted 상태가 아니라 `analysis_results` 반영 이후에만 발생한다.
-- dashboard side-effect는 후보 저장만으로 영향 없음, accepted 상태만으로 영향 없음, `analysis_results` 반영 후에만 영향 가능하다는 기준으로 사용자 로컬 추가 검증이 필요하다.
+- 사용자 로컬 side-effect 검증에서 accepted는 후보 채택일 뿐 dashboard 영향이 없고, `analysis_results` 반영 후에만 dashboard 영향이 가능하다는 정책이 pass로 확인되었다.
 
 ## Analysis Result Apply Policy Reference
 

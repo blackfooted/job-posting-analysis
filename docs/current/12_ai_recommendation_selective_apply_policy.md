@@ -1,5 +1,11 @@
 # AI Recommendation Selective Apply Policy
 
+## 선택 반영 결과 표시 개선
+
+- 선택 항목 저장/반영 결과는 `정제 항목`과 `산업/도메인/직무 후보` 영역을 구분해 표시한다.
+- 각 영역은 완료 건수와 제외 건수를 먼저 보여주고, 상세 사유는 필요할 때 확장해 확인한다.
+- 판단 근거와 skipped reason은 화면 길이를 줄이기 위해 아코디언 표시를 우선한다.
+
 ## Frontend Combined Selection UI Current Update
 
 - AI 추천 이력 상세/비교 화면의 선택 영역에서 `skill|competency` 정제 항목과 산업/도메인/직무 후보를 함께 선택할 수 있다.

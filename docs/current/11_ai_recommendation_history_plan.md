@@ -1,5 +1,12 @@
 # AI Recommendation History Plan
 
+## History UI/UX 개선 반영
+
+- history 상세/비교 화면의 판단 근거는 기본 접힘 상태의 아코디언으로 정리했다.
+- history 상세의 기술/도구 및 역량 목록은 PC 기준 3열 grid로 표시한다.
+- recommendation confidence는 항목명 옆 badge로 표시한다.
+- run 생성 시각 등 AI 추천 관리 화면의 날짜/시각 표시는 `YYYY-MM-DD HH:MM:SS`로 통일한다.
+
 ## Frontend Category Candidate Save UI Current Update
 
 - history 상세 화면과 비교 화면에서 산업/도메인/직무 후보를 선택해 저장할 수 있다.

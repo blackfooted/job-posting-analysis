@@ -1,5 +1,12 @@
 # AI Recommendation Category Candidate Storage
 
+## Category 후보 목록 UI/UX 개선 상태
+
+- 저장된 산업/도메인/직무 후보 목록의 table min-width를 확장해 추천값, 판단 근거, 메모의 가독성을 개선했다.
+- 생성 시각, 검토 시각, 반영 시각은 우측 날짜 컬럼으로 정리하고 `YYYY-MM-DD HH:MM:SS` 형식으로 표시한다.
+- 작업 컬럼은 상태 select, 상태 저장, 분석 결과로 반영 버튼을 inline 배치한다.
+- `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`는 분석 결과 반영 상태 확인 정보로 계속 표시한다.
+
 ## Analysis Apply Tracking Schema Current Update
 
 - `ai_recommendation_category_candidates` 테이블에 analysis apply 추적 컬럼이 추가되었다.
@@ -9,9 +16,8 @@
 - category 후보 목록 UI에서 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`를 표시할 수 있다.
 - apply-analysis UI는 accepted 후보에 한해 제공된다.
 - 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 `analysis_results` 반영, 반영 완료 상태 표시가 pass로 확인되었다.
-- `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요로 남긴다.
-- side-effect 검증에서 `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 여부를 별도 확인한다.
-- 현재 side-effect 검증 결과는 사용자 입력 필요 상태다.
+- 사용자 로컬 side-effect 검증에서 `analyzed_at` 미갱신과 dashboard 영향 정책이 pass로 확인되었다.
+- category 후보 저장/accepted 상태와 `analysis_results` 반영의 책임 분리가 정상 동작한다.
 
 ## Analysis Result Apply Policy Reference
 

@@ -1,5 +1,12 @@
 # Category Candidate Analysis Result Apply Policy
 
+## Apply UI/UX 개선 상태
+
+- 분석 결과 반영 UI에서 accepted 후보와 `applied_to_analysis` 반영 완료 상태의 구분을 유지한다.
+- 판단 근거는 기본 접힘 상태로 표시해 후보 목록의 세로 길이를 줄였다.
+- 반영 시각 등 날짜/시각은 `YYYY-MM-DD HH:MM:SS` 형식으로 통일한다.
+- 반영 결과 메시지는 action, 이전 값, 새 값, 반영 필드를 간결하게 확인할 수 있도록 유지한다.
+
 ## Frontend Implementation Status
 
 - `ai_recommendation_category_candidates`에 `analysis_results` 반영 추적을 위한 DB 컬럼이 schema 단계에서 추가되었다.
@@ -25,8 +32,8 @@
 | applied_at 기록 | pass | 반영 시각 기록 확인 |
 | previous_analysis_value 기록 | pass | 기존 분석값 기록 확인 |
 | applied_analysis_field 기록 | pass | 반영 필드 기록 확인 |
-| analyzed_at 미갱신 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
-| dashboard 영향 확인 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
+| analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |
+| dashboard 영향 확인 | pass | side-effect 검증에서 dashboard 영향 정책 정상 확인 |
 
 종합 판단:
 
@@ -35,19 +42,19 @@ pass
 ```
 
 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 “분석 결과로 반영”, `analysis_results` 반영, frontend 화면 반영 흐름이 정상 작동함을 확인했다.
-기능 흐름은 pass. `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요.
+기능 흐름과 side-effect 검증 모두 pass.
 
 ## Category Candidate Analysis Apply Side-effect 검증 결과
 
 | 항목 | 결과 | 메모 |
 |---|---|---|
-| analyzed_at 미갱신 | 사용자 입력 필요 | 반영 전/후 `analysis_results.analyzed_at` 비교 결과 필요 |
-| category 후보 저장만으로 dashboard 영향 없음 | 사용자 입력 필요 | 후보 저장 직후 dashboard 변화 여부 확인 필요 |
-| accepted 상태만으로 dashboard 영향 없음 | 사용자 입력 필요 | 상태 변경만으로 dashboard 변화 여부 확인 필요 |
-| analysis_results 반영 후 dashboard 영향 | 사용자 입력 필요 | dashboard에서 확인 가능한 범위 기준 확인 필요 |
-| 종합 판단 | 사용자 입력 필요 | 사용자 로컬 side-effect 검증 결과 대기 |
+| analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |
+| category 후보 저장만으로 dashboard 영향 없음 | pass | 후보 저장은 dashboard에 영향 없음 |
+| accepted 상태만으로 dashboard 영향 없음 | pass | 후보 채택만으로 dashboard에 영향 없음 |
+| analysis_results 반영 후 dashboard 영향 | pass | analysis_results 반영 후 dashboard에 영향 가능 |
+| 종합 판단 | pass | 기능 검증 완료 |
 
-검증 결과가 제공되지 않은 항목은 임의로 pass/fail 처리하지 않는다. dashboard에서 확인 가능한 항목이 제한적이면 partial 또는 확인 필요로 기록한다.
+사용자 로컬 side-effect 검증에서 `analyzed_at` 미갱신 정책과 dashboard 영향 정책이 pass로 확인되었다.
 
 ## 1. 문서 목적
 

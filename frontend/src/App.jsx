@@ -2443,20 +2443,21 @@ function AiCategoryCandidateList({
               <th>항목 유형</th>
               <th>추천값</th>
               <th>확신도</th>
+              <th>상태</th>
               <th>판단 근거</th>
               <th>현재 분석값</th>
               <th>분석 결과 반영</th>
-              <th>상태</th>
-              <th>생성 시각</th>
-              <th>검토 시각</th>
               <th>메모</th>
               <th>작업</th>
+              <th>생성 시각</th>
+              <th>검토 시각</th>
+              <th>반영 시각</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan="12">
+                <td colSpan="13">
                   {isLoading
                     ? '산업/도메인/직무 후보 목록을 불러오는 중입니다.'
                     : '산업/도메인/직무 후보가 없습니다.'}
@@ -2485,9 +2486,22 @@ function AiCategoryCandidateList({
                   <tr key={item.id}>
                     <td>{item.id}</td>
                     <td>{formatAiCategoryType(item.category_type)}</td>
-                    <td>{formatValue(item.recommended_value)}</td>
-                    <td>{formatValue(item.confidence)}</td>
-                    <td>{formatValue(item.reason)}</td>
+                    <td className="ai-category-candidate-value-cell">
+                      {formatValue(item.recommended_value)}
+                    </td>
+                    <td>
+                      <AiConfidenceBadge confidence={item.confidence} />
+                    </td>
+                    <td>
+                      <span
+                        className={`ai-category-candidate-status-badge ai-category-candidate-status-${item.status}`}
+                      >
+                        {formatAiCategoryCandidateStatus(item.status)}
+                      </span>
+                    </td>
+                    <td className="ai-category-candidate-reason-cell">
+                      <ReasonDetails reason={item.reason} />
+                    </td>
                     <td>
                       {analysisLoading
                         ? '분석 결과 확인 중'
@@ -2504,7 +2518,7 @@ function AiCategoryCandidateList({
                         </span>
                         <small>
                           {item.applied_to_analysis
-                            ? `반영 시각: ${formatValue(item.applied_at)}`
+                            ? `반영 시각: ${formatDateTime(item.applied_at)}`
                             : applyHint}
                         </small>
                         {item.applied_to_analysis && (
@@ -2521,16 +2535,7 @@ function AiCategoryCandidateList({
                         )}
                       </div>
                     </td>
-                    <td>
-                      <span
-                        className={`ai-category-candidate-status-badge ai-category-candidate-status-${item.status}`}
-                      >
-                        {formatAiCategoryCandidateStatus(item.status)}
-                      </span>
-                    </td>
-                    <td>{formatValue(item.created_at)}</td>
-                    <td>{formatValue(item.reviewed_at)}</td>
-                    <td>
+                    <td className="ai-category-candidate-note-cell">
                       <textarea
                         value={draft.note}
                         onChange={(event) =>
@@ -2540,41 +2545,52 @@ function AiCategoryCandidateList({
                       />
                     </td>
                     <td className="ai-category-candidate-actions">
-                      <select
-                        value={draft.status}
-                        onChange={(event) =>
-                          updateDraft(item.id, 'status', event.target.value)
-                        }
-                      >
-                        <option value="pending">검토 대기</option>
-                        <option value="accepted">후보 채택</option>
-                        <option value="rejected">제외</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onUpdate(item.id, draft.status, draft.note)
-                        }
-                        disabled={updatingId === item.id || isLoading}
-                      >
-                        상태 저장
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onApply(item)}
-                        disabled={applyDisabled}
-                      >
-                        {item.applied_to_analysis
-                          ? '반영 완료'
-                          : applyLoadingId === item.id
-                            ? '반영 중'
-                            : '분석 결과로 반영'}
-                      </button>
+                      <div className="ai-category-candidate-action-row">
+                        <select
+                          value={draft.status}
+                          onChange={(event) =>
+                            updateDraft(item.id, 'status', event.target.value)
+                          }
+                        >
+                          <option value="pending">검토 대기</option>
+                          <option value="accepted">후보 채택</option>
+                          <option value="rejected">제외</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdate(item.id, draft.status, draft.note)
+                          }
+                          disabled={updatingId === item.id || isLoading}
+                        >
+                          상태 저장
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onApply(item)}
+                          disabled={applyDisabled}
+                        >
+                          {item.applied_to_analysis
+                            ? '반영 완료'
+                            : applyLoadingId === item.id
+                              ? '반영 중'
+                              : '분석 결과로 반영'}
+                        </button>
+                      </div>
                       {!canApply && (
                         <span className="ai-category-candidate-action-hint">
                           {applyHint}
                         </span>
                       )}
+                    </td>
+                    <td className="ai-category-candidate-date-cell">
+                      {formatDateTime(item.created_at)}
+                    </td>
+                    <td className="ai-category-candidate-date-cell">
+                      {formatDateTime(item.reviewed_at)}
+                    </td>
+                    <td className="ai-category-candidate-date-cell">
+                      {formatDateTime(item.applied_at)}
                     </td>
                   </tr>
                 )
@@ -2642,7 +2658,7 @@ function AiCategoryCandidateApplyResult({ result }) {
         </div>
         <div>
           <dt>반영 시각</dt>
-          <dd>{formatValue(result.candidate?.applied_at)}</dd>
+          <dd>{formatDateTime(result.candidate?.applied_at)}</dd>
         </div>
       </dl>
     </div>
@@ -2658,15 +2674,18 @@ function AiRecommendationCard({ title, item = {} }) {
       <dl className="ai-recommendation-detail-list">
         <div>
           <dt>값</dt>
-          <dd>{formatValue(normalizedItem.value)}</dd>
-        </div>
-        <div>
-          <dt>확신도</dt>
-          <dd>{formatValue(normalizedItem.confidence)}</dd>
+          <dd>
+            <span className="ai-recommendation-heading-value">
+              {formatValue(normalizedItem.value)}
+              <AiConfidenceBadge confidence={normalizedItem.confidence} />
+            </span>
+          </dd>
         </div>
         <div>
           <dt>판단 근거</dt>
-          <dd>{formatValue(normalizedItem.reason)}</dd>
+          <dd>
+            <ReasonDetails reason={normalizedItem.reason} />
+          </dd>
         </div>
       </dl>
     </article>
@@ -2722,11 +2741,15 @@ function AiReviewCandidateList({ items = [] }) {
                 </div>
                 <div>
                   <dt>확신도</dt>
-                  <dd>{formatValue(item.confidence)}</dd>
+                  <dd>
+                    <AiConfidenceBadge confidence={item.confidence} />
+                  </dd>
                 </div>
                 <div>
                   <dt>판단 근거</dt>
-                  <dd>{formatValue(item.reason)}</dd>
+                  <dd>
+                    <ReasonDetails reason={item.reason} />
+                  </dd>
                 </div>
               </dl>
             </article>
@@ -2763,7 +2786,7 @@ function AiRecommendationMeta({ meta = {} }) {
         </div>
         <div>
           <dt>생성 시각</dt>
-          <dd>{formatValue(meta.generated_at)}</dd>
+          <dd>{formatDateTime(meta.generated_at)}</dd>
         </div>
       </dl>
     </section>
@@ -2796,7 +2819,7 @@ function AiRecommendationRunMeta({ run = null, meta = {} }) {
             </div>
             <div>
               <dt>생성 시각</dt>
-              <dd>{formatValue(run.created_at)}</dd>
+              <dd>{formatDateTime(run.created_at)}</dd>
             </div>
           </>
         )}
@@ -2896,7 +2919,7 @@ function AiRecommendationHistoryList({
                       {formatAiAppliedStatus(run.applied_status)}
                     </span>
                   </td>
-                  <td>{formatValue(run.created_at)}</td>
+                  <td>{formatDateTime(run.created_at)}</td>
                   <td>
                     <label className="ai-recommendation-history-compare-check">
                       <input
@@ -3030,7 +3053,7 @@ function AiRecommendationCompareCard({
       <dl className="ai-meta-list">
         <div>
           <dt>생성 시각</dt>
-          <dd>{formatValue(run.created_at)}</dd>
+          <dd>{formatDateTime(run.created_at)}</dd>
         </div>
         <div>
           <dt>실행 모드</dt>
@@ -3065,31 +3088,40 @@ function AiRecommendationCompareCard({
       <div className="ai-recommendation-compare-values">
         <div>
           <h4>산업</h4>
-          <p>{formatValue(getCategoryValue(recommendation.industry_category))}</p>
+          <p>
+            <RecommendationValueWithConfidence
+              item={recommendation.industry_category}
+            />
+          </p>
+          <ReasonDetails reason={recommendation.industry_category?.reason} />
         </div>
         <div>
           <h4>대표 도메인</h4>
           <p>
-            {formatValue(
-              getCategoryValue(recommendation.primary_domain_category),
-            )}
+            <RecommendationValueWithConfidence
+              item={recommendation.primary_domain_category}
+            />
           </p>
+          <ReasonDetails
+            reason={recommendation.primary_domain_category?.reason}
+          />
         </div>
         <div>
           <h4>직무 분류</h4>
-          <p>{formatValue(getCategoryValue(recommendation.position_category))}</p>
+          <p>
+            <RecommendationValueWithConfidence
+              item={recommendation.position_category}
+            />
+          </p>
+          <ReasonDetails reason={recommendation.position_category?.reason} />
         </div>
         <div>
           <h4>기술/도구</h4>
-          <p>{formatValue(getRecommendationItemValues(recommendation.skills))}</p>
+          <RecommendationSummaryList items={recommendation.skills} />
         </div>
         <div>
           <h4>역량</h4>
-          <p>
-            {formatValue(
-              getRecommendationItemValues(recommendation.competencies),
-            )}
-          </p>
+          <RecommendationSummaryList items={recommendation.competencies} />
         </div>
         <div>
           <h4>검토 후보</h4>
@@ -3175,16 +3207,16 @@ function AiRecommendationApplyPanel({
                 onChange={() => onToggle(runId, entry.payload)}
                 disabled={isLoading}
               />
-              <span>
-                <strong>{formatValue(entry.label)}</strong>
+              <div className="ai-recommendation-apply-item-body">
+                <strong>
+                  {formatValue(entry.label)}
+                  <AiConfidenceBadge confidence={entry.confidence} />
+                </strong>
                 <small>{entry.categoryLabel}</small>
-                {entry.confidence && (
-                  <small>확신도 {formatValue(entry.confidence)}</small>
-                )}
                 {entry.reason && (
-                  <small>판단 근거 {formatValue(entry.reason)}</small>
+                  <ReasonDetails reason={entry.reason} />
                 )}
-              </span>
+              </div>
             </label>
           ))}
         </div>
@@ -3221,7 +3253,8 @@ function AiRecommendationApplyResult({ result = null, error = '' }) {
       <h2>선택 항목 저장/반영 결과</h2>
       {error && <p className="error">{error}</p>}
       {(reviewItemResult || reviewItemError) && (
-        <>
+        <div className="ai-recommendation-apply-result-section">
+          <h3>정제 항목</h3>
           {reviewItemError && <p className="error">{reviewItemError}</p>}
           <dl className="ai-meta-list">
             <div>
@@ -3252,10 +3285,11 @@ function AiRecommendationApplyResult({ result = null, error = '' }) {
             title="정제 항목 반영 제외"
             items={skippedItems}
           />
-        </>
+        </div>
       )}
       {(categoryCandidateResult || categoryCandidateError) && (
-        <>
+        <div className="ai-recommendation-apply-result-section">
+          <h3>산업/도메인/직무 후보</h3>
           {categoryCandidateError && (
             <p className="error">{categoryCandidateError}</p>
           )}
@@ -3282,7 +3316,7 @@ function AiRecommendationApplyResult({ result = null, error = '' }) {
             title="산업/도메인/직무 후보 저장 제외"
             items={skippedCategoryItems}
           />
-        </>
+        </div>
       )}
     </section>
   )
@@ -3303,7 +3337,7 @@ function AiRecommendationApplyResultList({ title, items = [] }) {
                 {formatAiFieldType(item.field_type)} ·{' '}
                 {formatAiApplyAction(item.action)}
               </span>
-              {item.reason && <em>{item.reason}</em>}
+              {item.reason && <ReasonDetails reason={item.reason} />}
             </li>
           ))}
         </ul>
@@ -3329,7 +3363,7 @@ function AiRecommendationCategoryCandidateResultList({ title, items = [] }) {
                 {formatAiCategoryType(item.category_type)} ·{' '}
                 {formatAiCategoryCandidateAction(item.action)}
               </span>
-              {item.reason && <em>{item.reason}</em>}
+              {item.reason && <ReasonDetails reason={item.reason} />}
             </li>
           ))}
         </ul>
@@ -3535,7 +3569,7 @@ function AiRecommendationHistoryDetail({
               </div>
               <div>
                 <dt>생성 시각</dt>
-                <dd>{formatValue(run?.created_at)}</dd>
+                <dd>{formatDateTime(run?.created_at)}</dd>
               </div>
               <div>
                 <dt>실행 모드</dt>
@@ -3575,21 +3609,17 @@ function AiRecommendationHistoryDetail({
                 <div>
                   <dt>값</dt>
                   <dd>
-                    {formatValue(recommendation.industry_category?.value)}
-                  </dd>
-                </div>
-                <div>
-                  <dt>확신도</dt>
-                  <dd>
-                    {formatValue(
-                      recommendation.industry_category?.confidence,
-                    )}
+                    <RecommendationValueWithConfidence
+                      item={recommendation.industry_category}
+                    />
                   </dd>
                 </div>
                 <div>
                   <dt>판단 근거</dt>
                   <dd>
-                    {formatValue(recommendation.industry_category?.reason)}
+                    <ReasonDetails
+                      reason={recommendation.industry_category?.reason}
+                    />
                   </dd>
                 </div>
               </dl>
@@ -3601,25 +3631,17 @@ function AiRecommendationHistoryDetail({
                 <div>
                   <dt>값</dt>
                   <dd>
-                    {formatValue(
-                      recommendation.primary_domain_category?.value,
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>확신도</dt>
-                  <dd>
-                    {formatValue(
-                      recommendation.primary_domain_category?.confidence,
-                    )}
+                    <RecommendationValueWithConfidence
+                      item={recommendation.primary_domain_category}
+                    />
                   </dd>
                 </div>
                 <div>
                   <dt>판단 근거</dt>
                   <dd>
-                    {formatValue(
-                      recommendation.primary_domain_category?.reason,
-                    )}
+                    <ReasonDetails
+                      reason={recommendation.primary_domain_category?.reason}
+                    />
                   </dd>
                 </div>
               </dl>
@@ -3631,21 +3653,17 @@ function AiRecommendationHistoryDetail({
                 <div>
                   <dt>값</dt>
                   <dd>
-                    {formatValue(recommendation.position_category?.value)}
-                  </dd>
-                </div>
-                <div>
-                  <dt>확신도</dt>
-                  <dd>
-                    {formatValue(
-                      recommendation.position_category?.confidence,
-                    )}
+                    <RecommendationValueWithConfidence
+                      item={recommendation.position_category}
+                    />
                   </dd>
                 </div>
                 <div>
                   <dt>판단 근거</dt>
                   <dd>
-                    {formatValue(recommendation.position_category?.reason)}
+                    <ReasonDetails
+                      reason={recommendation.position_category?.reason}
+                    />
                   </dd>
                 </div>
               </dl>
@@ -3663,15 +3681,15 @@ function AiRecommendationHistoryDetail({
                     className="ai-recommendation-history-detail-card"
                     key={`history-skill-${item.value || index}`}
                   >
-                    <h4>{formatValue(item.value)}</h4>
+                    <h4>
+                      <RecommendationValueWithConfidence item={item} />
+                    </h4>
                     <dl className="ai-recommendation-detail-list">
                       <div>
-                        <dt>확신도</dt>
-                        <dd>{formatValue(item.confidence)}</dd>
-                      </div>
-                      <div>
                         <dt>판단 근거</dt>
-                        <dd>{formatValue(item.reason)}</dd>
+                        <dd>
+                          <ReasonDetails reason={item.reason} />
+                        </dd>
                       </div>
                     </dl>
                   </article>
@@ -3691,15 +3709,15 @@ function AiRecommendationHistoryDetail({
                     className="ai-recommendation-history-detail-card"
                     key={`history-competency-${item.value || index}`}
                   >
-                    <h4>{formatValue(item.value)}</h4>
+                    <h4>
+                      <RecommendationValueWithConfidence item={item} />
+                    </h4>
                     <dl className="ai-recommendation-detail-list">
                       <div>
-                        <dt>확신도</dt>
-                        <dd>{formatValue(item.confidence)}</dd>
-                      </div>
-                      <div>
                         <dt>판단 근거</dt>
-                        <dd>{formatValue(item.reason)}</dd>
+                        <dd>
+                          <ReasonDetails reason={item.reason} />
+                        </dd>
                       </div>
                     </dl>
                   </article>
@@ -3736,11 +3754,15 @@ function AiRecommendationHistoryDetail({
                       </div>
                       <div>
                         <dt>확신도</dt>
-                        <dd>{formatValue(item.confidence)}</dd>
+                        <dd>
+                          <AiConfidenceBadge confidence={item.confidence} />
+                        </dd>
                       </div>
                       <div>
                         <dt>판단 근거</dt>
-                        <dd>{formatValue(item.reason)}</dd>
+                        <dd>
+                          <ReasonDetails reason={item.reason} />
+                        </dd>
                       </div>
                     </dl>
                   </article>
@@ -4109,6 +4131,81 @@ function PostingAnalysisDetail({ analysis, isLoading, error }) {
   )
 }
 
+function AiConfidenceBadge({ confidence }) {
+  const label = formatAiConfidence(confidence)
+  const normalizedConfidence = confidence || 'unknown'
+
+  return (
+    <span
+      className={`ai-confidence-badge ai-confidence-badge-${normalizedConfidence}`}
+    >
+      {label}
+    </span>
+  )
+}
+
+function ReasonDetails({ reason, summary = '판단 근거 보기' }) {
+  if (!reason) {
+    return <span className="ai-reason-empty">-</span>
+  }
+
+  return (
+    <details className="ai-reason-details">
+      <summary>{summary}</summary>
+      <p>{reason}</p>
+    </details>
+  )
+}
+
+function RecommendationValueWithConfidence({ item }) {
+  if (!item) {
+    return formatValue(null)
+  }
+
+  return (
+    <span className="ai-recommendation-heading-value">
+      <span>{formatValue(item.value)}</span>
+      <AiConfidenceBadge confidence={item.confidence} />
+    </span>
+  )
+}
+
+function RecommendationSummaryList({ items = [] }) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return formatValue(null)
+  }
+
+  return (
+    <ul className="ai-recommendation-summary-list">
+      {items.map((item, index) => (
+        <li key={`${item?.value || index}-${index}`}>
+          <RecommendationValueWithConfidence item={item} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return '-'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 function formatValue(value) {
   return value === null || value === undefined || value === '' ? '-' : value
 }
@@ -4160,6 +4257,13 @@ function formatAiAppliedStatus(status) {
     return '반영 완료'
   }
   return formatValue(status)
+}
+
+function formatAiConfidence(confidence) {
+  if (confidence === 'high') return '높음'
+  if (confidence === 'medium') return '중간'
+  if (confidence === 'low') return '낮음'
+  return confidence || '-'
 }
 
 function formatAiFieldType(fieldType) {

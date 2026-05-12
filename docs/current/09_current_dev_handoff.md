@@ -1,5 +1,22 @@
 # Current Dev Handoff
 
+## AI 추천 관리 화면 UI/UX 개선 완료
+
+- AI 추천 관리 화면의 가독성, 정보 구조, 상태 인지 개선을 완료했다.
+- 판단 근거는 details/summary 아코디언으로 기본 접힘 처리했다.
+- 기술/도구 및 역량 영역은 PC 기준 3열 grid로 정리했다.
+- confidence는 항목명 옆 badge로 표시하고, 날짜/시각은 `YYYY-MM-DD HH:MM:SS`로 통일했다.
+- 저장된 산업/도메인/직무 후보 목록은 넓은 table, 우측 날짜 컬럼, inline 작업 컬럼으로 개선했다.
+- 선택 반영 결과는 정제 항목과 산업/도메인/직무 후보 저장 결과를 구분해 표시한다.
+- backend/API/DB/config 변경 없이 frontend 표시와 배치만 개선했다.
+
+다음 작업 순서:
+
+1. 공고 누적
+2. 데이터 정제
+3. AI 추천 품질 개선
+4. 실사용 중 발견되는 UI/UX 추가 개선
+
 ## Category Candidate Analysis Apply Frontend UI Update
 
 - `ai_recommendation_category_candidates`에 analysis apply tracking 컬럼이 추가되었다.
@@ -11,7 +28,9 @@
 - apply 성공 후 category 후보 목록과 현재 공고의 analysis 결과를 refresh한다.
 - 반영 시 `analyzed_at`은 갱신하지 않는다.
 - 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 “분석 결과로 반영”, `analysis_results` 반영, frontend 화면 반영 흐름이 정상 작동함을 확인했다.
-- 다음 작업 후보는 `analyzed_at` 미갱신 및 dashboard 영향 추가 확인, category 후보 UI UX 개선, `dictionary_candidates` 구조 설계, 공고 누적 후 AI 추천 품질 검증이다.
+- side-effect 검증에서 `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 가능 정책이 pass로 확인되었다.
+- category candidate analysis apply 기능 검증은 완료 상태다.
+- 현재 기능상 확인된 누락/오류는 없으며, 다음 실질 작업은 UI/UX 개선이다.
 
 ## Category Candidate Analysis Apply 검증 결과
 
@@ -25,8 +44,8 @@
 | applied_at 기록 | pass | 반영 시각 기록 확인 |
 | previous_analysis_value 기록 | pass | 기존 분석값 기록 확인 |
 | applied_analysis_field 기록 | pass | 반영 필드 기록 확인 |
-| analyzed_at 미갱신 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
-| dashboard 영향 확인 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
+| analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |
+| dashboard 영향 확인 | pass | side-effect 검증에서 dashboard 영향 정책 정상 확인 |
 
 종합 판단:
 
@@ -34,25 +53,31 @@
 pass
 ```
 
-기능 흐름은 pass. `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요.
+기능 흐름과 side-effect 검증 모두 pass.
 
 ## Category Candidate Analysis Apply Side-effect 검증 결과
 
 | 항목 | 결과 | 메모 |
 |---|---|---|
-| analyzed_at 미갱신 | 사용자 입력 필요 | 반영 전/후 `analysis_results.analyzed_at` 비교 결과 필요 |
-| category 후보 저장만으로 dashboard 영향 없음 | 사용자 입력 필요 | 후보 저장 직후 dashboard 변화 여부 확인 필요 |
-| accepted 상태만으로 dashboard 영향 없음 | 사용자 입력 필요 | 상태 변경만으로 dashboard 변화 여부 확인 필요 |
-| analysis_results 반영 후 dashboard 영향 | 사용자 입력 필요 | dashboard에서 확인 가능한 범위 기준 확인 필요 |
-| 종합 판단 | 사용자 입력 필요 | 사용자 로컬 side-effect 검증 결과 대기 |
+| analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |
+| category 후보 저장만으로 dashboard 영향 없음 | pass | 후보 저장은 dashboard에 영향 없음 |
+| accepted 상태만으로 dashboard 영향 없음 | pass | 후보 채택만으로 dashboard에 영향 없음 |
+| analysis_results 반영 후 dashboard 영향 | pass | analysis_results 반영 후 dashboard에 영향 가능 |
+| 종합 판단 | pass | 기능 검증 완료 |
 
 다음 작업 후보:
 
-- 기능상 누락/오류 보완
-- UI/UX 개선
+1. 기능상 누락/오류 보완
+2. UI/UX 개선
+3. 공고 누적
+4. 데이터 정제
+5. AI 추천 품질 개선
+
+현재 기능상 확인된 누락/오류는 없으므로 다음 실질 작업은 UI/UX 개선이다.
+
+참고 후보:
+
 - 공고 누적
-- 데이터 정제
-- AI 추천 품질 개선
 - `dictionary_candidates` 구조 설계는 이후 진행
 
 ## Category Candidate Analysis Apply Policy Update

@@ -1,5 +1,15 @@
 # AI Recommendation Spec
 
+## AI 추천 관리 화면 UI/UX 개선 상태
+
+- AI 추천 관리 화면의 기능 로직 변경 없이 가독성 개선을 1차 반영했다.
+- category/skill/competency/review candidate의 판단 근거는 기본 접힘 상태의 아코디언으로 표시한다.
+- 기술/도구 및 역량 목록은 PC 기준 3열 grid로 정리하고, tablet/mobile에서는 2열/1열로 줄인다.
+- AI 추천 confidence는 항목명 옆 badge로 표시하며 `high`/`medium`/`low`는 `높음`/`중간`/`낮음`으로 표시한다.
+- AI 추천 관리 화면의 날짜/시각 표시는 `YYYY-MM-DD HH:MM:SS` 형식으로 통일한다.
+- 저장된 산업/도메인/직무 후보 목록은 넓은 table, 우측 날짜 컬럼, inline 작업 컬럼으로 가로 가독성을 개선했다.
+- 후보 채택과 분석 결과 반영은 계속 별도 상태/액션으로 표시한다.
+
 ## Category Candidate Analysis Apply Backend API Current Update
 
 - category candidate analysis apply tracking schema가 구현되었다.
@@ -10,9 +20,9 @@
 - frontend는 accepted와 `applied_to_analysis`를 구분해 표시한다.
 - category 후보 저장/accepted 상태 변경만으로는 `analysis_results`와 dashboard가 변경되지 않는다.
 - 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 `analysis_results` 반영, frontend 화면 반영 흐름이 pass로 확인되었다.
-- `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요로 남긴다.
-- category candidate analysis apply side-effect 검증은 사용자 입력 필요 상태다.
-- side-effect 검증 대상은 `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 여부다.
+- category candidate analysis apply side-effect 검증도 pass로 확인되었다.
+- `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 가능 정책이 사용자 로컬 검증에서 확인되었다.
+- category candidate analysis apply 기능 검증 단계는 완료되었고, 다음 단계는 UI/UX 개선이다.
 
 ## Category Candidate Analysis Apply Policy Reference
 
