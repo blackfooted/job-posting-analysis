@@ -1,11 +1,16 @@
 # Category Candidate Analysis Result Apply Policy
 
-## Schema Implementation Status
+## Frontend Implementation Status
 
 - `ai_recommendation_category_candidates`에 `analysis_results` 반영 추적을 위한 DB 컬럼이 schema 단계에서 추가되었다.
 - 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
-- 실제 `apply-analysis` API는 아직 미구현이다.
-- 실제 `analysis_results` 갱신 로직은 아직 미구현이다.
+- `POST /api/ai-recommendations/category-candidates/{candidate_id}/apply-analysis` backend API가 1차 구현되었다.
+- frontend apply-analysis UI가 1차 연결되었다.
+- `accepted` 후보만 `analysis_results`에 반영할 수 있다.
+- accepted 후보 목록에서 사용자가 명시적으로 “분석 결과로 반영”을 실행할 수 있다.
+- 기존 분석 결과 값과 후보값이 다르면 confirm 후 `confirm_overwrite=true`를 사용한다.
+- 반영 성공 시 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`를 기록한다.
+- 반영 성공 후 category 후보 목록과 현재 공고의 analysis 결과를 refresh한다.
 - 1차 구현에서 `analyzed_at`을 갱신하지 않는 정책은 유지한다.
 
 ## 1. 문서 목적

@@ -1,18 +1,23 @@
 # Current Dev Handoff
 
-## Category Candidate Analysis Apply Tracking Schema Update
+## Category Candidate Analysis Apply Frontend UI Update
 
 - `ai_recommendation_category_candidates`에 analysis apply tracking 컬럼이 추가되었다.
 - 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
-- apply-analysis backend API와 frontend UI는 아직 미구현이다.
-- 다음 작업 후보는 apply-analysis backend API 구현, accepted 후보만 `analysis_results` 반영 허용, overwrite confirm 처리, `analyzed_at` 미갱신 유지, frontend apply-analysis UI 구현이다.
+- `POST /api/ai-recommendations/category-candidates/{candidate_id}/apply-analysis` backend API가 구현되었다.
+- frontend apply-analysis UI가 구현되었다.
+- accepted 후보만 `analysis_results` 반영 가능하다.
+- 기존 분석 결과 값과 후보값이 다르면 confirm UI 후 `confirm_overwrite=true`를 전달한다.
+- apply 성공 후 category 후보 목록과 현재 공고의 analysis 결과를 refresh한다.
+- 반영 시 `analyzed_at`은 갱신하지 않는다.
+- 다음 작업 후보는 dashboard 영향 검증, category 후보 UX 개선, `dictionary_candidates` 구조 설계다.
 
 ## Category Candidate Analysis Apply Policy Update
 
 - accepted category 후보를 `analysis_results`에 반영하는 정책 문서: `docs/current/16_category_candidate_analysis_apply_policy.md`
 - 권장 정책은 accepted 후보만 반영 가능, 별도 apply 액션 필요, domain은 대표 domain 1개만 반영, `analyzed_at`은 1차 구현에서 미갱신이다.
 - dashboard는 category 후보 저장 또는 accepted 상태 변경만으로 영향받지 않고, `analysis_results` 반영 후에만 영향받는다.
-- 다음 작업 후보는 category candidate analysis apply DB 보완이다.
+- category candidate analysis apply DB 보완, backend API, frontend UI 1차 구현은 완료되었다.
 
 ## AI Recommendation Category Candidate Save UI Update
 

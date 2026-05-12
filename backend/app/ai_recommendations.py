@@ -32,6 +32,11 @@ AI_RECOMMENDATION_APPLY_SOURCE_PATH_PATTERN = re.compile(
     r"^(skills|competencies|review_item_candidates)\[(\d+)\]$"
 )
 AI_RECOMMENDATION_CATEGORY_FIELD_TYPES = {"industry", "domain", "position"}
+AI_RECOMMENDATION_CATEGORY_ANALYSIS_FIELDS = {
+    "industry": "industry_category",
+    "domain": "domain_category",
+    "position": "position_category",
+}
 AI_RECOMMENDATION_CATEGORY_SOURCE_PATH_PATTERN = re.compile(
     r"^review_item_candidates\[(\d+)\]$"
 )
@@ -621,6 +626,135 @@ def update_ai_recommendation_category_candidate(
     )
 
 
+@router.post("/category-candidates/{candidate_id}/apply-analysis", response_model=None)
+def apply_ai_recommendation_category_candidate_to_analysis(
+    candidate_id: int,
+    payload: dict[str, Any] | None = Body(default=None),
+) -> Any:
+    initialize_database()
+    if payload is not None and not isinstance(payload, dict):
+        return _invalid_category_candidate_request_response()
+
+    confirm_overwrite = False
+    if isinstance(payload, dict) and "confirm_overwrite" in payload:
+        if not isinstance(payload["confirm_overwrite"], bool):
+            return _invalid_category_candidate_request_response()
+        confirm_overwrite = payload["confirm_overwrite"]
+
+    connection = _connection()
+    try:
+        candidate = _fetch_category_candidate(connection, candidate_id)
+        if candidate is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "AI_CATEGORY_CANDIDATE_NOT_FOUND",
+                    "AI category 후보를 찾을 수 없습니다.",
+                ),
+            )
+
+        if candidate["status"] != "accepted":
+            return JSONResponse(
+                status_code=400,
+                content=_error_response(
+                    "AI_CATEGORY_CANDIDATE_NOT_ACCEPTED",
+                    "accepted 상태의 AI category 후보만 분석 결과에 반영할 수 있습니다.",
+                ),
+            )
+
+        try:
+            analysis_field = _get_analysis_field_for_category_type(
+                candidate["category_type"],
+            )
+        except ValueError:
+            return _invalid_category_candidate_request_response()
+
+        if not _clean_category_candidate_value(candidate["recommended_value"]):
+            return _invalid_category_candidate_request_response()
+
+        analysis_result = _fetch_analysis_result_for_posting(
+            connection,
+            candidate["posting_id"],
+        )
+        if analysis_result is None:
+            return JSONResponse(
+                status_code=404,
+                content=_error_response(
+                    "ANALYSIS_RESULT_NOT_FOUND",
+                    "분석 결과를 찾을 수 없습니다.",
+                ),
+            )
+
+        if candidate["applied_to_analysis"] == 1:
+            return _success(
+                _build_category_analysis_apply_response(
+                    candidate=candidate,
+                    analysis_result=analysis_result,
+                    analysis_field=analysis_field,
+                    previous_value=candidate["previous_analysis_value"],
+                    new_value=analysis_result[analysis_field],
+                    action="already_applied",
+                )
+            )
+
+        previous_value = analysis_result[analysis_field]
+        recommended_value = candidate["recommended_value"]
+        values_match = _normalize_category_candidate_value(previous_value) == (
+            _normalize_category_candidate_value(recommended_value)
+        )
+        has_existing_value = bool(str(previous_value or "").strip())
+        if has_existing_value and not values_match and not confirm_overwrite:
+            return JSONResponse(
+                status_code=409,
+                content=_error_response(
+                    "ANALYSIS_RESULT_OVERWRITE_CONFIRM_REQUIRED",
+                    (
+                        "기존 분석 결과와 후보값이 다릅니다. "
+                        "덮어쓰려면 confirm_overwrite=true가 필요합니다."
+                    ),
+                ),
+            )
+
+        try:
+            updated_candidate = _apply_category_candidate_to_analysis(
+                connection=connection,
+                candidate=candidate,
+                analysis_field=analysis_field,
+                previous_value=previous_value,
+                should_update_analysis_result=not values_match,
+            )
+            updated_analysis_result = _fetch_analysis_result_for_posting(
+                connection,
+                candidate["posting_id"],
+            )
+            if updated_analysis_result is None:
+                raise sqlite3.Error("Analysis result missing after update.")
+            connection.commit()
+        except sqlite3.Error:
+            connection.rollback()
+            return JSONResponse(
+                status_code=500,
+                content=_error_response(
+                    "CATEGORY_CANDIDATE_ANALYSIS_APPLY_FAILED",
+                    "category 후보를 분석 결과에 반영하는 중 오류가 발생했습니다.",
+                ),
+            )
+    finally:
+        connection.close()
+
+    action = "already_same_value" if values_match else "updated_analysis_result"
+    return _success(
+        _build_category_analysis_apply_response(
+            candidate=updated_candidate,
+            analysis_result=updated_analysis_result,
+            analysis_field=analysis_field,
+            previous_value=previous_value,
+            new_value=recommended_value,
+            action=action,
+        )
+    )
+
+
 @router.post("/history/{run_id}/apply", response_model=None)
 def apply_ai_recommendation_history_run(
     run_id: int,
@@ -1203,6 +1337,68 @@ def _fetch_category_candidate(
     ).fetchone()
 
 
+def _fetch_analysis_result_for_posting(
+    connection: sqlite3.Connection,
+    posting_id: int,
+) -> sqlite3.Row | None:
+    return connection.execute(
+        """
+        SELECT *
+        FROM analysis_results
+        WHERE posting_id = ?
+        """,
+        (posting_id,),
+    ).fetchone()
+
+
+def _get_analysis_field_for_category_type(category_type: str) -> str:
+    analysis_field = AI_RECOMMENDATION_CATEGORY_ANALYSIS_FIELDS.get(category_type)
+    if analysis_field is None:
+        raise ValueError("Unsupported category_type.")
+    return analysis_field
+
+
+def _apply_category_candidate_to_analysis(
+    *,
+    connection: sqlite3.Connection,
+    candidate: sqlite3.Row,
+    analysis_field: str,
+    previous_value: Any,
+    should_update_analysis_result: bool,
+) -> sqlite3.Row:
+    applied_at = _current_kst_isoformat()
+    if should_update_analysis_result:
+        connection.execute(
+            f"""
+            UPDATE analysis_results
+            SET {analysis_field} = ?
+            WHERE posting_id = ?
+            """,
+            (candidate["recommended_value"], candidate["posting_id"]),
+        )
+
+    connection.execute(
+        """
+        UPDATE ai_recommendation_category_candidates
+        SET applied_to_analysis = 1,
+            applied_at = ?,
+            previous_analysis_value = ?,
+            applied_analysis_field = ?
+        WHERE id = ?
+        """,
+        (
+            applied_at,
+            previous_value,
+            analysis_field,
+            candidate["id"],
+        ),
+    )
+    row = _fetch_category_candidate(connection, candidate["id"])
+    if row is None:
+        raise sqlite3.Error("AI category candidate apply tracking update failed.")
+    return row
+
+
 def _update_category_candidate_status(
     *,
     connection: sqlite3.Connection,
@@ -1246,7 +1442,32 @@ def _serialize_category_candidate(row: sqlite3.Row) -> dict[str, Any]:
         "status": row["status"],
         "created_at": row["created_at"],
         "reviewed_at": row["reviewed_at"],
+        "applied_to_analysis": bool(row["applied_to_analysis"]),
+        "applied_at": row["applied_at"],
+        "previous_analysis_value": row["previous_analysis_value"],
+        "applied_analysis_field": row["applied_analysis_field"],
         "note": row["note"],
+    }
+
+
+def _build_category_analysis_apply_response(
+    *,
+    candidate: sqlite3.Row,
+    analysis_result: sqlite3.Row,
+    analysis_field: str,
+    previous_value: Any,
+    new_value: Any,
+    action: str,
+) -> dict[str, Any]:
+    return {
+        "candidate": _serialize_category_candidate(candidate),
+        "analysis_result": {
+            "posting_id": analysis_result["posting_id"],
+            "field": analysis_field,
+            "previous_value": previous_value,
+            "new_value": new_value,
+        },
+        "action": action,
     }
 
 

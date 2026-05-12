@@ -1,18 +1,22 @@
 # AI Recommendation Spec
 
-## Category Candidate Analysis Apply Tracking Schema Current Update
+## Category Candidate Analysis Apply Backend API Current Update
 
 - category candidate analysis apply tracking schema가 구현되었다.
 - `ai_recommendation_category_candidates`는 `accepted` 후보 채택 상태와 별도로 `applied_to_analysis` 반영 완료 여부를 추적할 수 있다.
-- 실제 `analysis_results` apply API는 후속 구현이다.
-- category 후보 저장/accepted 상태 변경만으로 `analysis_results`와 dashboard는 변경되지 않는다.
+- accepted category 후보를 `analysis_results`에 반영하는 backend API와 frontend UI가 구현되었다.
+- endpoint는 `POST /api/ai-recommendations/category-candidates/{candidate_id}/apply-analysis`다.
+- 자동 반영이 아니라 사용자의 명시적 apply-analysis 액션으로만 반영한다.
+- frontend는 accepted와 `applied_to_analysis`를 구분해 표시한다.
+- category 후보 저장/accepted 상태 변경만으로는 `analysis_results`와 dashboard가 변경되지 않는다.
 
 ## Category Candidate Analysis Apply Policy Reference
 
 - accepted category 후보의 `analysis_results` 반영 정책 문서 위치: `docs/current/16_category_candidate_analysis_apply_policy.md`
 - `accepted`는 분석 결과 반영이 아니며 별도 apply 액션이 필요하다.
 - 1차 권장 정책은 accepted 후보만 반영 가능, domain은 대표 domain 1개만 반영, `analyzed_at`은 미갱신이다.
-- `analysis_results` 반영은 후속 구현 범위이며, category 후보 저장/상태 변경만으로 dashboard와 config JSON은 변경되지 않는다.
+- `analysis_results` 반영 backend API와 frontend UI는 1차 구현되었다.
+- category 후보 저장/상태 변경만으로 dashboard와 config JSON은 변경되지 않는다.
 
 ## Frontend Category Candidate Save UI Current Update
 

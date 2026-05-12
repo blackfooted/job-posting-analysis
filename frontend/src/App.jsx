@@ -6,6 +6,7 @@ import {
   fetchDashboardSummary,
 } from './api/dashboardApi'
 import {
+  applyAiRecommendationCategoryCandidateToAnalysis,
   applyAiRecommendationItems,
   createAiRecommendationCategoryCandidates,
   createAiRecommendationRun,
@@ -185,6 +186,22 @@ function App() {
   const [aiCategoryCandidateMessage, setAiCategoryCandidateMessage] =
     useState('')
   const [aiCategoryCandidateUpdatingId, setAiCategoryCandidateUpdatingId] =
+    useState(null)
+  const [selectedAiPostingAnalysis, setSelectedAiPostingAnalysis] =
+    useState(null)
+  const [selectedAiPostingAnalysisLoading, setSelectedAiPostingAnalysisLoading] =
+    useState(false)
+  const [selectedAiPostingAnalysisError, setSelectedAiPostingAnalysisError] =
+    useState('')
+  const [
+    aiCategoryCandidateApplyLoadingId,
+    setAiCategoryCandidateApplyLoadingId,
+  ] = useState(null)
+  const [aiCategoryCandidateApplyError, setAiCategoryCandidateApplyError] =
+    useState('')
+  const [aiCategoryCandidateApplyMessage, setAiCategoryCandidateApplyMessage] =
+    useState('')
+  const [aiCategoryCandidateApplyResult, setAiCategoryCandidateApplyResult] =
     useState(null)
 
   async function loadSummary(shouldUpdate = () => true) {
@@ -957,6 +974,20 @@ function App() {
     setAiCategoryCandidateError('')
     setAiCategoryCandidateMessage('')
     setAiCategoryCandidateUpdatingId(null)
+    resetAiCategoryCandidateApplyState()
+  }
+
+  function resetAiCategoryCandidateApplyState() {
+    setAiCategoryCandidateApplyLoadingId(null)
+    setAiCategoryCandidateApplyError('')
+    setAiCategoryCandidateApplyMessage('')
+    setAiCategoryCandidateApplyResult(null)
+  }
+
+  function resetSelectedAiPostingAnalysis() {
+    setSelectedAiPostingAnalysis(null)
+    setSelectedAiPostingAnalysisLoading(false)
+    setSelectedAiPostingAnalysisError('')
   }
 
   function handleAiRecommendationApplyToggle(runId, item) {
@@ -1174,6 +1205,105 @@ function App() {
     }
   }
 
+  async function handleAiCategoryCandidateApply(candidate) {
+    if (
+      !candidate ||
+      aiCategoryCandidateApplyLoadingId ||
+      candidate.status !== 'accepted' ||
+      candidate.applied_to_analysis
+    ) {
+      return
+    }
+
+    const currentValue = getAnalysisValueForCategoryType(
+      selectedAiPostingAnalysis,
+      candidate.category_type,
+    )
+    const recommendedValue = candidate.recommended_value || ''
+    const hasCurrentValue = String(currentValue || '').trim() !== ''
+    const valuesAreDifferent =
+      normalizeComparableValue(currentValue) !==
+      normalizeComparableValue(recommendedValue)
+
+    let confirmOverwrite = false
+    if (hasCurrentValue && valuesAreDifferent) {
+      const shouldOverwrite = window.confirm(
+        [
+          '현재 분석 결과 값과 후보값이 다릅니다.',
+          `기존 값: ${formatValue(currentValue)}`,
+          `후보값: ${formatValue(recommendedValue)}`,
+          '덮어쓰시겠습니까?',
+        ].join('\n'),
+      )
+
+      if (!shouldOverwrite) {
+        return
+      }
+      confirmOverwrite = true
+    }
+
+    await applyAiCategoryCandidateToAnalysis(candidate, confirmOverwrite)
+  }
+
+  async function applyAiCategoryCandidateToAnalysis(
+    candidate,
+    confirmOverwrite = false,
+  ) {
+    setAiCategoryCandidateApplyLoadingId(candidate.id)
+    setAiCategoryCandidateApplyError('')
+    setAiCategoryCandidateApplyMessage('')
+    setAiCategoryCandidateApplyResult(null)
+
+    try {
+      const result = await applyAiRecommendationCategoryCandidateToAnalysis(
+        candidate.id,
+        { confirmOverwrite },
+      )
+
+      if (result.error) {
+        setAiCategoryCandidateApplyError(
+          result.error.message ||
+            '산업/도메인/직무 후보를 분석 결과에 반영하지 못했습니다.',
+        )
+        return
+      }
+
+      setAiCategoryCandidateApplyResult(result.data || null)
+      setAiCategoryCandidateApplyMessage(
+        formatAiCategoryCandidateApplyActionMessage(result.data?.action),
+      )
+      await fetchSelectedAiCategoryCandidates(
+        selectedAiPostingId,
+        aiCategoryCandidatePage,
+      )
+      await fetchSelectedAiPostingAnalysis(selectedAiPostingId)
+    } catch (requestError) {
+      if (
+        requestError.code === 'ANALYSIS_RESULT_OVERWRITE_CONFIRM_REQUIRED'
+      ) {
+        const shouldOverwrite = window.confirm(
+          [
+            '기존 분석 결과와 후보값이 다릅니다.',
+            '덮어쓰려면 확인이 필요합니다.',
+            '덮어쓰시겠습니까?',
+          ].join('\n'),
+        )
+
+        if (shouldOverwrite) {
+          await applyAiCategoryCandidateToAnalysis(candidate, true)
+          return
+        }
+      }
+
+      setAiCategoryCandidateApplyError(
+        requestError.message ||
+          '산업/도메인/직무 후보를 분석 결과에 반영하지 못했습니다.',
+      )
+    } finally {
+      setAiCategoryCandidateApplyLoadingId(null)
+    }
+  }
+
   async function fetchSelectedAiRecommendationHistory(postingId, page = 1) {
     if (!postingId) {
       resetAiRecommendationHistory()
@@ -1309,6 +1439,37 @@ function App() {
     }
   }
 
+  async function fetchSelectedAiPostingAnalysis(postingId) {
+    if (!postingId) {
+      resetSelectedAiPostingAnalysis()
+      return
+    }
+
+    setSelectedAiPostingAnalysisLoading(true)
+    setSelectedAiPostingAnalysisError('')
+
+    try {
+      const result = await fetchPostingAnalysis(postingId)
+
+      if (result.error) {
+        setSelectedAiPostingAnalysis(null)
+        setSelectedAiPostingAnalysisError(
+          result.error.message || '분석 결과를 불러오지 못했습니다.',
+        )
+        return
+      }
+
+      setSelectedAiPostingAnalysis(result.data || null)
+    } catch (requestError) {
+      setSelectedAiPostingAnalysis(null)
+      setSelectedAiPostingAnalysisError(
+        requestError.message || '분석 결과를 불러오지 못했습니다.',
+      )
+    } finally {
+      setSelectedAiPostingAnalysisLoading(false)
+    }
+  }
+
   function handleAiCategoryCandidateStatusFilterChange(value) {
     setAiCategoryCandidateStatusFilter(value)
     setAiCategoryCandidatePage(1)
@@ -1433,10 +1594,12 @@ function App() {
     resetAiRecommendationHistoryCompare()
     resetAiRecommendationApplyState()
     resetAiCategoryCandidateState()
+    resetSelectedAiPostingAnalysis()
 
     if (postingId) {
       fetchSelectedAiRecommendationHistory(postingId, 1)
       fetchSelectedAiCategoryCandidates(postingId, 1)
+      fetchSelectedAiPostingAnalysis(postingId)
     }
   }
 
@@ -2112,10 +2275,18 @@ function App() {
                 statusFilter={aiCategoryCandidateStatusFilter}
                 typeFilter={aiCategoryCandidateTypeFilter}
                 updatingId={aiCategoryCandidateUpdatingId}
+                applyLoadingId={aiCategoryCandidateApplyLoadingId}
+                applyError={aiCategoryCandidateApplyError}
+                applyMessage={aiCategoryCandidateApplyMessage}
+                applyResult={aiCategoryCandidateApplyResult}
+                analysis={selectedAiPostingAnalysis}
+                analysisLoading={selectedAiPostingAnalysisLoading}
+                analysisError={selectedAiPostingAnalysisError}
                 onPageChange={handleAiCategoryCandidatePageChange}
                 onStatusFilterChange={handleAiCategoryCandidateStatusFilterChange}
                 onTypeFilterChange={handleAiCategoryCandidateTypeFilterChange}
                 onUpdate={handleAiCategoryCandidateUpdate}
+                onApply={handleAiCategoryCandidateApply}
               />
             )}
           </section>
@@ -2185,10 +2356,18 @@ function AiCategoryCandidateList({
   statusFilter,
   typeFilter,
   updatingId,
+  applyLoadingId,
+  applyError,
+  applyMessage,
+  applyResult,
+  analysis,
+  analysisLoading,
+  analysisError,
   onPageChange,
   onStatusFilterChange,
   onTypeFilterChange,
   onUpdate,
+  onApply,
 }) {
   const [drafts, setDrafts] = useState({})
 
@@ -2252,6 +2431,9 @@ function AiCategoryCandidateList({
 
       {message && <p className="success-message">{message}</p>}
       {error && <p className="error">{error}</p>}
+      {applyMessage && <p className="success-message">{applyMessage}</p>}
+      {applyError && <p className="error">{applyError}</p>}
+      <AiCategoryCandidateApplyResult result={applyResult} />
 
       <div className="ai-category-candidate-table-wrap">
         <table className="ai-category-candidate-table">
@@ -2262,6 +2444,8 @@ function AiCategoryCandidateList({
               <th>추천값</th>
               <th>확신도</th>
               <th>판단 근거</th>
+              <th>현재 분석값</th>
+              <th>분석 결과 반영</th>
               <th>상태</th>
               <th>생성 시각</th>
               <th>검토 시각</th>
@@ -2272,7 +2456,7 @@ function AiCategoryCandidateList({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan="10">
+                <td colSpan="12">
                   {isLoading
                     ? '산업/도메인/직무 후보 목록을 불러오는 중입니다.'
                     : '산업/도메인/직무 후보가 없습니다.'}
@@ -2284,6 +2468,18 @@ function AiCategoryCandidateList({
                   status: item.status || 'pending',
                   note: item.note || '',
                 }
+                const currentAnalysisValue = getAnalysisValueForCategoryType(
+                  analysis,
+                  item.category_type,
+                )
+                const canApply =
+                  item.status === 'accepted' && !item.applied_to_analysis
+                const applyDisabled =
+                  !canApply ||
+                  isLoading ||
+                  analysisLoading ||
+                  applyLoadingId === item.id
+                const applyHint = getAiCategoryCandidateApplyHint(item)
 
                 return (
                   <tr key={item.id}>
@@ -2292,6 +2488,39 @@ function AiCategoryCandidateList({
                     <td>{formatValue(item.recommended_value)}</td>
                     <td>{formatValue(item.confidence)}</td>
                     <td>{formatValue(item.reason)}</td>
+                    <td>
+                      {analysisLoading
+                        ? '분석 결과 확인 중'
+                        : analysisError
+                          ? '현재값 확인 불가'
+                          : formatValue(currentAnalysisValue)}
+                    </td>
+                    <td>
+                      <div className="ai-category-candidate-apply-state">
+                        <span>
+                          {item.applied_to_analysis
+                            ? '반영 완료'
+                            : '미반영'}
+                        </span>
+                        <small>
+                          {item.applied_to_analysis
+                            ? `반영 시각: ${formatValue(item.applied_at)}`
+                            : applyHint}
+                        </small>
+                        {item.applied_to_analysis && (
+                          <small>
+                            이전 분석값:{' '}
+                            {formatValue(item.previous_analysis_value)}
+                          </small>
+                        )}
+                        {item.applied_analysis_field && (
+                          <small>
+                            반영 필드:{' '}
+                            {formatAiAnalysisField(item.applied_analysis_field)}
+                          </small>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       <span
                         className={`ai-category-candidate-status-badge ai-category-candidate-status-${item.status}`}
@@ -2330,6 +2559,22 @@ function AiCategoryCandidateList({
                       >
                         상태 저장
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => onApply(item)}
+                        disabled={applyDisabled}
+                      >
+                        {item.applied_to_analysis
+                          ? '반영 완료'
+                          : applyLoadingId === item.id
+                            ? '반영 중'
+                            : '분석 결과로 반영'}
+                      </button>
+                      {!canApply && (
+                        <span className="ai-category-candidate-action-hint">
+                          {applyHint}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -2368,6 +2613,39 @@ function AiCategoryCandidateList({
         </button>
       </div>
     </section>
+  )
+}
+
+function AiCategoryCandidateApplyResult({ result }) {
+  if (!result) {
+    return null
+  }
+
+  return (
+    <div className="ai-category-candidate-apply-result">
+      <dl>
+        <div>
+          <dt>결과</dt>
+          <dd>{formatAiCategoryCandidateApplyAction(result.action)}</dd>
+        </div>
+        <div>
+          <dt>항목 유형</dt>
+          <dd>{formatAiCategoryType(result.candidate?.category_type)}</dd>
+        </div>
+        <div>
+          <dt>이전 값</dt>
+          <dd>{formatValue(result.analysis_result?.previous_value)}</dd>
+        </div>
+        <div>
+          <dt>새 값</dt>
+          <dd>{formatValue(result.analysis_result?.new_value)}</dd>
+        </div>
+        <div>
+          <dt>반영 시각</dt>
+          <dd>{formatValue(result.candidate?.applied_at)}</dd>
+        </div>
+      </dl>
+    </div>
   )
 }
 
@@ -3928,6 +4206,69 @@ function formatAiCategoryCandidateAction(action) {
   }
 
   return actionLabels[action] || '후보 저장'
+}
+
+function formatAiCategoryCandidateApplyAction(action) {
+  const actionLabels = {
+    updated_analysis_result: '분석 결과 반영',
+    already_same_value: '동일 값',
+    already_applied: '이미 반영됨',
+  }
+
+  return actionLabels[action] || formatValue(action)
+}
+
+function formatAiCategoryCandidateApplyActionMessage(action) {
+  const actionMessages = {
+    updated_analysis_result: '분석 결과에 반영되었습니다.',
+    already_same_value: '이미 동일한 분석 결과입니다. 반영 상태만 갱신되었습니다.',
+    already_applied: '이미 분석 결과에 반영된 후보입니다.',
+  }
+
+  return actionMessages[action] || '분석 결과 반영 요청이 처리되었습니다.'
+}
+
+function formatAiAnalysisField(field) {
+  const fieldLabels = {
+    industry_category: '산업 카테고리',
+    domain_category: '도메인 카테고리',
+    position_category: '직무 카테고리',
+  }
+
+  return fieldLabels[field] || formatValue(field)
+}
+
+function getAiCategoryCandidateApplyHint(candidate) {
+  if (candidate.applied_to_analysis) {
+    return '이미 분석 결과에 반영됨'
+  }
+  if (candidate.status === 'pending') {
+    return '후보 채택 후 반영 가능'
+  }
+  if (candidate.status === 'rejected') {
+    return '제외 후보는 반영 불가'
+  }
+  return '후보 채택 상태에서 수동 반영 가능'
+}
+
+function getAnalysisValueForCategoryType(analysis, categoryType) {
+  if (!analysis) {
+    return null
+  }
+  if (categoryType === 'industry') {
+    return analysis.industry_category
+  }
+  if (categoryType === 'domain') {
+    return analysis.domain_category
+  }
+  if (categoryType === 'position') {
+    return analysis.position_category
+  }
+  return null
+}
+
+function normalizeComparableValue(value) {
+  return String(value || '').replace(/\s+/g, '')
 }
 
 function createReviewItemDrafts(items = []) {

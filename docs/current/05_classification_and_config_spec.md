@@ -3,9 +3,9 @@
 ## Category Candidate Analysis Apply Policy Reference
 
 - `analysis_results`는 자동 classification 결과를 저장하는 기준 테이블이다.
-- 후속 category 후보 반영 기능에서는 accepted 상태의 AI recommendation category 후보를 사용자의 별도 명시 액션으로 `analysis_results.industry_category`, `analysis_results.domain_category`, `analysis_results.position_category`에 수동 반영할 수 있다.
+- accepted 상태의 AI recommendation category 후보는 사용자의 별도 명시 액션과 frontend apply UI를 통해 `analysis_results.industry_category`, `analysis_results.domain_category`, `analysis_results.position_category`에 수동 반영할 수 있다.
 - `accepted` 상태만으로 `analysis_results`를 갱신하지 않는다.
-- category 후보 테이블에는 수동 반영 여부를 추적하기 위한 schema가 추가되었으며, 실제 수동 갱신 API는 후속 구현이다.
+- category 후보 테이블에는 수동 반영 여부를 추적하기 위한 schema가 추가되었으며, 실제 수동 갱신 backend API도 구현되었다.
 - config JSON은 category 후보 수동 반영과 무관하게 자동 수정하지 않는다.
 - 세부 정책은 `docs/current/16_category_candidate_analysis_apply_policy.md`를 따른다.
 

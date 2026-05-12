@@ -856,7 +856,7 @@ button { font-family: inherit; }
 .ai-category-candidate-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1100px;
+  min-width: 1360px;
 }
 
 .ai-category-candidate-table th,
@@ -899,6 +899,55 @@ button { font-family: inherit; }
 .ai-category-candidate-actions {
   display: grid;
   gap: 10px;
+}
+
+.ai-category-candidate-apply-state {
+  display: grid;
+  gap: 4px;
+}
+
+.ai-category-candidate-apply-state span {
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ai-category-candidate-apply-state small,
+.ai-category-candidate-action-hint {
+  color: var(--gray-500);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ai-category-candidate-apply-result {
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-sm);
+  background: var(--brand-50);
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
+.ai-category-candidate-apply-result dl {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-category-candidate-apply-result div {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px;
+}
+
+.ai-category-candidate-apply-result dt {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-category-candidate-apply-result dd {
+  color: var(--gray-700);
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .ai-category-candidate-actions select,

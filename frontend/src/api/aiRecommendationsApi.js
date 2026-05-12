@@ -6,9 +6,12 @@ async function requestAiRecommendations(endpoint, options = {}) {
   const result = await response.json()
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       result?.error?.message || 'AI 추천 결과를 불러오지 못했습니다.',
     )
+    error.code = result?.error?.code
+    error.status = response.status
+    throw error
   }
 
   return result
@@ -104,6 +107,24 @@ export function updateAiRecommendationCategoryCandidate(candidateId, payload) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+    },
+  )
+}
+
+export function applyAiRecommendationCategoryCandidateToAnalysis(
+  candidateId,
+  { confirmOverwrite = false } = {},
+) {
+  return requestAiRecommendations(
+    `/api/ai-recommendations/category-candidates/${candidateId}/apply-analysis`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        confirm_overwrite: confirmOverwrite,
+      }),
     },
   )
 }

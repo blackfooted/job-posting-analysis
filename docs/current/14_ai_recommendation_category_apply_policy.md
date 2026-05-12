@@ -5,13 +5,16 @@
 - category 후보 저장 구조에 analysis apply 추적 컬럼이 추가되었다.
 - 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
 - accepted 상태만으로 `analysis_results`가 변경되지 않는 정책은 유지한다.
-- 실제 apply-analysis 처리는 후속 backend API에서 구현한다.
+- accepted 후보는 별도 apply-analysis backend API로 `analysis_results`에 반영할 수 있다.
+- frontend는 “후보 채택”과 “분석 결과 반영”을 별도 상태와 액션으로 구분해 표시한다.
+- dashboard 반영은 category 후보 accepted 상태가 아니라 `analysis_results` 반영 이후에만 발생한다.
 
 ## Analysis Result Apply Policy Reference
 
 - accepted category 후보의 `analysis_results` 반영은 `docs/current/16_category_candidate_analysis_apply_policy.md` 기준을 따른다.
 - accepted 상태만으로 `analysis_results`를 갱신하지 않는다.
-- 분석 결과 반영은 별도 apply 액션, overwrite confirm, 반영 이력/상태 추적 정책이 필요하다.
+- accepted 후보와 `analysis_results` 반영 완료 상태는 frontend에서도 구분한다.
+- 분석 결과 반영은 별도 apply 액션, overwrite confirm, 반영 이력/상태 추적 기준으로 처리한다.
 
 ## Frontend Category Candidate Save UI Current Update
 
