@@ -1,5 +1,12 @@
 # AI Recommendation Category Apply Policy
 
+## Analysis Apply Tracking Schema Current Update
+
+- category 후보 저장 구조에 analysis apply 추적 컬럼이 추가되었다.
+- 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
+- accepted 상태만으로 `analysis_results`가 변경되지 않는 정책은 유지한다.
+- 실제 apply-analysis 처리는 후속 backend API에서 구현한다.
+
 ## Analysis Result Apply Policy Reference
 
 - accepted category 후보의 `analysis_results` 반영은 `docs/current/16_category_candidate_analysis_apply_policy.md` 기준을 따른다.

@@ -86,6 +86,10 @@ CREATE TABLE IF NOT EXISTS ai_recommendation_category_candidates (
     CHECK (status IN ('pending', 'accepted', 'rejected')),
   created_at          TEXT NOT NULL DEFAULT (datetime('now', '+9 hours')),
   reviewed_at         TEXT,
+  applied_to_analysis INTEGER NOT NULL DEFAULT 0 CHECK (applied_to_analysis IN (0, 1)),
+  applied_at          TEXT,
+  previous_analysis_value TEXT,
+  applied_analysis_field TEXT,
   note                TEXT,
   FOREIGN KEY (run_id) REFERENCES ai_recommendation_runs(id),
   FOREIGN KEY (posting_id) REFERENCES postings(id)
@@ -224,6 +228,22 @@ def _ensure_ai_recommendation_category_candidates_schema(
         "reviewed_at": (
             "ALTER TABLE ai_recommendation_category_candidates "
             "ADD COLUMN reviewed_at TEXT"
+        ),
+        "applied_to_analysis": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN applied_to_analysis INTEGER DEFAULT 0"
+        ),
+        "applied_at": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN applied_at TEXT"
+        ),
+        "previous_analysis_value": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN previous_analysis_value TEXT"
+        ),
+        "applied_analysis_field": (
+            "ALTER TABLE ai_recommendation_category_candidates "
+            "ADD COLUMN applied_analysis_field TEXT"
         ),
         "note": (
             "ALTER TABLE ai_recommendation_category_candidates "

@@ -1,5 +1,12 @@
 # AI Recommendation Category Candidate Storage
 
+## Analysis Apply Tracking Schema Current Update
+
+- `ai_recommendation_category_candidates` 테이블에 analysis apply 추적 컬럼이 추가되었다.
+- 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
+- `accepted`/`rejected` 상태 관리는 후보 검토 상태이고, `applied_to_analysis=1`은 실제 `analysis_results` 반영 완료를 의미한다.
+- apply-analysis API와 frontend UI는 후속 구현이다.
+
 ## Analysis Result Apply Policy Reference
 
 - category 후보 저장/상태 관리 이후 후속으로 `analysis_results` apply policy가 정의되었다.

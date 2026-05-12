@@ -1,5 +1,13 @@
 # Category Candidate Analysis Result Apply Policy
 
+## Schema Implementation Status
+
+- `ai_recommendation_category_candidates`에 `analysis_results` 반영 추적을 위한 DB 컬럼이 schema 단계에서 추가되었다.
+- 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
+- 실제 `apply-analysis` API는 아직 미구현이다.
+- 실제 `analysis_results` 갱신 로직은 아직 미구현이다.
+- 1차 구현에서 `analyzed_at`을 갱신하지 않는 정책은 유지한다.
+
 ## 1. 문서 목적
 
 이 문서는 `accepted` 상태의 AI recommendation category 후보를 실제 `analysis_results`에 반영하는 정책을 정의한다.
@@ -60,8 +68,8 @@
 
 - `accepted`는 후보 채택 상태다.
 - `applied_to_analysis`는 실제 분석 결과 반영 상태다.
-- 1차 schema에는 `applied_to_analysis` 상태 컬럼이 없으므로 후속 DB 보완이 필요할 수 있다.
-- 당장 상태 컬럼을 추가하지 않는다면, 별도 반영 이력 테이블 또는 note 기록 방식이 필요하다.
+- 1차 schema에는 `applied_to_analysis` 상태 컬럼이 추가되었다.
+- 여러 번 반영/되돌리기 이력까지 추적해야 한다면, 별도 반영 이력 테이블 또는 note 기록 방식 보완을 검토한다.
 
 ## 6. analysis_results 반영 대상
 
@@ -148,16 +156,16 @@ analyzed_at을 현재 시각으로 갱신
 - `reviewed_at`
 - `note`
 
-현재 없는 컬럼:
+반영 추적을 위해 schema 단계에서 추가된 컬럼:
 
-- `applied_at`
 - `applied_to_analysis`
+- `applied_at`
 - `previous_analysis_value`
 - `applied_analysis_field`
 
 정책:
 
-- `analysis_results` 반영 기능을 구현하기 전에 DB 보완을 검토한다.
+- `analysis_results` 반영 기능을 구현하기 전에 필요한 1차 DB 보완은 완료되었다.
 - 최소 후보 컬럼은 `applied_at`, `applied_to_analysis`, `previous_analysis_value`다.
 - 또는 별도 이력 테이블 `ai_recommendation_category_candidate_applications`를 검토한다.
 
@@ -185,7 +193,7 @@ analyzed_at을 현재 시각으로 갱신
 
 권장:
 
-- MVP 1차는 후보 테이블 컬럼 추가를 우선 검토한다.
+- MVP 1차는 후보 테이블 컬럼 추가 방식으로 구현되었다.
 - 장기적으로는 별도 이력 테이블을 검토한다.
 
 ## 9. domain 단일값/복수값 정책

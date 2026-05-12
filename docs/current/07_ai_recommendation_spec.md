@@ -1,5 +1,12 @@
 # AI Recommendation Spec
 
+## Category Candidate Analysis Apply Tracking Schema Current Update
+
+- category candidate analysis apply tracking schema가 구현되었다.
+- `ai_recommendation_category_candidates`는 `accepted` 후보 채택 상태와 별도로 `applied_to_analysis` 반영 완료 여부를 추적할 수 있다.
+- 실제 `analysis_results` apply API는 후속 구현이다.
+- category 후보 저장/accepted 상태 변경만으로 `analysis_results`와 dashboard는 변경되지 않는다.
+
 ## Category Candidate Analysis Apply Policy Reference
 
 - accepted category 후보의 `analysis_results` 반영 정책 문서 위치: `docs/current/16_category_candidate_analysis_apply_policy.md`

@@ -1,5 +1,12 @@
 # Current Dev Handoff
 
+## Category Candidate Analysis Apply Tracking Schema Update
+
+- `ai_recommendation_category_candidates`에 analysis apply tracking 컬럼이 추가되었다.
+- 추가 컬럼은 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`다.
+- apply-analysis backend API와 frontend UI는 아직 미구현이다.
+- 다음 작업 후보는 apply-analysis backend API 구현, accepted 후보만 `analysis_results` 반영 허용, overwrite confirm 처리, `analyzed_at` 미갱신 유지, frontend apply-analysis UI 구현이다.
+
 ## Category Candidate Analysis Apply Policy Update
 
 - accepted category 후보를 `analysis_results`에 반영하는 정책 문서: `docs/current/16_category_candidate_analysis_apply_policy.md`
