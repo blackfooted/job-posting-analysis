@@ -1,5 +1,11 @@
 # AI Recommendation Category Apply Policy
 
+## Analysis Result Apply Policy Reference
+
+- accepted category 후보의 `analysis_results` 반영은 `docs/current/16_category_candidate_analysis_apply_policy.md` 기준을 따른다.
+- accepted 상태만으로 `analysis_results`를 갱신하지 않는다.
+- 분석 결과 반영은 별도 apply 액션, overwrite confirm, 반영 이력/상태 추적 정책이 필요하다.
+
 ## Frontend Category Candidate Save UI Current Update
 
 - AI 추천 이력 상세/비교 화면에서 category 후보 저장 UI가 연결되었다.

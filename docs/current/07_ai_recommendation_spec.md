@@ -1,5 +1,12 @@
 # AI Recommendation Spec
 
+## Category Candidate Analysis Apply Policy Reference
+
+- accepted category 후보의 `analysis_results` 반영 정책 문서 위치: `docs/current/16_category_candidate_analysis_apply_policy.md`
+- `accepted`는 분석 결과 반영이 아니며 별도 apply 액션이 필요하다.
+- 1차 권장 정책은 accepted 후보만 반영 가능, domain은 대표 domain 1개만 반영, `analyzed_at`은 미갱신이다.
+- `analysis_results` 반영은 후속 구현 범위이며, category 후보 저장/상태 변경만으로 dashboard와 config JSON은 변경되지 않는다.
+
 ## Frontend Category Candidate Save UI Current Update
 
 - AI 추천 이력 상세 화면과 비교 화면의 `AI 추천 항목 선택` 영역에서 `industry_category`, `primary_domain_category`, `position_category`, `review_item_candidates` 중 `field_type=industry|domain|position` 항목을 함께 선택할 수 있다.

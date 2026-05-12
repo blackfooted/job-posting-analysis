@@ -1,12 +1,19 @@
 # Current Dev Handoff
 
+## Category Candidate Analysis Apply Policy Update
+
+- accepted category 후보를 `analysis_results`에 반영하는 정책 문서: `docs/current/16_category_candidate_analysis_apply_policy.md`
+- 권장 정책은 accepted 후보만 반영 가능, 별도 apply 액션 필요, domain은 대표 domain 1개만 반영, `analyzed_at`은 1차 구현에서 미갱신이다.
+- dashboard는 category 후보 저장 또는 accepted 상태 변경만으로 영향받지 않고, `analysis_results` 반영 후에만 영향받는다.
+- 다음 작업 후보는 category candidate analysis apply DB 보완이다.
+
 ## AI Recommendation Category Candidate Save UI Update
 
 - frontend에서 AI 추천 이력 상세/비교 화면의 `AI 추천 항목 선택` 영역에 산업/도메인/직무 후보 선택 저장 UI를 연결했다.
 - 기존 하단 category 후보 목록/상태 변경 UI는 `저장된 산업/도메인/직무 후보` 관리 영역으로 유지하며, AI 추천 결과에서 새 후보를 선택하는 영역과 역할을 분리한다.
 - 선택 항목 저장/반영 시 `skill|competency`는 review_items apply API로 보내고, `industry|domain|position`은 category candidate API로 보내도록 분기한다.
 - 두 API 결과는 독립적으로 표시하며, 부분 성공/부분 실패 가능성을 UI에서 구분한다.
-- 다음 작업 후보는 accepted category 후보의 `analysis_results` 반영 정책 설계, category 후보 UI/UX 개선, `dictionary_candidates` 구조 설계다.
+- 다음 작업 후보는 category candidate analysis apply DB 보완, backend API 설계/구현, frontend UI 설계/구현, category 후보 UI/UX 개선, `dictionary_candidates` 구조 설계다.
 
 ## Classification Phase 3-A 재분석 판단 로그
 
@@ -49,7 +56,7 @@ Classification Phase 3-A 회귀 검증 완료:
    - analysis_results 즉시 갱신 제외
    - 복수 domain 후보 저장 가능
    - dictionary_candidates는 후속 통합
-2. accepted category 후보의 analysis_results 반영 정책 설계
+2. category candidate analysis apply DB 보완
 3. dictionary_candidates 구조 설계
 4. AI 추천 품질 검증
    - 공고 20개 이상 누적 후 정량 검증

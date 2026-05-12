@@ -1,5 +1,12 @@
 # AI Recommendation Category Candidate Storage
 
+## Analysis Result Apply Policy Reference
+
+- category 후보 저장/상태 관리 이후 후속으로 `analysis_results` apply policy가 정의되었다.
+- 정책 문서: `docs/current/16_category_candidate_analysis_apply_policy.md`
+- `analysis_results` apply는 별도 DB 보완, backend API, frontend UI가 필요하다.
+- accepted 상태는 후보 채택이며, 그 자체로 `analysis_results` 반영이 아니다.
+
 ## Frontend Category Candidate Save UI Current Update
 
 - frontend에서 category 후보 저장 UI가 history 상세/비교 화면의 `AI 추천 항목 선택` 영역에 연결되었다.
@@ -469,9 +476,10 @@ PATCH /api/ai-recommendations/category-candidates/{candidate_id}
 - 공고별 후보 목록/필터
 - accepted/rejected 처리
 
-### Phase CAT-2E — analysis_results 반영 정책 검토
+### Phase CAT-2E — analysis_results 반영 정책 문서화 완료
 
-- accepted 후보를 실제 분석 결과에 반영할지 별도 결정
+- accepted 후보를 실제 분석 결과에 반영하는 정책은 `docs/current/16_category_candidate_analysis_apply_policy.md`를 따른다.
+- 다음 단계는 analysis apply DB 보완/API/UI 구현이다.
 
 ### Phase CAT-2F — dictionary_candidates 통합 검토
 
@@ -495,5 +503,5 @@ PATCH /api/ai-recommendations/category-candidates/{candidate_id}
 다음 Codex 작업 후보:
 
 - category 후보 frontend UI 구현
-- accepted category 후보의 analysis_results 반영 정책 설계
+- category candidate analysis apply DB 보완
 - dictionary_candidates 구조 설계
