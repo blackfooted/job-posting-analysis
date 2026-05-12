@@ -37,6 +37,18 @@ pass
 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 “분석 결과로 반영”, `analysis_results` 반영, frontend 화면 반영 흐름이 정상 작동함을 확인했다.
 기능 흐름은 pass. `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요.
 
+## Category Candidate Analysis Apply Side-effect 검증 결과
+
+| 항목 | 결과 | 메모 |
+|---|---|---|
+| analyzed_at 미갱신 | 사용자 입력 필요 | 반영 전/후 `analysis_results.analyzed_at` 비교 결과 필요 |
+| category 후보 저장만으로 dashboard 영향 없음 | 사용자 입력 필요 | 후보 저장 직후 dashboard 변화 여부 확인 필요 |
+| accepted 상태만으로 dashboard 영향 없음 | 사용자 입력 필요 | 상태 변경만으로 dashboard 변화 여부 확인 필요 |
+| analysis_results 반영 후 dashboard 영향 | 사용자 입력 필요 | dashboard에서 확인 가능한 범위 기준 확인 필요 |
+| 종합 판단 | 사용자 입력 필요 | 사용자 로컬 side-effect 검증 결과 대기 |
+
+검증 결과가 제공되지 않은 항목은 임의로 pass/fail 처리하지 않는다. dashboard에서 확인 가능한 항목이 제한적이면 partial 또는 확인 필요로 기록한다.
+
 ## 1. 문서 목적
 
 이 문서는 `accepted` 상태의 AI recommendation category 후보를 실제 `analysis_results`에 반영하는 정책을 정의한다.

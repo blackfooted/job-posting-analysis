@@ -10,6 +10,7 @@
 - 신규 공고 기준 사용자 로컬 검증에서 accepted 후보의 `analysis_results` 반영과 frontend 화면 반영 흐름이 pass로 확인되었다.
 - accepted는 후보 채택, `applied_to_analysis`는 분석 결과 반영이라는 구분이 UI 흐름에서 확인되었다.
 - dashboard 반영은 category 후보 accepted 상태가 아니라 `analysis_results` 반영 이후에만 발생한다.
+- dashboard side-effect는 후보 저장만으로 영향 없음, accepted 상태만으로 영향 없음, `analysis_results` 반영 후에만 영향 가능하다는 기준으로 사용자 로컬 추가 검증이 필요하다.
 
 ## Analysis Result Apply Policy Reference
 

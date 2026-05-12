@@ -11,6 +11,8 @@
 - category 후보 저장/accepted 상태 변경만으로는 `analysis_results`와 dashboard가 변경되지 않는다.
 - 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 `analysis_results` 반영, frontend 화면 반영 흐름이 pass로 확인되었다.
 - `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요로 남긴다.
+- category candidate analysis apply side-effect 검증은 사용자 입력 필요 상태다.
+- side-effect 검증 대상은 `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 여부다.
 
 ## Category Candidate Analysis Apply Policy Reference
 

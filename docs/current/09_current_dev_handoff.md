@@ -36,11 +36,23 @@ pass
 
 기능 흐름은 pass. `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요.
 
+## Category Candidate Analysis Apply Side-effect 검증 결과
+
+| 항목 | 결과 | 메모 |
+|---|---|---|
+| analyzed_at 미갱신 | 사용자 입력 필요 | 반영 전/후 `analysis_results.analyzed_at` 비교 결과 필요 |
+| category 후보 저장만으로 dashboard 영향 없음 | 사용자 입력 필요 | 후보 저장 직후 dashboard 변화 여부 확인 필요 |
+| accepted 상태만으로 dashboard 영향 없음 | 사용자 입력 필요 | 상태 변경만으로 dashboard 변화 여부 확인 필요 |
+| analysis_results 반영 후 dashboard 영향 | 사용자 입력 필요 | dashboard에서 확인 가능한 범위 기준 확인 필요 |
+| 종합 판단 | 사용자 입력 필요 | 사용자 로컬 side-effect 검증 결과 대기 |
+
 다음 작업 후보:
 
-- `analyzed_at` 미갱신 및 dashboard 영향 추가 확인
-- category 후보 UI UX 개선
-- 공고 누적 후 AI 추천 품질 검증
+- 기능상 누락/오류 보완
+- UI/UX 개선
+- 공고 누적
+- 데이터 정제
+- AI 추천 품질 개선
 - `dictionary_candidates` 구조 설계는 이후 진행
 
 ## Category Candidate Analysis Apply Policy Update

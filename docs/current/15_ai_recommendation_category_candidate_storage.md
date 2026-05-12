@@ -10,6 +10,8 @@
 - apply-analysis UI는 accepted 후보에 한해 제공된다.
 - 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 `analysis_results` 반영, 반영 완료 상태 표시가 pass로 확인되었다.
 - `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요로 남긴다.
+- side-effect 검증에서 `analyzed_at` 미갱신, 후보 저장/accepted 상태만으로 dashboard 영향 없음, `analysis_results` 반영 후 dashboard 영향 여부를 별도 확인한다.
+- 현재 side-effect 검증 결과는 사용자 입력 필요 상태다.
 
 ## Analysis Result Apply Policy Reference
 
