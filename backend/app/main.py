@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,11 +15,29 @@ from backend.app.postings import error_response, router as postings_router
 from backend.app.review_items import router as review_items_router
 
 
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+]
+
+
+def get_allowed_origins() -> list[str]:
+    env_value = os.getenv("ALLOWED_ORIGINS", "")
+    if not env_value.strip():
+        return DEFAULT_ALLOWED_ORIGINS
+
+    return [
+        origin.strip()
+        for origin in env_value.split(",")
+        if origin.strip()
+    ]
+
+
 app = FastAPI(title="Job Posting Analysis API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DB_PATH = PROJECT_ROOT / "backend" / "job_posting_analysis.db"
+DEFAULT_DB_PATH = Path(
+    os.getenv("DB_PATH") or PROJECT_ROOT / "backend" / "job_posting_analysis.db"
+)
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS postings (

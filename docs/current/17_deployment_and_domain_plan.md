@@ -1,5 +1,66 @@
 # Deployment and Domain Plan
 
+## Backend Deployment Readiness Check 결과
+
+- backend production command 후보는 아래 기준으로 유지한다.
+
+```powershell
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+```
+
+- local 개발 command의 `--reload`는 개발 전용이며 production command에서는 사용하지 않는다.
+- `.venv` 기준 `backend.app.main:app` import 가능 여부를 확인했다.
+- `backend/requirements.txt`에는 `fastapi`, `uvicorn`, `openai>=1.0.0`이 포함되어 있으며, 이번 점검에서 추가 dependency는 확인되지 않았다.
+- CORS allowed origins는 `ALLOWED_ORIGINS` 환경변수로 관리할 수 있도록 보완했다.
+- `ALLOWED_ORIGINS`가 없으면 local 기본값 `http://127.0.0.1:3000`, `http://localhost:3000`을 사용한다.
+- 배포 예시는 아래와 같다.
+
+```text
+ALLOWED_ORIGINS=https://job.<domain>
+```
+
+- SQLite DB 경로는 `DB_PATH` 환경변수로 분리할 수 있도록 보완했다.
+- `DB_PATH`가 없으면 기존 local 기본 경로 `backend/job_posting_analysis.db`를 유지한다.
+- Render persistent disk 사용 시 예시는 아래와 같다.
+
+```text
+DB_PATH=/var/data/job_posting_analysis.db
+```
+
+- OpenAI 관련 환경변수는 backend service secret env에서만 관리한다.
+
+```text
+AI_RECOMMENDATION_MODE=openai
+OPENAI_API_KEY=<secret>
+OPENAI_MODEL=gpt-5.4-nano
+AI_RECOMMENDATION_DEBUG=0
+```
+
+- `OPENAI_API_KEY`는 frontend env에 두지 않는다.
+- 이번 점검에서 실제 Render 배포, DNS 설정, OpenAI 호출은 수행하지 않았다.
+
+Backend smoke test command:
+
+Windows PowerShell:
+
+```powershell
+$env:PORT="8000"
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $env:PORT
+```
+
+Render command:
+
+```powershell
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+```
+
+검증 URL:
+
+```text
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/openapi.json
+```
+
 ## 1. 문서 목적
 
 이 문서는 현재 로컬 개발 중심의 `job-posting-analysis` 서비스를 도메인으로 접근 가능한 배포 구조로 전환하기 위한 계획 문서다.
@@ -185,7 +246,7 @@ DATABASE_URL=<PostgreSQL 전환 시>
 - `OPENAI_API_KEY`는 secret env로만 관리한다.
 - GitHub에 commit하지 않는다.
 - frontend env에 넣지 않는다.
-- `DB_PATH` 또는 `DATABASE_URL`을 코드가 실제로 지원하는지 Phase DEP-2에서 확인 필요하다.
+- `DB_PATH`는 backend에서 지원한다. `DATABASE_URL`은 PostgreSQL 전환 시 별도 구현 검토가 필요하다.
 - 현재 코드가 SQLite 경로를 하드코딩하거나 relative path로 사용한다면 배포 전 환경변수 기반으로 분리해야 한다.
 
 ### CORS
@@ -240,7 +301,7 @@ DB_PATH=/var/data/job_posting_analysis.db
 - Render 무료 플랜에서는 persistent disk 사용 가능 여부와 플랜 제약을 확인해야 함
 - 공고/정제 데이터가 중요해지는 시점에는 PostgreSQL 전환
 - 배포 전 DB backup/export 방법 필요
-- Phase DEP-2에서 `backend/app/database.py`가 `DB_PATH` 환경변수를 지원하도록 변경할지 검토
+- `backend/app/database.py`는 `DB_PATH` 환경변수를 지원한다.
 
 ## 7. Render 무료 플랜 sleep/cold start 정책
 
@@ -335,7 +396,8 @@ Render 기준 절차:
 - [ ] CORS 배포 origin 추가 필요 여부 확인
 - [ ] `OPENAI_API_KEY` secret env 설정
 - [ ] SQLite persistent disk 또는 PostgreSQL 방향 결정
-- [ ] `DB_PATH`/`DATABASE_URL` 환경변수 지원 여부 확인
+- [ ] `DB_PATH` 환경변수 설정 확인
+- [ ] PostgreSQL 전환 시 `DATABASE_URL` 지원 구현 여부 확인
 - [ ] DB init 방식 확인
 - [ ] Swagger 접근 여부 확인
 - [ ] 무료 플랜 sleep/cold start 허용 여부 결정
@@ -387,7 +449,8 @@ Render 기준 절차:
 - production start command 확정
 - `--host 0.0.0.0 --port $PORT`
 - CORS env 기반화 검토
-- `DB_PATH`/persistent disk 또는 `DATABASE_URL` 검토
+- `DB_PATH`/persistent disk 설정 검토
+- PostgreSQL 전환 시 `DATABASE_URL` 구현 검토
 - Render 무료 플랜 sleep/cold start 운영 판단
 - Render Web Service 설정 문서화
 
@@ -423,7 +486,7 @@ Render 기준 절차:
 | Render 플랜 | Free / Starter 이상 | 단기 Free 가능, 외부 공유 시 유료 검토 |
 | backend start command | local reload / production uvicorn | production uvicorn |
 | DB 단기 | SQLite ephemeral / SQLite persistent disk / PostgreSQL | SQLite persistent disk 또는 PostgreSQL |
-| DB 경로 | 코드 고정 / DB_PATH env | DB_PATH env 검토 |
+| DB 경로 | 코드 고정 / DB_PATH env | DB_PATH env 지원 |
 | DB 중기 | SQLite 유지 / PostgreSQL 전환 | PostgreSQL 전환 검토 |
 | domain 구조 | 단일 domain path routing / subdomain 분리 | subdomain 분리 |
 | OpenAI key 위치 | frontend / backend env | backend env |

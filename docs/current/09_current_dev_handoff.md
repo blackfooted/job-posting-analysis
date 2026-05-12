@@ -1,5 +1,34 @@
 # Current Dev Handoff
 
+## Backend Deployment Readiness Check 완료
+
+- Render Web Service 배포 전 backend readiness를 점검했다.
+- production start command 후보는 `python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`다.
+- production에서는 `--reload`를 사용하지 않는다.
+- CORS allowed origins는 `ALLOWED_ORIGINS` 환경변수 기반으로 보완했다.
+- `ALLOWED_ORIGINS` 미설정 시 local 기본 origin을 유지한다.
+- SQLite DB 경로는 `DB_PATH` 환경변수 기반으로 보완했다.
+- `DB_PATH` 미설정 시 기존 `backend/job_posting_analysis.db` local 기본 경로를 유지한다.
+- `.env.example`에 `AI_RECOMMENDATION_DEBUG`, `ALLOWED_ORIGINS`, `DB_PATH` 예시를 추가했다.
+- `backend/requirements.txt`에는 `fastapi`, `uvicorn`, `openai>=1.0.0`이 있으며 이번 점검에서 변경하지 않았다.
+- 실제 Render 배포, domain/DNS 설정, OpenAI 호출은 수행하지 않았다.
+
+수정 파일:
+
+- `backend/app/main.py`
+- `backend/app/database.py`
+- `.env.example`
+- `docs/current/17_deployment_and_domain_plan.md`
+- `docs/current/02_architecture_current_state.md`
+- `docs/current/09_current_dev_handoff.md`
+
+다음 작업 후보:
+
+1. frontend deployment readiness check
+2. Render Web Service 설정 checklist
+3. Render Static Site 설정 checklist
+4. 실제 Render 배포
+
 ## Deployment and Domain Plan 완료
 
 - 배포/도메인 계획 문서 `docs/current/17_deployment_and_domain_plan.md`를 추가했다.

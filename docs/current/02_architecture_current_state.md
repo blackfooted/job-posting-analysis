@@ -7,7 +7,9 @@
 - 1차 후보는 Render Static Site + Render Web Service 조합이다.
 - Render 무료 플랜 사용 시 Web Service sleep/cold start 지연을 운영 제약으로 고려해야 한다.
 - SQLite 운영 시 persistent disk 사용 또는 PostgreSQL 전환을 검토해야 한다.
-- 배포 전 `DB_PATH` 또는 `DATABASE_URL` 환경변수화 필요성을 확인한다.
+- SQLite DB 경로는 `DB_PATH` 환경변수로 분리 가능하다. 값이 없으면 local 기본 경로 `backend/job_posting_analysis.db`를 사용한다.
+- CORS allowed origins는 `ALLOWED_ORIGINS` 환경변수로 관리 가능하다. 값이 없으면 local origin 기본값을 사용한다.
+- PostgreSQL 전환 시에는 별도 `DATABASE_URL` 지원 검토가 필요하다.
 - backend production start command는 `0.0.0.0` bind와 `$PORT` 사용을 기준으로 검토한다.
 - 상세 계획은 `docs/current/17_deployment_and_domain_plan.md`를 따른다.
 
