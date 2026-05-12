@@ -3,10 +3,12 @@
 ## AI 추천 관리 화면 UI/UX 개선 상태
 
 - AI 추천 관리 화면의 기능 로직 변경 없이 가독성 개선을 1차 반영했다.
+- AI 추천 관리 화면의 layout polish를 추가 반영해 저장된 산업/도메인/직무 후보 목록을 최근 추천 이력 table 스타일과 맞췄다.
+- 페이지/섹션/본문/보조 설명/table/button/badge 폰트 크기 체계를 AI 추천 관리 화면 안에서 정리했다.
 - category/skill/competency/review candidate의 판단 근거는 기본 접힘 상태의 아코디언으로 표시한다.
 - 기술/도구 및 역량 목록은 PC 기준 3열 grid로 정리하고, tablet/mobile에서는 2열/1열로 줄인다.
 - AI 추천 confidence는 항목명 옆 badge로 표시하며 `high`/`medium`/`low`는 `높음`/`중간`/`낮음`으로 표시한다.
-- AI 추천 관리 화면의 날짜/시각 표시는 `YYYY-MM-DD HH:MM:SS` 형식으로 통일한다.
+- AI 추천 관리 화면의 날짜/시간 label은 `일시` 기준으로 통일하고, 값은 `YYYY-MM-DD HH:MM:SS` 형식으로 표시한다.
 - 저장된 산업/도메인/직무 후보 목록은 넓은 table, 우측 날짜 컬럼, inline 작업 컬럼으로 가로 가독성을 개선했다.
 - 후보 채택과 분석 결과 반영은 계속 별도 상태/액션으로 표시한다.
 

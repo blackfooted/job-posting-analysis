@@ -3,9 +3,11 @@
 ## Category 후보 관리 UI/UX 개선 상태
 
 - category 후보 저장/관리 UI의 가로 가독성을 개선했다.
+- 저장된 산업/도메인/직무 후보 목록을 최근 추천 이력 table과 유사한 화면 톤으로 정리했다.
 - 후보 채택과 분석 결과 반영은 화면에서 별도 상태와 별도 액션으로 계속 구분한다.
 - 판단 근거는 아코디언으로 접고, confidence는 badge로 표시한다.
 - 저장된 산업/도메인/직무 후보 목록의 작업 컬럼은 상태 select, 상태 저장, 분석 결과 반영 버튼을 한 줄로 배치한다.
+- category 후보 UI의 날짜/시간 표시 label은 생성일시/검토일시/반영일시로 통일한다.
 - accepted 상태만으로 dashboard가 변경되지 않고, analysis_results 반영 이후에만 dashboard 영향이 가능하다는 정책은 유지한다.
 
 ## Analysis Apply Tracking Schema Current Update
@@ -296,8 +298,8 @@ ai_recommendation_category_candidates
 | reason | TEXT | no | AI 판단 근거 |
 | source_path | TEXT | yes | recommendation 내 위치 |
 | status | TEXT | yes | pending/accepted/rejected |
-| created_at | TEXT | yes | 생성 시각 |
-| reviewed_at | TEXT | no | 검토 시각 |
+| created_at | TEXT | yes | 생성일시 |
+| reviewed_at | TEXT | no | 검토일시 |
 | note | TEXT | no | 사용자 메모 |
 
 상태값:

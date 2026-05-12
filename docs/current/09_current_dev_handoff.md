@@ -3,9 +3,13 @@
 ## AI 추천 관리 화면 UI/UX 개선 완료
 
 - AI 추천 관리 화면의 가독성, 정보 구조, 상태 인지 개선을 완료했다.
+- AI 추천 관리 화면 layout polish를 완료했다.
+- 저장된 산업/도메인/직무 후보 영역을 최근 추천 이력 table 스타일과 유사한 톤으로 정리했다.
+- 페이지 제목, 섹션 제목, 본문, 보조 설명, table, button, badge의 폰트 사이즈 체계를 정리했다.
+- 화면 label은 `생성일시`/`검토일시`/`반영일시`처럼 `일시` 기준으로 통일했다.
 - 판단 근거는 details/summary 아코디언으로 기본 접힘 처리했다.
 - 기술/도구 및 역량 영역은 PC 기준 3열 grid로 정리했다.
-- confidence는 항목명 옆 badge로 표시하고, 날짜/시각은 `YYYY-MM-DD HH:MM:SS`로 통일했다.
+- confidence는 항목명 옆 badge로 표시하고, 날짜/시간 값은 `YYYY-MM-DD HH:MM:SS`로 통일했다.
 - 저장된 산업/도메인/직무 후보 목록은 넓은 table, 우측 날짜 컬럼, inline 작업 컬럼으로 개선했다.
 - 선택 반영 결과는 정제 항목과 산업/도메인/직무 후보 저장 결과를 구분해 표시한다.
 - backend/API/DB/config 변경 없이 frontend 표시와 배치만 개선했다.
@@ -41,7 +45,7 @@
 | confirm_overwrite 처리 | pass | 기존 값과 후보값이 다른 경우 confirm 흐름 정상 |
 | analysis_results 컬럼 반영 | pass | 후보 category_type에 맞는 분석 결과 반영 확인 |
 | applied_to_analysis 기록 | pass | 반영 완료 상태 확인 |
-| applied_at 기록 | pass | 반영 시각 기록 확인 |
+| applied_at 기록 | pass | 반영일시 기록 확인 |
 | previous_analysis_value 기록 | pass | 기존 분석값 기록 확인 |
 | applied_analysis_field 기록 | pass | 반영 필드 기록 확인 |
 | analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |

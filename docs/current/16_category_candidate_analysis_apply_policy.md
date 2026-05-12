@@ -4,7 +4,8 @@
 
 - 분석 결과 반영 UI에서 accepted 후보와 `applied_to_analysis` 반영 완료 상태의 구분을 유지한다.
 - 판단 근거는 기본 접힘 상태로 표시해 후보 목록의 세로 길이를 줄였다.
-- 반영 시각 등 날짜/시각은 `YYYY-MM-DD HH:MM:SS` 형식으로 통일한다.
+- `applied_at` 화면 label은 반영일시로 표시한다.
+- 반영일시 등 날짜/시간 값은 `YYYY-MM-DD HH:MM:SS` 형식으로 통일한다.
 - 반영 결과 메시지는 action, 이전 값, 새 값, 반영 필드를 간결하게 확인할 수 있도록 유지한다.
 
 ## Frontend Implementation Status
@@ -29,7 +30,7 @@
 | confirm_overwrite 처리 | pass | 기존 값과 후보값이 다른 경우 confirm 흐름 정상 |
 | analysis_results 컬럼 반영 | pass | 후보 category_type에 맞는 분석 결과 반영 확인 |
 | applied_to_analysis 기록 | pass | 반영 완료 상태 확인 |
-| applied_at 기록 | pass | 반영 시각 기록 확인 |
+| applied_at 기록 | pass | 반영일시 기록 확인 |
 | previous_analysis_value 기록 | pass | 기존 분석값 기록 확인 |
 | applied_analysis_field 기록 | pass | 반영 필드 기록 확인 |
 | analyzed_at 미갱신 | pass | 분석 결과 반영 후에도 analyzed_at 정책 유지 |
@@ -101,7 +102,7 @@ pass
 - config JSON은 수정하지 않는다.
 - `dictionary_candidates` 연동은 후속이다.
 - dashboard 집계는 `analysis_results` 반영 이후에만 바뀐다.
-- 반영 이력 또는 최소한 반영 시각/출처를 남기는 방식을 검토한다.
+- 반영 이력 또는 최소한 반영일시/출처를 남기는 방식을 검토한다.
 
 ## 5. accepted와 applied의 의미 분리
 
@@ -171,30 +172,30 @@ analyzed_at을 갱신하지 않음
 
 장점:
 
-- 자동 classification 실행 시각과 사용자 수동 반영을 구분 가능
+- 자동 classification 실행일시와 사용자 수동 반영을 구분 가능
 
 단점:
 
-- 결과 변경 시각을 알기 어려움
+- 결과 변경일시를 알기 어려움
 
 선택지 B:
 
 ```text
-analyzed_at을 현재 시각으로 갱신
+analyzed_at을 현재 일시로 갱신
 ```
 
 장점:
 
-- 분석 결과가 변경된 시각을 알 수 있음
+- 분석 결과가 변경된 일시를 알 수 있음
 
 단점:
 
-- 자동 분석 시각과 수동 반영 시각이 섞임
+- 자동 분석일시와 수동 반영일시가 섞임
 
 권장:
 
 - 1차 구현에서는 `analyzed_at`을 갱신하지 않는다.
-- 수동 반영 시각은 별도 이력 또는 후보 테이블의 `applied_at`으로 추적한다.
+- 수동 반영일시는 별도 이력 또는 후보 테이블의 `applied_at`으로 추적한다.
 
 ## 8. 반영 이력/상태 추적 정책
 
@@ -232,7 +233,7 @@ analyzed_at을 현재 시각으로 갱신
 
 장점:
 
-- 이전 값/새 값/반영 시각/되돌리기 추적 가능
+- 이전 값/새 값/반영일시/되돌리기 추적 가능
 - 장기 운영에 유리
 
 단점:
@@ -371,7 +372,7 @@ POST /api/ai-recommendations/category-candidates/{candidate_id}/apply-analysis
 - 추천값
 - 현재 `analysis_results` 값
 - 반영 여부
-- 반영 시각
+- 반영일시
 
 액션:
 

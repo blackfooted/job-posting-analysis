@@ -3,7 +3,9 @@
 ## Category 후보 목록 UI/UX 개선 상태
 
 - 저장된 산업/도메인/직무 후보 목록의 table min-width를 확장해 추천값, 판단 근거, 메모의 가독성을 개선했다.
-- 생성 시각, 검토 시각, 반영 시각은 우측 날짜 컬럼으로 정리하고 `YYYY-MM-DD HH:MM:SS` 형식으로 표시한다.
+- 후보 목록 table 스타일은 최근 추천 이력 table과 유사한 header, row padding, border, pagination 톤으로 정리한다.
+- `created_at`, `reviewed_at`, `applied_at` 화면 label은 생성일시, 검토일시, 반영일시로 표시한다.
+- 생성일시, 검토일시, 반영일시는 우측 날짜 컬럼으로 정리하고 `YYYY-MM-DD HH:MM:SS` 형식으로 표시한다.
 - 작업 컬럼은 상태 select, 상태 저장, 분석 결과로 반영 버튼을 inline 배치한다.
 - `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`는 분석 결과 반영 상태 확인 정보로 계속 표시한다.
 
@@ -127,8 +129,8 @@ ai_recommendation_category_candidates
 | confidence | TEXT | no | high/medium/low |
 | reason | TEXT | no | AI 판단 근거 |
 | status | TEXT | yes | pending/accepted/rejected |
-| created_at | TEXT | yes | 후보 생성 시각 |
-| reviewed_at | TEXT | no | 검토 시각 |
+| created_at | TEXT | yes | 후보 생성일시 |
+| reviewed_at | TEXT | no | 검토일시 |
 | note | TEXT | no | 사용자 메모 |
 
 권장 제약:

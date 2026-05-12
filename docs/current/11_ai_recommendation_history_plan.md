@@ -5,7 +5,8 @@
 - history 상세/비교 화면의 판단 근거는 기본 접힘 상태의 아코디언으로 정리했다.
 - history 상세의 기술/도구 및 역량 목록은 PC 기준 3열 grid로 표시한다.
 - recommendation confidence는 항목명 옆 badge로 표시한다.
-- run 생성 시각 등 AI 추천 관리 화면의 날짜/시각 표시는 `YYYY-MM-DD HH:MM:SS`로 통일한다.
+- history table과 category 후보 목록의 표시 스타일을 유사한 table 톤으로 정리했다.
+- run 생성일시 등 AI 추천 관리 화면의 날짜/시간 label은 `일시` 기준으로 통일하고, 값은 `YYYY-MM-DD HH:MM:SS`로 표시한다.
 
 ## Frontend Category Candidate Save UI Current Update
 
@@ -155,7 +156,7 @@ AI Recommendation History backend 1차 구현 상태:
 
 | column | reason |
 |---|---|
-| `applied_at` | 마지막 반영 시각 추적용 |
+| `applied_at` | 마지막 반영일시 추적용 |
 | `applied_by` | 다중 사용자 구조 도입 시 반영 사용자 추적 |
 
 초기 판단:
@@ -203,7 +204,7 @@ ai_recommendation_runs
 | `recommendation_json` | TEXT | yes | 정규화된 recommendation JSON |
 | `applied_status` | TEXT | yes | `not_applied`, `partially_applied`, `applied` |
 | `applied_items_json` | TEXT | no | 선택 반영 처리 결과 추적용 JSON |
-| `created_at` | TEXT | yes | 추천 실행 저장 시각 |
+| `created_at` | TEXT | yes | 추천 실행 저장일시 |
 
 후속 컬럼 후보:
 
@@ -214,7 +215,7 @@ ai_recommendation_runs
 | `output_token_count` | 비용 분석 |
 | `error_code` | 실패 결과 저장 시 원인 분류 |
 | `error_message` | 실패 결과 저장 시 제한된 오류 메시지 |
-| `applied_at` | 반영 시각 추적 |
+| `applied_at` | 반영일시 추적 |
 | `applied_by` | 다중 사용자 구조 도입 시 사용자 추적 |
 
 초기 상태값:
@@ -324,7 +325,7 @@ PATCH /api/ai-recommendations/runs/{run_id}/applied-status
 초기 UI 후보:
 
 - 공고별 AI 추천 이력 목록
-- 실행 시각, mode, model, prompt_version, applied_status 표시
+- 실행일시, mode, model, prompt_version, applied_status 표시
 - 추천 이력 상세 보기
 - 현재 추천 결과와 과거 추천 결과 비교 보기
 

@@ -2449,9 +2449,9 @@ function AiCategoryCandidateList({
               <th>분석 결과 반영</th>
               <th>메모</th>
               <th>작업</th>
-              <th>생성 시각</th>
-              <th>검토 시각</th>
-              <th>반영 시각</th>
+              <th>생성일시</th>
+              <th>검토일시</th>
+              <th>반영일시</th>
             </tr>
           </thead>
           <tbody>
@@ -2518,7 +2518,7 @@ function AiCategoryCandidateList({
                         </span>
                         <small>
                           {item.applied_to_analysis
-                            ? `반영 시각: ${formatDateTime(item.applied_at)}`
+                            ? `반영일시: ${formatDateTime(item.applied_at)}`
                             : applyHint}
                         </small>
                         {item.applied_to_analysis && (
@@ -2657,7 +2657,7 @@ function AiCategoryCandidateApplyResult({ result }) {
           <dd>{formatValue(result.analysis_result?.new_value)}</dd>
         </div>
         <div>
-          <dt>반영 시각</dt>
+          <dt>반영일시</dt>
           <dd>{formatDateTime(result.candidate?.applied_at)}</dd>
         </div>
       </dl>
@@ -2785,7 +2785,7 @@ function AiRecommendationMeta({ meta = {} }) {
           <dd>{formatValue(meta.prompt_version)}</dd>
         </div>
         <div>
-          <dt>생성 시각</dt>
+          <dt>생성일시</dt>
           <dd>{formatDateTime(meta.generated_at)}</dd>
         </div>
       </dl>
@@ -2818,7 +2818,7 @@ function AiRecommendationRunMeta({ run = null, meta = {} }) {
               <dd>{formatValue(run.id)}</dd>
             </div>
             <div>
-              <dt>생성 시각</dt>
+              <dt>생성일시</dt>
               <dd>{formatDateTime(run.created_at)}</dd>
             </div>
           </>
@@ -2889,7 +2889,7 @@ function AiRecommendationHistoryList({
                 <th>프롬프트 버전</th>
                 <th>실행 상태</th>
                 <th>반영 상태</th>
-                <th>생성 시각</th>
+                <th>생성일시</th>
                 <th>비교</th>
                 <th>상세</th>
               </tr>
@@ -3052,7 +3052,7 @@ function AiRecommendationCompareCard({
 
       <dl className="ai-meta-list">
         <div>
-          <dt>생성 시각</dt>
+          <dt>생성일시</dt>
           <dd>{formatDateTime(run.created_at)}</dd>
         </div>
         <div>
@@ -3568,7 +3568,7 @@ function AiRecommendationHistoryDetail({
                 <dd>{formatValue(run?.id)}</dd>
               </div>
               <div>
-                <dt>생성 시각</dt>
+                <dt>생성일시</dt>
                 <dd>{formatDateTime(run?.created_at)}</dd>
               </div>
               <div>
