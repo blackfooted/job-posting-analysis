@@ -7,6 +7,7 @@
 - accepted 상태만으로 `analysis_results`가 변경되지 않는 정책은 유지한다.
 - accepted 후보는 별도 apply-analysis backend API로 `analysis_results`에 반영할 수 있다.
 - frontend는 “후보 채택”과 “분석 결과 반영”을 별도 상태와 액션으로 구분해 표시한다.
+- accepted는 후보 채택, `applied_to_analysis`는 분석 결과 반영이라는 구분은 사용자 로컬 검증 대상이다.
 - dashboard 반영은 category 후보 accepted 상태가 아니라 `analysis_results` 반영 이후에만 발생한다.
 
 ## Analysis Result Apply Policy Reference

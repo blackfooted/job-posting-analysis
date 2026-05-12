@@ -13,6 +13,29 @@
 - 반영 성공 후 category 후보 목록과 현재 공고의 analysis 결과를 refresh한다.
 - 1차 구현에서 `analyzed_at`을 갱신하지 않는 정책은 유지한다.
 
+## Category Candidate Analysis Apply 검증 결과
+
+| 항목 | 결과 | 메모 |
+|---|---|---|
+| accepted 후보만 반영 가능 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
+| pending/rejected 후보 반영 불가 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
+| confirm_overwrite 처리 | 사용자 입력 필요 | 기존값과 후보값이 다른 케이스 검증 필요 |
+| analysis_results 컬럼 반영 | 사용자 입력 필요 | industry/domain/position 매핑 검증 필요 |
+| applied_to_analysis 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
+| applied_at 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
+| previous_analysis_value 기록 | 사용자 입력 필요 | overwrite/동일값 케이스 확인 필요 |
+| applied_analysis_field 기록 | 사용자 입력 필요 | 반영 컬럼명 확인 필요 |
+| analyzed_at 미갱신 | 사용자 입력 필요 | 가능하면 DB 또는 backend 응답 기준 확인 필요 |
+| dashboard 영향 확인 | 사용자 입력 필요 | `analysis_results` 반영 이후 집계 영향 확인 필요 |
+
+종합 판단:
+
+```text
+사용자 입력 필요
+```
+
+사용자 로컬 검증 결과가 제공되면 pass / partial / fail 중 하나로 확정한다.
+
 ## 1. 문서 목적
 
 이 문서는 `accepted` 상태의 AI recommendation category 후보를 실제 `analysis_results`에 반영하는 정책을 정의한다.

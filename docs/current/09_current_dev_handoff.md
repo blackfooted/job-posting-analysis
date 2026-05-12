@@ -12,6 +12,33 @@
 - 반영 시 `analyzed_at`은 갱신하지 않는다.
 - 다음 작업 후보는 dashboard 영향 검증, category 후보 UX 개선, `dictionary_candidates` 구조 설계다.
 
+## Category Candidate Analysis Apply 검증 결과
+
+| 항목 | 결과 | 메모 |
+|---|---|---|
+| accepted 후보만 반영 가능 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
+| pending/rejected 후보 반영 불가 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
+| confirm_overwrite 처리 | 사용자 입력 필요 | 기존값과 후보값이 다른 케이스 검증 필요 |
+| analysis_results 컬럼 반영 | 사용자 입력 필요 | industry/domain/position 매핑 검증 필요 |
+| applied_to_analysis 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
+| applied_at 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
+| previous_analysis_value 기록 | 사용자 입력 필요 | overwrite/동일값 케이스 확인 필요 |
+| applied_analysis_field 기록 | 사용자 입력 필요 | 반영 컬럼명 확인 필요 |
+| analyzed_at 미갱신 | 사용자 입력 필요 | 가능하면 DB 또는 backend 응답 기준 확인 필요 |
+| dashboard 영향 확인 | 사용자 입력 필요 | `analysis_results` 반영 이후 집계 영향 확인 필요 |
+
+종합 판단:
+
+```text
+사용자 입력 필요
+```
+
+다음 작업 후보:
+
+- 검증 결과 pass 시 category 후보 UI UX 개선 또는 dashboard 영향 정리
+- partial/fail 시 frontend/backend 보완
+- `dictionary_candidates` 구조 설계는 이후 진행
+
 ## Category Candidate Analysis Apply Policy Update
 
 - accepted category 후보를 `analysis_results`에 반영하는 정책 문서: `docs/current/16_category_candidate_analysis_apply_policy.md`

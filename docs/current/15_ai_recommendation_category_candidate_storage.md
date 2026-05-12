@@ -8,6 +8,7 @@
 - apply-analysis backend API가 구현되었고, 반영 성공 시 tracking 컬럼이 업데이트된다.
 - category 후보 목록 UI에서 `applied_to_analysis`, `applied_at`, `previous_analysis_value`, `applied_analysis_field`를 표시할 수 있다.
 - apply-analysis UI는 accepted 후보에 한해 제공된다.
+- 위 tracking 컬럼은 사용자 로컬 검증 대상이며, 현재 검증 결과는 사용자 입력 필요 상태다.
 
 ## Analysis Result Apply Policy Reference
 
