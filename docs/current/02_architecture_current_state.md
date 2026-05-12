@@ -1,5 +1,14 @@
 # Architecture Current State
 
+## Frontend Deployment Readiness Note
+
+- frontend는 Vite build 결과물(`dist`)을 Render Static Site 같은 정적 사이트 호스팅으로 배포할 수 있다.
+- 배포 시 frontend는 backend API domain을 `VITE_API_BASE_URL`로 참조한다.
+- local 기본값은 `http://127.0.0.1:8000`이며, 배포 예시는 `https://api.<domain>`이다.
+- `VITE_` 접두사 환경변수는 browser bundle에 노출될 수 있으므로 frontend에는 public API base URL만 둔다.
+- OpenAI secret은 frontend에 두지 않는다. OpenAI 호출과 `OPENAI_API_KEY` 관리는 backend 책임이다.
+- Render Static Site 권장 설정은 `Root Directory: frontend`, `Build Command: npm install && npm run build`, `Publish Directory: dist`이다.
+
 ## Deployment Target Architecture Note
 
 - 현재 구조는 local development architecture 기준이다.

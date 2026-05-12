@@ -1,5 +1,66 @@
 # Deployment and Domain Plan
 
+## Frontend Deployment Readiness Check 결과
+
+- Render Static Site 배포 전 frontend readiness를 점검했다.
+- `frontend/package.json` 기준 production build script는 `vite build`이며, local 검증 명령은 아래와 같다.
+
+```powershell
+cd frontend
+npm.cmd run build
+```
+
+- Render Static Site 설정은 frontend 디렉터리를 root로 두는 구성을 1차 권장한다.
+
+권장안 A:
+
+```text
+Root Directory: frontend
+Build Command: npm install && npm run build
+Publish Directory: dist
+Environment Variables:
+  VITE_API_BASE_URL=https://api.<domain>
+```
+
+대안 B:
+
+```text
+Root Directory: .
+Build Command: cd frontend && npm install && npm run build
+Publish Directory: frontend/dist
+Environment Variables:
+  VITE_API_BASE_URL=https://api.<domain>
+```
+
+- 권장안 A를 우선한다. frontend Static Site 설정이 단순하고, publish directory가 `dist`로 명확하며, backend와 build context를 분리할 수 있기 때문이다.
+- frontend API client는 `import.meta.env.VITE_API_BASE_URL`을 우선 사용하고, 값이 없으면 local 기본값 `http://127.0.0.1:8000`을 사용한다.
+- local 개발 예시는 `VITE_API_BASE_URL=http://127.0.0.1:8000`이다.
+- 배포 예시는 `VITE_API_BASE_URL=https://api.<domain>`이다.
+- Vite의 `VITE_` 접두사 환경변수는 browser bundle에 노출될 수 있으므로, `VITE_API_BASE_URL`에는 public backend API base URL만 둔다.
+- `OPENAI_API_KEY`는 frontend env에 두지 않는다. OpenAI key는 backend Render Web Service의 secret env로만 관리한다.
+- `frontend/.env.example`에는 local `VITE_API_BASE_URL` 예시가 이미 존재하므로 이번 점검에서 추가 수정하지 않았다.
+- Recharts는 `frontend/package.json`에 포함되어 있으며, dashboard Recharts import를 포함한 frontend build가 통과했다.
+- build 중 chunk size warning이 표시될 수 있으나, 이번 점검에서는 build 실패로 이어지지 않았다.
+
+Frontend deployment smoke test checklist:
+
+- 배포 전 local
+  - `npm.cmd run build` 통과
+  - `VITE_API_BASE_URL` local 값 확인
+  - dashboard 화면 build 문제 없음
+  - Recharts chart build 문제 없음
+- 배포 후
+  - frontend domain 접속
+  - browser console error 없음
+  - API 요청이 backend API domain으로 나가는지 확인
+  - CORS 오류 없음
+  - dashboard 조회
+  - postings 목록 조회
+  - review_items 조회
+  - AI recommendation 화면 진입
+  - OpenAI key가 frontend bundle/env에 노출되지 않음
+  - 새로고침 후 라우팅 유지 여부 확인
+
 ## Backend Deployment Readiness Check 결과
 
 - backend production command 후보는 아래 기준으로 유지한다.

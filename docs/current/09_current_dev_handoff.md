@@ -1,5 +1,31 @@
 # Current Dev Handoff
 
+## Frontend Deployment Readiness Check 완료
+
+- Render Static Site 배포 전 frontend readiness를 점검했다.
+- `frontend/package.json` 기준 build script는 `vite build`이며, local 검증은 `cd frontend` 후 `npm.cmd run build`로 수행한다.
+- Render Static Site 권장 설정은 `Root Directory: frontend`, `Build Command: npm install && npm run build`, `Publish Directory: dist`이다.
+- repository root를 Render root로 둘 경우 대안 설정은 `Build Command: cd frontend && npm install && npm run build`, `Publish Directory: frontend/dist`이다.
+- frontend API base URL은 `VITE_API_BASE_URL` 기준이며, local 기본값은 `http://127.0.0.1:8000`, 배포 예시는 `https://api.<domain>`이다.
+- `VITE_` 환경변수는 browser bundle에 노출되므로 frontend에는 public API base URL만 둔다.
+- OpenAI key는 frontend에 두지 않고 backend Render Web Service secret env에서만 관리한다.
+- `frontend/.env.example`에는 local `VITE_API_BASE_URL` 예시가 이미 있어 이번 점검에서 수정하지 않았다.
+- Recharts 포함 frontend build가 통과했다. build 중 chunk size warning은 있었지만 실패로 이어지지 않았다.
+- 실제 Render 배포, domain/DNS 설정, OpenAI 호출은 수행하지 않았다.
+
+수정 파일:
+
+- `docs/current/17_deployment_and_domain_plan.md`
+- `docs/current/02_architecture_current_state.md`
+- `docs/current/09_current_dev_handoff.md`
+
+다음 작업 후보:
+
+1. Render deployment checklist 작성
+2. backend Render Web Service 실제 설정
+3. frontend Render Static Site 실제 설정
+4. domain/DNS 연결
+
 ## Backend Deployment Readiness Check 완료
 
 - Render Web Service 배포 전 backend readiness를 점검했다.
