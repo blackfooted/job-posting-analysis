@@ -1,5 +1,13 @@
 # AI Recommendation Spec
 
+## Frontend Category Candidate Save UI Current Update
+
+- AI 추천 이력 상세 화면과 비교 화면의 `AI 추천 항목 선택` 영역에서 `industry_category`, `primary_domain_category`, `position_category`, `review_item_candidates` 중 `field_type=industry|domain|position` 항목을 함께 선택할 수 있다.
+- 선택 항목 저장/반영 시 `skill|competency` 항목은 `POST /api/ai-recommendations/history/{run_id}/apply`로 `review_items`에 반영하고, `industry|domain|position` 항목은 `POST /api/ai-recommendations/history/{run_id}/category-candidates`로 산업/도메인/직무 후보에 저장한다.
+- 두 API 호출 결과는 화면에서 독립적으로 표시한다. 하나가 실패해도 다른 API의 성공 결과는 유지하며, 부분 성공/부분 실패를 구분한다.
+- 산업/도메인/직무 후보 저장은 `analysis_results`, dashboard, config JSON을 즉시 갱신하지 않는다.
+- 하단 영역은 `저장된 산업/도메인/직무 후보` 관리 영역이며, AI 추천 결과에서 후보를 새로 선택하는 영역은 history 상세/비교 화면 안에 둔다.
+
 ## OpenAI Output Token 안정화 기준
 
 - OpenAI mode는 Responses API + Structured Outputs JSON을 사용한다.

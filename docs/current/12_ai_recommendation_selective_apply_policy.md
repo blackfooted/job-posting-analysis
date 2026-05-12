@@ -1,5 +1,13 @@
 # AI Recommendation Selective Apply Policy
 
+## Frontend Combined Selection UI Current Update
+
+- AI 추천 이력 상세/비교 화면의 선택 영역에서 `skill|competency` 정제 항목과 산업/도메인/직무 후보를 함께 선택할 수 있다.
+- `skill|competency`는 기존 `POST /api/ai-recommendations/history/{run_id}/apply` 흐름으로 `review_items`에 반영한다.
+- `industry|domain|position`은 `POST /api/ai-recommendations/history/{run_id}/category-candidates` 흐름으로 산업/도메인/직무 후보에 저장한다.
+- 두 흐름은 API와 저장 위치가 다르며, 부분 성공/부분 실패 시 각 결과를 분리 표시한다.
+- 산업/도메인/직무 후보 저장은 선택 반영 정책의 review_items 반영 범위를 확장하지 않는다.
+
 ## 1. 문서 목적
 
 이 문서는 AI 추천 이력에서 사용자가 일부 항목을 선택해 `review_items` 또는 후속 `dictionary_candidates`에 반영하기 위한 정책 문서다.

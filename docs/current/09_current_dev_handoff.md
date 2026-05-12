@@ -1,5 +1,13 @@
 # Current Dev Handoff
 
+## AI Recommendation Category Candidate Save UI Update
+
+- frontend에서 AI 추천 이력 상세/비교 화면의 `AI 추천 항목 선택` 영역에 산업/도메인/직무 후보 선택 저장 UI를 연결했다.
+- 기존 하단 category 후보 목록/상태 변경 UI는 `저장된 산업/도메인/직무 후보` 관리 영역으로 유지하며, AI 추천 결과에서 새 후보를 선택하는 영역과 역할을 분리한다.
+- 선택 항목 저장/반영 시 `skill|competency`는 review_items apply API로 보내고, `industry|domain|position`은 category candidate API로 보내도록 분기한다.
+- 두 API 결과는 독립적으로 표시하며, 부분 성공/부분 실패 가능성을 UI에서 구분한다.
+- 다음 작업 후보는 accepted category 후보의 `analysis_results` 반영 정책 설계, category 후보 UI/UX 개선, `dictionary_candidates` 구조 설계다.
+
 ## Classification Phase 3-A 재분석 판단 로그
 
 - classification phase 3-A 재분석 판단은 사용자 로컬 재분석 결과 기반으로 기록한다.

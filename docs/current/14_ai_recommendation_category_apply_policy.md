@@ -1,5 +1,12 @@
 # AI Recommendation Category Apply Policy
 
+## Frontend Category Candidate Save UI Current Update
+
+- AI 추천 이력 상세/비교 화면에서 category 후보 저장 UI가 연결되었다.
+- 하단 category 후보 목록은 `저장된 산업/도메인/직무 후보` 관리 영역으로 유지한다.
+- `review_items` 반영 흐름과 category 후보 저장 흐름은 버튼은 공유하되 API 호출과 결과 표시를 독립적으로 처리한다.
+- category 후보 저장 성공 후 공고별 후보 목록을 refresh하며, `analysis_results` 즉시 갱신은 하지 않는다.
+
 ## 1. 문서 목적
 
 이 문서는 AI 추천 결과 중 industry/domain/position category 항목을 어떻게 저장하고 검토할지 정의하는 정책 문서다.

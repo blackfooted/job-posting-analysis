@@ -809,8 +809,20 @@ button { font-family: inherit; }
   padding: 20px;
 }
 
-.ai-category-candidates-header h2 {
+.ai-category-candidates-header {
+  display: grid;
+  gap: 6px;
   margin-bottom: 16px;
+}
+
+.ai-category-candidates-header h2 {
+  margin-bottom: 0;
+}
+
+.ai-category-candidates-header p {
+  color: var(--gray-500);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .ai-category-candidate-filters {

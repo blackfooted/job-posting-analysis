@@ -7,6 +7,7 @@ import {
 } from './api/dashboardApi'
 import {
   applyAiRecommendationItems,
+  createAiRecommendationCategoryCandidates,
   createAiRecommendationRun,
   fetchAiRecommendationHistory,
   fetchAiRecommendationHistoryDetail,
@@ -30,6 +31,9 @@ const postingFormValidationMessages = {
   requirements: '자격 요건을 입력하세요.',
   raw_text: '원문을 입력하세요.',
 }
+
+const reviewItemApplyFieldTypes = ['skill', 'competency']
+const categoryCandidateFieldTypes = ['industry', 'domain', 'position']
 
 function App() {
   const reviewItemsPageSize = 15
@@ -990,44 +994,143 @@ function App() {
     setAiRecommendationApplyError('')
     setAiRecommendationApplyResult(null)
 
-    try {
-      const result = await applyAiRecommendationItems(runId, selectedItems)
+    const reviewItemItems = selectedItems
+      .filter(
+        (item) =>
+          item?.item_kind === 'review_item' &&
+          reviewItemApplyFieldTypes.includes(item?.field_type),
+      )
+      .map((item) => ({
+        source_path: item.source_path,
+        field_type: item.field_type,
+        raw_value: item.raw_value,
+        suggested_value: item.suggested_value,
+      }))
 
-      if (result.error) {
-        setAiRecommendationApplyError(
-          result.error.message || '선택 항목 반영 중 오류가 발생했습니다.',
-        )
-        return
+    const categoryItems = selectedItems
+      .filter(
+        (item) =>
+          item?.item_kind === 'category_candidate' &&
+          categoryCandidateFieldTypes.includes(item?.category_type) &&
+          item?.recommended_value,
+      )
+      .map((item) => ({
+        source_path: item.source_path,
+        category_type: item.category_type,
+        recommended_value: item.recommended_value,
+      }))
+
+    const resultState = {
+      runId,
+      reviewItem: null,
+      categoryCandidate: null,
+    }
+
+    try {
+      if (reviewItemItems.length > 0) {
+        try {
+          const result = await applyAiRecommendationItems(runId, reviewItemItems)
+
+          if (result.error) {
+            resultState.reviewItem = {
+              error:
+                result.error.message ||
+                '정제 항목 반영 중 오류가 발생했습니다.',
+            }
+          } else {
+            resultState.reviewItem = { data: result.data || null }
+          }
+        } catch (requestError) {
+          resultState.reviewItem = {
+            error:
+              requestError.message ||
+              '정제 항목 반영 중 오류가 발생했습니다.',
+          }
+        }
       }
 
-      await fetchSelectedAiRecommendationHistory(
-        selectedAiPostingId,
-        aiRecommendationHistoryPagination?.page || 1,
+      if (categoryItems.length > 0) {
+        try {
+          const result = await createAiRecommendationCategoryCandidates(
+            runId,
+            categoryItems,
+          )
+
+          if (result.error) {
+            resultState.categoryCandidate = {
+              error:
+                result.error.message ||
+                '산업/도메인/직무 후보 저장 중 오류가 발생했습니다.',
+            }
+          } else {
+            resultState.categoryCandidate = { data: result.data || null }
+          }
+        } catch (requestError) {
+          resultState.categoryCandidate = {
+            error:
+              requestError.message ||
+              '산업/도메인/직무 후보 저장 중 오류가 발생했습니다.',
+          }
+        }
+      }
+
+      const reviewItemSucceeded = Boolean(resultState.reviewItem?.data)
+      const categoryCandidateSucceeded = Boolean(
+        resultState.categoryCandidate?.data,
       )
 
-      if (selectedAiRecommendationHistoryRunId === runId) {
-        await fetchSelectedAiRecommendationHistoryDetail(runId)
+      if (reviewItemSucceeded) {
+        await fetchSelectedAiRecommendationHistory(
+          selectedAiPostingId,
+          aiRecommendationHistoryPagination?.page || 1,
+        )
+
+        if (selectedAiRecommendationHistoryRunId === runId) {
+          await fetchSelectedAiRecommendationHistoryDetail(runId)
+        }
+
+        if (
+          aiRecommendationCompareDetails.some(
+            (detail) => detail?.run?.id === runId,
+          )
+        ) {
+          setAiRecommendationCompareDetails([])
+          setAiRecommendationCompareMessage(
+            '반영 후 비교 결과를 초기화했습니다. 다시 비교를 실행하세요.',
+          )
+        }
+      }
+
+      if (categoryCandidateSucceeded) {
+        setAiCategoryCandidatePage(1)
+        await fetchSelectedAiCategoryCandidates(selectedAiPostingId, 1)
+      }
+
+      const attemptedRequestsSucceeded =
+        (reviewItemItems.length === 0 || reviewItemSucceeded) &&
+        (categoryItems.length === 0 || categoryCandidateSucceeded)
+
+      if (attemptedRequestsSucceeded) {
+        setAiRecommendationApplySelections((currentSelections) => ({
+          ...currentSelections,
+          [runKey]: {},
+        }))
       }
 
       if (
-        aiRecommendationCompareDetails.some(
-          (detail) => detail?.run?.id === runId,
-        )
+        !reviewItemSucceeded &&
+        !categoryCandidateSucceeded &&
+        (reviewItemItems.length > 0 || categoryItems.length > 0)
       ) {
-        setAiRecommendationCompareDetails([])
-        setAiRecommendationCompareMessage(
-          '반영 후 비교 결과를 초기화했습니다. 다시 비교를 실행하세요.',
+        setAiRecommendationApplyError(
+          '선택 항목 저장/반영에 실패했습니다. 항목별 결과를 확인하세요.',
         )
       }
 
-      setAiRecommendationApplySelections((currentSelections) => ({
-        ...currentSelections,
-        [runKey]: {},
-      }))
-      setAiRecommendationApplyResult(result.data || null)
+      setAiRecommendationApplyResult(resultState)
     } catch (requestError) {
       setAiRecommendationApplyError(
-        requestError.message || '선택 항목 반영 중 오류가 발생했습니다.',
+        requestError.message || '선택 항목 저장/반영 중 오류가 발생했습니다.',
       )
     } finally {
       setAiRecommendationApplyLoadingRunId(null)
@@ -2113,7 +2216,11 @@ function AiCategoryCandidateList({
   return (
     <section className="ai-category-candidates">
       <div className="ai-category-candidates-header">
-        <h2>산업/도메인/직무 후보 목록</h2>
+        <h2>저장된 산업/도메인/직무 후보</h2>
+        <p>
+          AI 추천 결과에서 후보로 저장한 산업/도메인/직무를 검토합니다.
+          후보 채택은 분석 결과 반영이 아닙니다.
+        </p>
       </div>
 
       <div className="ai-category-candidate-filters">
@@ -2143,7 +2250,7 @@ function AiCategoryCandidateList({
         </label>
       </div>
 
-      {message && <p className="success">{message}</p>}
+      {message && <p className="success-message">{message}</p>}
       {error && <p className="error">{error}</p>}
 
       <div className="ai-category-candidate-table-wrap">
@@ -2723,7 +2830,7 @@ function AiRecommendationCompareCard({
         items={selectableItems}
         selectedItems={selectedItems}
         isLoading={applyLoadingRunId === runId}
-        buttonLabel="이 이력의 선택 항목 반영"
+        buttonLabel="이 이력의 선택 항목 저장/반영"
         onToggle={onApplyToggle}
         onApply={onApply}
       />
@@ -2762,7 +2869,7 @@ function AiRecommendationApplyPanel({
   items = [],
   selectedItems = {},
   isLoading = false,
-  buttonLabel = '선택 항목 반영',
+  buttonLabel = '선택 항목 저장/반영',
   onToggle,
   onApply,
 }) {
@@ -2770,9 +2877,13 @@ function AiRecommendationApplyPanel({
 
   return (
     <section className="ai-recommendation-apply-panel">
-      <h3>정제 항목 선택 반영</h3>
+      <h3>AI 추천 항목 선택</h3>
+      <p>
+        기술/역량은 정제 항목으로 반영되고, 산업/도메인/직무는 후보로
+        저장됩니다.
+      </p>
       {items.length === 0 ? (
-        <p>반영 가능한 기술/도구 또는 역량 항목이 없습니다.</p>
+        <p>저장/반영 가능한 AI 추천 항목이 없습니다.</p>
       ) : (
         <div className="ai-recommendation-apply-list">
           {items.map((entry) => (
@@ -2789,6 +2900,12 @@ function AiRecommendationApplyPanel({
               <span>
                 <strong>{formatValue(entry.label)}</strong>
                 <small>{entry.categoryLabel}</small>
+                {entry.confidence && (
+                  <small>확신도 {formatValue(entry.confidence)}</small>
+                )}
+                {entry.reason && (
+                  <small>판단 근거 {formatValue(entry.reason)}</small>
+                )}
               </span>
             </label>
           ))}
@@ -2799,7 +2916,7 @@ function AiRecommendationApplyPanel({
         onClick={() => onApply(runId)}
         disabled={selectedCount === 0 || isLoading}
       >
-        {isLoading ? '반영 중입니다' : buttonLabel}
+        {isLoading ? '저장/반영 중입니다' : buttonLabel}
       </button>
     </section>
   )
@@ -2810,41 +2927,82 @@ function AiRecommendationApplyResult({ result = null, error = '' }) {
     return null
   }
 
-  const appliedItems = result?.applied_items || []
-  const skippedItems = result?.skipped_items || []
+  const legacyResult =
+    result && !result.reviewItem && !result.categoryCandidate ? result : null
+  const reviewItemResult = result?.reviewItem?.data || legacyResult
+  const categoryCandidateResult = result?.categoryCandidate?.data || null
+  const reviewItemError = result?.reviewItem?.error || ''
+  const categoryCandidateError = result?.categoryCandidate?.error || ''
+  const appliedItems = reviewItemResult?.applied_items || []
+  const skippedItems = reviewItemResult?.skipped_items || []
+  const createdCategoryItems = categoryCandidateResult?.created_items || []
+  const skippedCategoryItems = categoryCandidateResult?.skipped_items || []
 
   return (
     <section className="ai-recommendation-apply-result">
-      <h2>선택 반영 결과</h2>
+      <h2>선택 항목 저장/반영 결과</h2>
       {error && <p className="error">{error}</p>}
-      {result && (
+      {(reviewItemResult || reviewItemError) && (
         <>
+          {reviewItemError && <p className="error">{reviewItemError}</p>}
           <dl className="ai-meta-list">
             <div>
               <dt>이력 ID</dt>
-              <dd>{formatValue(result?.run?.id)}</dd>
+              <dd>{formatValue(reviewItemResult?.run?.id || result?.runId)}</dd>
             </div>
             <div>
               <dt>반영 상태</dt>
-              <dd>{formatAiAppliedStatus(result?.run?.applied_status)}</dd>
+              <dd>
+                {formatAiAppliedStatus(reviewItemResult?.run?.applied_status)}
+              </dd>
             </div>
             <div>
-              <dt>반영 완료</dt>
+              <dt>정제 항목 반영 완료</dt>
               <dd>{appliedItems.length}건</dd>
             </div>
             <div>
-              <dt>반영 제외</dt>
+              <dt>정제 항목 반영 제외</dt>
               <dd>{skippedItems.length}건</dd>
             </div>
           </dl>
 
           <AiRecommendationApplyResultList
-            title="반영 항목"
+            title="정제 항목 반영 완료"
             items={appliedItems}
           />
           <AiRecommendationApplyResultList
-            title="제외 항목"
+            title="정제 항목 반영 제외"
             items={skippedItems}
+          />
+        </>
+      )}
+      {(categoryCandidateResult || categoryCandidateError) && (
+        <>
+          {categoryCandidateError && (
+            <p className="error">{categoryCandidateError}</p>
+          )}
+          <dl className="ai-meta-list">
+            <div>
+              <dt>이력 ID</dt>
+              <dd>{formatValue(result?.runId)}</dd>
+            </div>
+            <div>
+              <dt>산업/도메인/직무 후보 저장 완료</dt>
+              <dd>{createdCategoryItems.length}건</dd>
+            </div>
+            <div>
+              <dt>산업/도메인/직무 후보 저장 제외</dt>
+              <dd>{skippedCategoryItems.length}건</dd>
+            </div>
+          </dl>
+
+          <AiRecommendationCategoryCandidateResultList
+            title="산업/도메인/직무 후보 저장 완료"
+            items={createdCategoryItems}
+          />
+          <AiRecommendationCategoryCandidateResultList
+            title="산업/도메인/직무 후보 저장 제외"
+            items={skippedCategoryItems}
           />
         </>
       )}
@@ -2876,7 +3034,63 @@ function AiRecommendationApplyResultList({ title, items = [] }) {
   )
 }
 
+function AiRecommendationCategoryCandidateResultList({ title, items = [] }) {
+  return (
+    <div className="ai-recommendation-apply-result-list">
+      <h3>{title}</h3>
+      {items.length === 0 ? (
+        <p>없음</p>
+      ) : (
+        <ul>
+          {items.map((item, index) => (
+            <li key={`${item.source_path}-${index}`}>
+              <strong>
+                {formatValue(item.recommended_value || item.raw_value)}
+              </strong>
+              <span>
+                {formatAiCategoryType(item.category_type)} ·{' '}
+                {formatAiCategoryCandidateAction(item.action)}
+              </span>
+              {item.reason && <em>{item.reason}</em>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function getSelectableAiRecommendationApplyItems(recommendation = {}) {
+  const categoryItems = [
+    createCategoryCandidateEntry({
+      sourcePath: 'industry_category',
+      categoryType: 'industry',
+      recommendedValue: recommendation.industry_category?.value,
+      categoryLabel: '산업/도메인/직무 후보 · 산업',
+      labelPrefix: '산업',
+      confidence: recommendation.industry_category?.confidence,
+      reason: recommendation.industry_category?.reason,
+    }),
+    createCategoryCandidateEntry({
+      sourcePath: 'primary_domain_category',
+      categoryType: 'domain',
+      recommendedValue: recommendation.primary_domain_category?.value,
+      categoryLabel: '산업/도메인/직무 후보 · 도메인',
+      labelPrefix: '대표 도메인',
+      confidence: recommendation.primary_domain_category?.confidence,
+      reason: recommendation.primary_domain_category?.reason,
+    }),
+    createCategoryCandidateEntry({
+      sourcePath: 'position_category',
+      categoryType: 'position',
+      recommendedValue: recommendation.position_category?.value,
+      categoryLabel: '산업/도메인/직무 후보 · 직무',
+      labelPrefix: '직무',
+      confidence: recommendation.position_category?.confidence,
+      reason: recommendation.position_category?.reason,
+    }),
+  ].filter(Boolean)
+
   const skillItems = (recommendation.skills || [])
     .map((item, index) =>
       createApplyItemEntry({
@@ -2885,6 +3099,8 @@ function getSelectableAiRecommendationApplyItems(recommendation = {}) {
         rawValue: item?.value,
         suggestedValue: item?.value,
         categoryLabel: '기술/도구',
+        confidence: item?.confidence,
+        reason: item?.reason,
       }),
     )
     .filter(Boolean)
@@ -2897,27 +3113,73 @@ function getSelectableAiRecommendationApplyItems(recommendation = {}) {
         rawValue: item?.value,
         suggestedValue: item?.value,
         categoryLabel: '역량',
+        confidence: item?.confidence,
+        reason: item?.reason,
       }),
     )
     .filter(Boolean)
 
   const candidateItems = (recommendation.review_item_candidates || [])
     .map((item, index) => {
-      if (!['skill', 'competency'].includes(item?.field_type)) {
-        return null
+      if (reviewItemApplyFieldTypes.includes(item?.field_type)) {
+        return createApplyItemEntry({
+          sourcePath: `review_item_candidates[${index}]`,
+          fieldType: item.field_type,
+          rawValue: item.raw_value,
+          suggestedValue: item.suggested_value,
+          categoryLabel: `검토 후보 · ${formatAiFieldType(item.field_type)}`,
+          confidence: item?.confidence,
+          reason: item?.reason,
+        })
       }
 
-      return createApplyItemEntry({
-        sourcePath: `review_item_candidates[${index}]`,
-        fieldType: item.field_type,
-        rawValue: item.raw_value,
-        suggestedValue: item.suggested_value,
-        categoryLabel: `검토 후보 · ${formatAiFieldType(item.field_type)}`,
-      })
+      if (categoryCandidateFieldTypes.includes(item?.field_type)) {
+        return createCategoryCandidateEntry({
+          sourcePath: `review_item_candidates[${index}]`,
+          categoryType: item.field_type,
+          recommendedValue: item.suggested_value || item.raw_value,
+          categoryLabel: `검토 후보 · ${formatAiFieldType(item.field_type)}`,
+          labelPrefix: formatAiFieldType(item.field_type),
+          confidence: item?.confidence,
+          reason: item?.reason,
+        })
+      }
+
+      return null
     })
     .filter(Boolean)
 
-  return [...skillItems, ...competencyItems, ...candidateItems]
+  return [...categoryItems, ...skillItems, ...competencyItems, ...candidateItems]
+}
+
+function createCategoryCandidateEntry({
+  sourcePath,
+  categoryType,
+  recommendedValue,
+  categoryLabel,
+  labelPrefix,
+  confidence,
+  reason,
+}) {
+  const normalizedRecommendedValue = recommendedValue || ''
+
+  if (!normalizedRecommendedValue) {
+    return null
+  }
+
+  return {
+    source_path: sourcePath,
+    label: `${labelPrefix}: ${normalizedRecommendedValue}`,
+    categoryLabel,
+    confidence,
+    reason,
+    payload: {
+      source_path: sourcePath,
+      item_kind: 'category_candidate',
+      category_type: categoryType,
+      recommended_value: normalizedRecommendedValue,
+    },
+  }
 }
 
 function createApplyItemEntry({
@@ -2926,6 +3188,8 @@ function createApplyItemEntry({
   rawValue,
   suggestedValue,
   categoryLabel,
+  confidence,
+  reason,
 }) {
   const normalizedRawValue = rawValue || suggestedValue || ''
   const normalizedSuggestedValue = suggestedValue || rawValue || ''
@@ -2938,8 +3202,11 @@ function createApplyItemEntry({
     source_path: sourcePath,
     label: normalizedSuggestedValue || normalizedRawValue,
     categoryLabel,
+    confidence,
+    reason,
     payload: {
       source_path: sourcePath,
+      item_kind: 'review_item',
       field_type: fieldType,
       raw_value: normalizedRawValue,
       suggested_value: normalizedSuggestedValue,
@@ -3209,7 +3476,7 @@ function AiRecommendationHistoryDetail({
             items={selectableItems}
             selectedItems={selectedItems}
             isLoading={applyLoadingRunId === runId}
-            buttonLabel="선택 항목 반영"
+            buttonLabel="선택 항목 저장/반영"
             onToggle={onApplyToggle}
             onApply={onApply}
           />
@@ -3654,6 +3921,15 @@ function formatAiCategoryCandidateStatus(status) {
   return status || '-'
 }
 
+function formatAiCategoryCandidateAction(action) {
+  const actionLabels = {
+    skipped_duplicate_candidate: '중복 후보 제외',
+    skipped_empty_value: '빈 후보값 제외',
+  }
+
+  return actionLabels[action] || '후보 저장'
+}
+
 function createReviewItemDrafts(items = []) {
   return items.reduce((drafts, item) => {
     drafts[item.id] = createReviewItemDraft(item)
@@ -3705,4 +3981,3 @@ function clearPostingFieldError(setErrors, fieldName) {
 }
 
 export default App
-

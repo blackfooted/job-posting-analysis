@@ -1,5 +1,12 @@
 # AI Recommendation History Plan
 
+## Frontend Category Candidate Save UI Current Update
+
+- history 상세 화면과 비교 화면에서 산업/도메인/직무 후보를 선택해 저장할 수 있다.
+- 저장된 후보는 하단 `저장된 산업/도메인/직무 후보` 목록에서 별도로 관리한다.
+- `skill|competency` apply 결과와 산업/도메인/직무 후보 저장 결과는 독립적으로 표시한다.
+- category 후보 저장은 history recommendation_json 기반 후보 저장이며, `analysis_results`는 즉시 갱신하지 않는다.
+
 ## Output Token 안정화와 History 저장 기준
 
 - `POST /api/ai-recommendations/postings/{posting_id}/runs`와 history 저장은 OpenAI 응답 JSON parse 안정성을 우선한다.

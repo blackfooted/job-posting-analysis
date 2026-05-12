@@ -1,5 +1,12 @@
 # AI Recommendation Category Candidate Storage
 
+## Frontend Category Candidate Save UI Current Update
+
+- frontend에서 category 후보 저장 UI가 history 상세/비교 화면의 `AI 추천 항목 선택` 영역에 연결되었다.
+- 공고별 후보 목록/상태 변경 UI는 `저장된 산업/도메인/직무 후보` 관리 영역으로 유지하며, AI 추천 결과에서 새 후보를 선택 저장하는 UI와 역할을 분리한다.
+- 선택 항목 저장/반영 시 `industry|domain|position`만 category 후보 저장 API로 보내고, `skill|competency`는 기존 review_items apply API로 보낸다.
+- 두 API 결과는 독립적으로 표시하며, 부분 성공/부분 실패 시 성공한 결과와 실패한 결과를 각각 보여준다.
+
 ## 1. 문서 목적
 
 이 문서는 AI 추천 결과 중 industry/domain/position category 후보를 별도 저장 구조로 관리하기 위한 DB/API/UI 설계 문서다.
