@@ -17,24 +17,25 @@
 
 | 항목 | 결과 | 메모 |
 |---|---|---|
-| accepted 후보만 반영 가능 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
-| pending/rejected 후보 반영 불가 | 사용자 입력 필요 | 사용자 로컬 UI/API 흐름 검증 필요 |
-| confirm_overwrite 처리 | 사용자 입력 필요 | 기존값과 후보값이 다른 케이스 검증 필요 |
-| analysis_results 컬럼 반영 | 사용자 입력 필요 | industry/domain/position 매핑 검증 필요 |
-| applied_to_analysis 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
-| applied_at 기록 | 사용자 입력 필요 | 후보 목록 또는 backend 응답 기준 확인 필요 |
-| previous_analysis_value 기록 | 사용자 입력 필요 | overwrite/동일값 케이스 확인 필요 |
-| applied_analysis_field 기록 | 사용자 입력 필요 | 반영 컬럼명 확인 필요 |
-| analyzed_at 미갱신 | 사용자 입력 필요 | 가능하면 DB 또는 backend 응답 기준 확인 필요 |
-| dashboard 영향 확인 | 사용자 입력 필요 | `analysis_results` 반영 이후 집계 영향 확인 필요 |
+| accepted 후보만 반영 가능 | pass | 신규 공고 기준 정상 작동 확인 |
+| pending/rejected 후보 반영 불가 | pass | 신규 공고 기준 정상 작동 확인 |
+| confirm_overwrite 처리 | pass | 기존 값과 후보값이 다른 경우 confirm 흐름 정상 |
+| analysis_results 컬럼 반영 | pass | 후보 category_type에 맞는 분석 결과 반영 확인 |
+| applied_to_analysis 기록 | pass | 반영 완료 상태 확인 |
+| applied_at 기록 | pass | 반영 시각 기록 확인 |
+| previous_analysis_value 기록 | pass | 기존 분석값 기록 확인 |
+| applied_analysis_field 기록 | pass | 반영 필드 기록 확인 |
+| analyzed_at 미갱신 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
+| dashboard 영향 확인 | 확인 필요 | 사용자 검증 결과에서 명시 확인 여부가 제공되지 않음 |
 
 종합 판단:
 
 ```text
-사용자 입력 필요
+pass
 ```
 
-사용자 로컬 검증 결과가 제공되면 pass / partial / fail 중 하나로 확정한다.
+신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 “분석 결과로 반영”, `analysis_results` 반영, frontend 화면 반영 흐름이 정상 작동함을 확인했다.
+기능 흐름은 pass. `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요.
 
 ## 1. 문서 목적
 

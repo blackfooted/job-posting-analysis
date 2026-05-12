@@ -9,7 +9,8 @@
 - 자동 반영이 아니라 사용자의 명시적 apply-analysis 액션으로만 반영한다.
 - frontend는 accepted와 `applied_to_analysis`를 구분해 표시한다.
 - category 후보 저장/accepted 상태 변경만으로는 `analysis_results`와 dashboard가 변경되지 않는다.
-- category candidate analysis apply 기능의 사용자 로컬 검증 결과는 아직 사용자 입력 필요 상태다.
+- 신규 공고 기준 사용자 로컬 검증에서 category 후보 상태 변경, accepted 후보의 `analysis_results` 반영, frontend 화면 반영 흐름이 pass로 확인되었다.
+- `analyzed_at` 미갱신 및 dashboard 영향은 추가 확인 필요로 남긴다.
 
 ## Category Candidate Analysis Apply Policy Reference
 
