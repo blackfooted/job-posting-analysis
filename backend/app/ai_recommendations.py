@@ -59,9 +59,11 @@ AI_RECOMMENDATION_PROMPT_VERSION = "ai-recommendation-v1"
 AI_RECOMMENDATION_DEBUG_ENV = "AI_RECOMMENDATION_DEBUG"
 AI_RECOMMENDATION_DEBUG_PREVIEW_LENGTH = 200
 AI_RECOMMENDATION_MODE_ENV = "AI_RECOMMENDATION_MODE"
+AI_RECOMMENDATION_DAILY_LIMIT_ENV = "AI_RECOMMENDATION_DAILY_LIMIT"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
 DEFAULT_AI_RECOMMENDATION_MODE = "mock"
+DEFAULT_AI_RECOMMENDATION_DAILY_LIMIT = 10
 DEFAULT_OPENAI_MODEL = "gpt-5.4-nano"
 AI_RECOMMENDATION_MODES = {"mock", "openai"}
 AI_RECOMMENDATION_RESPONSE_SCHEMA = {
@@ -191,6 +193,10 @@ def get_ai_recommendation_for_posting(posting_id: int) -> Any:
                 ),
             )
 
+        with _connection() as connection:
+            if not _reserve_ai_recommendation_daily_quota(connection):
+                return _daily_limit_exceeded_response()
+
         model = os.getenv(OPENAI_MODEL_ENV, "").strip() or DEFAULT_OPENAI_MODEL
         try:
             raw_recommendation = _get_openai_recommendation(
@@ -285,6 +291,10 @@ def create_ai_recommendation_run_for_posting(posting_id: int) -> Any:
                     "openai mode에서는 OPENAI_API_KEY가 필요합니다.",
                 ),
             )
+
+        with _connection() as connection:
+            if not _reserve_ai_recommendation_daily_quota(connection):
+                return _daily_limit_exceeded_response()
 
         model = os.getenv(OPENAI_MODEL_ENV, "").strip() or DEFAULT_OPENAI_MODEL
         try:
@@ -1916,6 +1926,66 @@ def _get_ai_recommendation_mode() -> str:
     return mode or DEFAULT_AI_RECOMMENDATION_MODE
 
 
+def _get_ai_recommendation_daily_limit() -> int:
+    raw_limit = os.getenv(AI_RECOMMENDATION_DAILY_LIMIT_ENV, "").strip()
+    try:
+        limit = int(raw_limit)
+    except ValueError:
+        return DEFAULT_AI_RECOMMENDATION_DAILY_LIMIT
+
+    if limit <= 0:
+        return DEFAULT_AI_RECOMMENDATION_DAILY_LIMIT
+    return limit
+
+
+def _current_kst_date() -> str:
+    kst = timezone(timedelta(hours=9))
+    return datetime.now(kst).date().isoformat()
+
+
+def _reserve_ai_recommendation_daily_quota(
+    connection: sqlite3.Connection,
+) -> bool:
+    usage_date = _current_kst_date()
+    daily_limit = _get_ai_recommendation_daily_limit()
+
+    connection.execute("BEGIN IMMEDIATE")
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO ai_recommendation_daily_usage (
+          usage_date,
+          call_count,
+          updated_at
+        )
+        VALUES (?, 0, datetime('now', '+9 hours'))
+        """,
+        (usage_date,),
+    )
+
+    row = connection.execute(
+        """
+        SELECT call_count
+        FROM ai_recommendation_daily_usage
+        WHERE usage_date = ?
+        """,
+        (usage_date,),
+    ).fetchone()
+    call_count = row["call_count"] if isinstance(row, sqlite3.Row) else row[0]
+    if call_count >= daily_limit:
+        return False
+
+    connection.execute(
+        """
+        UPDATE ai_recommendation_daily_usage
+        SET call_count = call_count + 1,
+            updated_at = datetime('now', '+9 hours')
+        WHERE usage_date = ?
+        """,
+        (usage_date,),
+    )
+    return True
+
+
 def _get_mock_recommendation(posting: dict[str, Any]) -> dict[str, Any]:
     del posting
     return {
@@ -2306,6 +2376,16 @@ def _current_kst_isoformat() -> str:
 
 def _success(data: Any) -> dict[str, Any]:
     return {"data": data, "error": None}
+
+
+def _daily_limit_exceeded_response() -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content=_error_response(
+            "AI_RECOMMENDATION_DAILY_LIMIT_EXCEEDED",
+            "오늘 사용할 수 있는 AI 추천 횟수를 모두 사용했습니다.",
+        ),
+    )
 
 
 def _error_response(code: str, message: str) -> dict[str, Any]:

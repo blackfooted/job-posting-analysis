@@ -76,6 +76,12 @@ CREATE TABLE IF NOT EXISTS ai_recommendation_runs (
 CREATE INDEX IF NOT EXISTS idx_ai_recommendation_runs_posting_id_created_at
 ON ai_recommendation_runs(posting_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS ai_recommendation_daily_usage (
+  usage_date TEXT PRIMARY KEY,
+  call_count INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now', '+9 hours'))
+);
+
 CREATE TABLE IF NOT EXISTS ai_recommendation_category_candidates (
   id                  INTEGER PRIMARY KEY AUTOINCREMENT,
   run_id              INTEGER NOT NULL,

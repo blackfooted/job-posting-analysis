@@ -1,5 +1,26 @@
 # AI Recommendation Spec
 
+## OpenAI Daily Call Quota
+
+- OpenAI mode AI 추천 호출에 backend 일일 quota를 추가했다.
+- 기본 제한값은 KST 날짜 기준 하루 10회다.
+- 제한값은 `AI_RECOMMENDATION_DAILY_LIMIT` 환경변수로 조정하며, 미설정/숫자 아님/0 이하이면 기본값 10을 사용한다.
+- 제한 대상 endpoint:
+  - `GET /api/ai-recommendations/postings/{posting_id}`
+  - `POST /api/ai-recommendations/postings/{posting_id}/runs`
+- mock mode는 제한하지 않는다.
+- history 조회, 선택 반영, category 후보 저장/조회/상태 변경/분석 결과 반영 API는 OpenAI를 호출하지 않으므로 제한 대상이 아니다.
+- quota 차감 순서:
+  1. posting 존재 확인
+  2. mode 확인
+  3. openai mode API key 확인
+  4. quota reserve
+  5. OpenAI 호출
+- posting 없음, mode invalid, API key 없음, mock mode는 quota를 차감하지 않는다.
+- quota 초과 시 HTTP 429와 `AI_RECOMMENDATION_DAILY_LIMIT_EXCEEDED`를 반환한다.
+- error message는 `오늘 사용할 수 있는 AI 추천 횟수를 모두 사용했습니다.`다.
+- 이번 작업에서는 사용량 조회 API를 만들지 않으며, 필요 시 후속 후보로 검토한다.
+
 ## AI 추천 관리 화면 UI/UX 개선 상태
 
 - AI 추천 관리 화면의 기능 로직 변경 없이 가독성 개선을 1차 반영했다.

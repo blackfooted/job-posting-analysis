@@ -95,9 +95,13 @@ AI_RECOMMENDATION_MODE=openai
 OPENAI_API_KEY=<secret>
 OPENAI_MODEL=gpt-5.4-nano
 AI_RECOMMENDATION_DEBUG=0
+AI_RECOMMENDATION_DAILY_LIMIT=10
 ```
 
 - `OPENAI_API_KEY`는 frontend env에 두지 않는다.
+- public URL 공개 시 OpenAI 비용 제어를 위해 backend quota 환경변수 `AI_RECOMMENDATION_DAILY_LIMIT=10` 설정을 권장한다.
+- Free/Starter 플랜 여부와 무관하게 OpenAI 호출 비용 제어는 backend daily quota로 관리한다.
+- 외부 공개 후에는 admin token 또는 인증 기반 AI 추천 API 보호를 후속으로 검토한다.
 - 이번 점검에서 실제 Render 배포, DNS 설정, OpenAI 호출은 수행하지 않았다.
 
 Backend smoke test command:

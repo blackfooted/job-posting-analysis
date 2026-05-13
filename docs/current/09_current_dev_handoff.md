@@ -1,5 +1,23 @@
 # Current Dev Handoff
 
+## AI Recommendation OpenAI Daily Quota 구현 완료
+
+- OpenAI mode AI 추천 호출 비용 제어를 위해 backend 일일 quota를 구현했다.
+- `ai_recommendation_daily_usage` 테이블을 추가해 KST 날짜별 OpenAI 추천 호출 시도 수를 관리한다.
+- 기본 일일 제한은 10회이며 `AI_RECOMMENDATION_DAILY_LIMIT` 환경변수로 조정할 수 있다.
+- 제한 대상은 `GET /api/ai-recommendations/postings/{posting_id}`와 `POST /api/ai-recommendations/postings/{posting_id}/runs`다.
+- quota 차감은 OpenAI 호출 시도 직전에 수행한다.
+- posting 없음, mode invalid, API key 없음, mock mode는 quota를 차감하지 않는다.
+- quota 초과 시 HTTP 429와 `AI_RECOMMENDATION_DAILY_LIMIT_EXCEEDED`를 반환한다.
+- Render 배포 시 backend env에 `AI_RECOMMENDATION_DAILY_LIMIT=10` 설정을 권장한다.
+- frontend/API client/config/OpenAI prompt/실제 OpenAI 호출 로직은 변경하지 않았다.
+
+후속 후보:
+
+1. 사용량 조회 UI/API
+2. admin token 기반 AI 추천 API 보호
+3. 사용자/IP별 rate limit
+
 ## MVP Deployment UI Label Polish 완료
 
 - MVP 배포 전 화면 라벨/상태값/그리드 컬럼 정리를 완료했다.

@@ -1,5 +1,14 @@
 # AI Recommendation History Plan
 
+## Daily Quota와 History 분리
+
+- AI 추천 run history와 OpenAI daily quota는 별도 테이블과 별도 목적을 가진다.
+- `ai_recommendation_runs`는 추천 이력 저장, 상세 조회, 비교, 선택 반영 기준 데이터 보존용이다.
+- `ai_recommendation_daily_usage`는 KST 날짜별 OpenAI 호출 시도 수를 제한하는 비용 제어용이다.
+- daily quota는 run 저장 성공 여부와 별개로 OpenAI 호출 시도 직전에 차감한다.
+- OpenAI 호출 성공 후 run history 저장이 실패해도 이미 시도한 OpenAI 요청의 quota는 되돌리지 않는다.
+- mock mode, posting 없음, mode invalid, API key 없음은 OpenAI 호출 전 단계이므로 quota를 차감하지 않는다.
+
 ## History UI/UX 개선 반영
 
 - history 상세/비교 화면의 판단 근거는 기본 접힘 상태의 아코디언으로 정리했다.
