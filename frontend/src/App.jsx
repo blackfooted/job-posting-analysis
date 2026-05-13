@@ -317,14 +317,14 @@ function App() {
       }
 
       if (result.error) {
-        setPostingsError(result.error.message || 'Failed to load postings.')
+        setPostingsError(result.error.message || '공고 목록을 불러오지 못했습니다.')
         return
       }
 
       setPostings(result.data || [])
     } catch (requestError) {
       if (shouldUpdate()) {
-        setPostingsError(requestError.message || 'Failed to load postings.')
+        setPostingsError(requestError.message || '공고 목록을 불러오지 못했습니다.')
       }
     } finally {
       if (shouldUpdate()) {
@@ -389,7 +389,7 @@ function App() {
 
       if (detailResult.error) {
         setSelectedPostingError(
-          detailResult.error.message || 'Failed to load posting detail.',
+          detailResult.error.message || '공고 상세를 불러오지 못했습니다.',
         )
         return
       }
@@ -404,7 +404,7 @@ function App() {
       applyPostingAnalysisResult(analysisResult, analysisError)
     } catch (requestError) {
       setSelectedPostingError(
-        requestError.message || 'Failed to load posting detail.',
+        requestError.message || '공고 상세를 불러오지 못했습니다.',
       )
     } finally {
       setSelectedPostingLoading(false)
@@ -467,7 +467,7 @@ function App() {
 
       if (result.error) {
         setPostingCreateError(
-          result.error.message || 'Failed to create posting.',
+          result.error.message || '공고 저장에 실패했습니다.',
         )
         return
       }
@@ -479,7 +479,7 @@ function App() {
       setPostingCreateMessage('공고가 저장되었습니다.')
     } catch (requestError) {
       setPostingCreateError(
-        requestError.message || 'Failed to create posting.',
+        requestError.message || '공고 저장에 실패했습니다.',
       )
     } finally {
       setPostingCreateLoading(false)
@@ -510,7 +510,7 @@ function App() {
 
       if (result.error) {
         setPostingCreateError(
-          result.error.message || 'Failed to update posting.',
+          result.error.message || '공고 수정에 실패했습니다.',
         )
         return
       }
@@ -524,7 +524,7 @@ function App() {
 
       if (detailResult.error) {
         setSelectedPostingError(
-          detailResult.error.message || 'Failed to load posting detail.',
+          detailResult.error.message || '공고 상세를 불러오지 못했습니다.',
         )
         return
       }
@@ -537,7 +537,7 @@ function App() {
       setPostingCreateMessage('공고가 수정되었습니다.')
     } catch (requestError) {
       setPostingCreateError(
-        requestError.message || 'Failed to update posting.',
+        requestError.message || '공고 수정에 실패했습니다.',
       )
     } finally {
       setPostingCreateLoading(false)
@@ -588,7 +588,7 @@ function App() {
 
     if (detailResult.error) {
       setSelectedPostingError(
-        detailResult.error.message || 'Failed to load posting detail.',
+        detailResult.error.message || '공고 상세를 불러오지 못했습니다.',
       )
       return
     }
@@ -680,7 +680,7 @@ function App() {
 
       if (result.error) {
         setReviewItemsError(
-          result.error.message || 'Failed to load review items.',
+          result.error.message || '정제 항목을 불러오지 못했습니다.',
         )
         return
       }
@@ -697,7 +697,7 @@ function App() {
     } catch (requestError) {
       if (shouldUpdate()) {
         setReviewItemsError(
-          requestError.message || 'Failed to load review items.',
+          requestError.message || '정제 항목을 불러오지 못했습니다.',
         )
       }
     } finally {
@@ -727,7 +727,7 @@ function App() {
       if (result.error) {
         setReviewItemSaveMessage('')
         setReviewItemSaveError(
-          result.error.message || 'Failed to save review item.',
+          result.error.message || '정제 항목 저장에 실패했습니다.',
         )
         return
       }
@@ -737,7 +737,7 @@ function App() {
     } catch (requestError) {
       setReviewItemSaveMessage('')
       setReviewItemSaveError(
-        requestError.message || 'Failed to save review item.',
+        requestError.message || '정제 항목 저장에 실패했습니다.',
       )
     } finally {
       setSavingReviewItemId(null)
@@ -1849,9 +1849,9 @@ function App() {
             </div>
 
             <section className="postings" aria-label="Postings">
-              <h2>Postings</h2>
+              <h2>공고 목록</h2>
 
-              {postingsLoading && <p>Loading postings...</p>}
+              {postingsLoading && <p>공고 목록을 불러오는 중...</p>}
 
               {!postingsLoading && postingsError && (
                 <p className="error">{postingsError}</p>
@@ -1889,7 +1889,7 @@ function App() {
             )}
 
             <section className="posting-detail" aria-label="Posting detail">
-              <h2>Posting Detail</h2>
+              <h2>공고 상세</h2>
 
               {!selectedPostingLoading &&
                 !selectedPostingError &&
@@ -1897,7 +1897,7 @@ function App() {
                   <p>공고를 선택하면 상세 정보가 표시됩니다.</p>
                 )}
 
-              {selectedPostingLoading && <p>Loading posting detail...</p>}
+              {selectedPostingLoading && <p>공고 상세를 불러오는 중...</p>}
 
               {!selectedPostingLoading && selectedPostingError && (
                 <p className="error">{selectedPostingError}</p>
@@ -1940,7 +1940,7 @@ function App() {
                   <div className="posting-edit">
                     <p className="form-note">
                       공고 수정 시 전체 재분류가 발생하며 기존 정제 항목과
-                      confirmed 값이 초기화될 수 있습니다.
+                      확정값이 초기화될 수 있습니다.
                     </p>
 
                     {postingCreateError && (
@@ -1969,8 +1969,9 @@ function App() {
             <h1>데이터 정제 관리</h1>
 
             <div className="review-items-filters">
+              <h2>조회조건</h2>
               <label>
-                <span>Status</span>
+                <span>상태</span>
                 <select
                   value={reviewItemsStatusFilter}
                   onChange={(event) =>
@@ -1981,13 +1982,13 @@ function App() {
                   }
                 >
                   <option value="">전체</option>
-                  <option value="unconfirmed">미확인</option>
+                  <option value="unconfirmed">미확정</option>
                   <option value="confirmed">확정</option>
                   <option value="removed">제외</option>
                 </select>
               </label>
               <label>
-                <span>Field type</span>
+                <span>항목 유형</span>
                 <select
                   value={reviewItemsFieldTypeFilter}
                   onChange={(event) =>
@@ -1998,15 +1999,15 @@ function App() {
                   }
                 >
                   <option value="">전체</option>
-                  <option value="industry">industry</option>
-                  <option value="domain">domain</option>
-                  <option value="position">position</option>
-                  <option value="skill">skill</option>
-                  <option value="competency">competency</option>
+                  <option value="industry">산업</option>
+                  <option value="domain">도메인</option>
+                  <option value="position">직무</option>
+                  <option value="skill">기술/도구</option>
+                  <option value="competency">역량</option>
                 </select>
               </label>
               <label>
-                <span>Dictionary apply</span>
+                <span>사전 반영</span>
                 <select
                   value={reviewItemsDictionaryApplyFilter}
                   onChange={(event) =>
@@ -2022,7 +2023,7 @@ function App() {
                 </select>
               </label>
               <label>
-                <span>Keyword</span>
+                <span>키워드</span>
                 <input
                   type="search"
                   value={reviewItemsKeywordFilter}
@@ -2052,11 +2053,11 @@ function App() {
             </div>
 
             <p className="page-info">
-              Page {reviewItemsPageInfo.page} / Size {reviewItemsPageInfo.size}{' '}
-              / Total {reviewItemsPageInfo.total}
+              페이지 {reviewItemsPageInfo.page} / 표시 수{' '}
+              {reviewItemsPageInfo.size} / 전체 {reviewItemsPageInfo.total}
             </p>
 
-            {reviewItemsLoading && <p>Loading review items...</p>}
+            {reviewItemsLoading && <p>정제 항목을 불러오는 중...</p>}
 
             {!reviewItemsLoading && reviewItemsError && (
               <p className="error">{reviewItemsError}</p>
@@ -2412,7 +2413,6 @@ function AiCategoryCandidateList({
     const nextDrafts = items.reduce((acc, item) => {
       acc[item.id] = {
         status: item.status || 'pending',
-        note: item.note || '',
       }
       return acc
     }, {})
@@ -2482,10 +2482,8 @@ function AiCategoryCandidateList({
               <th>확신도</th>
               <th>상태</th>
               <th>판단 근거</th>
-              <th>현재 분석값</th>
-              <th>분석 결과 반영</th>
-              <th>메모</th>
-              <th>작업</th>
+              <th>반영상태</th>
+              <th>후보상태</th>
               <th>생성일시</th>
               <th>검토일시</th>
               <th>반영일시</th>
@@ -2494,7 +2492,7 @@ function AiCategoryCandidateList({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan="13">
+                <td colSpan="11">
                   {isLoading
                     ? '산업/도메인/직무 후보 목록을 불러오는 중입니다.'
                     : '산업/도메인/직무 후보가 없습니다.'}
@@ -2504,12 +2502,7 @@ function AiCategoryCandidateList({
               items.map((item) => {
                 const draft = drafts[item.id] || {
                   status: item.status || 'pending',
-                  note: item.note || '',
                 }
-                const currentAnalysisValue = getAnalysisValueForCategoryType(
-                  analysis,
-                  item.category_type,
-                )
                 const canApply =
                   item.status === 'accepted' && !item.applied_to_analysis
                 const applyDisabled =
@@ -2540,46 +2533,19 @@ function AiCategoryCandidateList({
                       <ReasonDetails reason={item.reason} />
                     </td>
                     <td>
-                      {analysisLoading
-                        ? '분석 결과 확인 중'
-                        : analysisError
-                          ? '현재값 확인 불가'
-                          : formatValue(currentAnalysisValue)}
-                    </td>
-                    <td>
                       <div className="ai-category-candidate-apply-state">
-                        <span>
+                        <span
+                          className={`ai-category-candidate-apply-badge ${
+                            item.applied_to_analysis
+                              ? 'ai-category-candidate-apply-badge-applied'
+                              : 'ai-category-candidate-apply-badge-pending'
+                          }`}
+                        >
                           {item.applied_to_analysis
                             ? '반영 완료'
                             : '미반영'}
                         </span>
-                        <small>
-                          {item.applied_to_analysis
-                            ? `반영일시: ${formatDateTime(item.applied_at)}`
-                            : applyHint}
-                        </small>
-                        {item.applied_to_analysis && (
-                          <small>
-                            이전 분석값:{' '}
-                            {formatValue(item.previous_analysis_value)}
-                          </small>
-                        )}
-                        {item.applied_analysis_field && (
-                          <small>
-                            반영 필드:{' '}
-                            {formatAiAnalysisField(item.applied_analysis_field)}
-                          </small>
-                        )}
                       </div>
-                    </td>
-                    <td className="ai-category-candidate-note-cell">
-                      <textarea
-                        value={draft.note}
-                        onChange={(event) =>
-                          updateDraft(item.id, 'note', event.target.value)
-                        }
-                        rows="2"
-                      />
                     </td>
                     <td className="ai-category-candidate-actions">
                       <div className="ai-category-candidate-action-row">
@@ -2596,7 +2562,7 @@ function AiCategoryCandidateList({
                         <button
                           type="button"
                           onClick={() =>
-                            onUpdate(item.id, draft.status, draft.note)
+                            onUpdate(item.id, draft.status, item.note)
                           }
                           disabled={updatingId === item.id || isLoading}
                         >
@@ -2606,6 +2572,8 @@ function AiCategoryCandidateList({
                           type="button"
                           onClick={() => onApply(item)}
                           disabled={applyDisabled}
+                          title={applyHint}
+                          aria-label={applyHint}
                         >
                           {item.applied_to_analysis
                             ? '반영 완료'
@@ -2614,11 +2582,6 @@ function AiCategoryCandidateList({
                               : '분석 결과로 반영'}
                         </button>
                       </div>
-                      {!canApply && (
-                        <span className="ai-category-candidate-action-hint">
-                          {applyHint}
-                        </span>
-                      )}
                     </td>
                     <td className="ai-category-candidate-date-cell">
                       {formatDateTime(item.created_at)}
@@ -3918,7 +3881,7 @@ function ComparisonTable({ items = [] }) {
             <th>산업 카테고리</th>
             <th>도메인 카테고리</th>
             <th>직무 카테고리</th>
-            <th>기술/툴</th>
+            <th>기술/도구</th>
             <th>역량</th>
             <th>미확정 항목 수</th>
           </tr>
@@ -4000,7 +3963,7 @@ function PostingForm({
     ['duties', '담당 업무', 'textarea'],
     ['requirements', '자격 요건', 'textarea'],
     ['preferred', '우대 사항 (선택)', 'textarea'],
-    ['tools', '기술/툴 (선택)', 'textarea'],
+    ['tools', '기술/도구 (선택)', 'textarea'],
     ['experience', '경력 (선택)', 'input'],
     ['employment_type', '고용 형태 (선택)', 'input'],
     ['work_type', '근무 형태 (선택)', 'input'],
@@ -4132,9 +4095,9 @@ function ReviewItemsTable({
                       onDraftChange(item.id, 'status', event.target.value)
                     }
                   >
-                    <option value="unconfirmed">unconfirmed</option>
-                    <option value="confirmed">confirmed</option>
-                    <option value="removed">removed</option>
+                    <option value="unconfirmed">미확정</option>
+                    <option value="confirmed">확정</option>
+                    <option value="removed">제외</option>
                   </select>
                 </td>
                 <td>
@@ -4173,7 +4136,7 @@ function PostingDetail({ posting }) {
     ['담당 업무', posting.duties],
     ['자격 요건', posting.requirements],
     ['우대 사항', posting.preferred],
-    ['기술/툴', posting.tools],
+    ['기술/도구', posting.tools],
     ['경력', posting.experience],
     ['고용 형태', posting.employment_type],
     ['근무 형태', posting.work_type],
@@ -4197,10 +4160,10 @@ function PostingDetail({ posting }) {
 
 function PostingAnalysisDetail({ analysis, isLoading, error }) {
   const analysisItems = [
-    ['산업 카테고리', analysis?.industry_category],
-    ['도메인 카테고리', analysis?.domain_category],
-    ['직무 카테고리', analysis?.position_category],
-    ['기술/툴', formatList(analysis?.extracted_skills)],
+    ['산업', analysis?.industry_category],
+    ['도메인', analysis?.domain_category],
+    ['직무', analysis?.position_category],
+    ['기술/도구', formatList(analysis?.extracted_skills)],
     ['역량', formatList(analysis?.extracted_competencies)],
     ['미확정 항목 수', analysis?.unconfirmed_count],
     ['분석일시', analysis?.analyzed_at],
@@ -4375,13 +4338,16 @@ function formatList(value) {
 }
 
 function formatReviewItemStatus(status) {
+  if (status === 'unconfirmed') {
+    return '미확정'
+  }
   if (status === 'confirmed') {
     return '확정'
   }
   if (status === 'removed') {
     return '제외'
   }
-  return '미확인'
+  return status || '-'
 }
 
 function formatReviewItemFieldType(fieldType) {
@@ -4389,7 +4355,7 @@ function formatReviewItemFieldType(fieldType) {
     industry: '산업',
     domain: '도메인',
     position: '직무',
-    skill: '기술/툴',
+    skill: '기술/도구',
     competency: '역량',
   }
 
@@ -4504,15 +4470,15 @@ function formatAiAnalysisField(field) {
 
 function getAiCategoryCandidateApplyHint(candidate) {
   if (candidate.applied_to_analysis) {
-    return '이미 분석 결과에 반영됨'
+    return '반영 완료'
   }
   if (candidate.status === 'pending') {
-    return '후보 채택 후 반영 가능'
+    return '후보 채택 필요'
   }
   if (candidate.status === 'rejected') {
-    return '제외 후보는 반영 불가'
+    return '반영 불가'
   }
-  return '후보 채택 상태에서 수동 반영 가능'
+  return '반영 가능'
 }
 
 function getAnalysisValueForCategoryType(analysis, categoryType) {

@@ -654,6 +654,13 @@ button { font-family: inherit; }
   box-shadow: var(--shadow-xs);
 }
 
+.review-items-filters h2 {
+  flex: 1 0 100%;
+  margin: 0 0 2px;
+  color: var(--gray-900);
+  font-size: 15px;
+}
+
 .review-items-filters label {
   display: grid;
   gap: 4px;
@@ -957,7 +964,7 @@ button { font-family: inherit; }
 .ai-category-candidate-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1720px;
+  min-width: 1480px;
 }
 
 .ai-category-candidate-table th,
@@ -1008,7 +1015,7 @@ button { font-family: inherit; }
 .ai-category-candidate-actions {
   display: grid;
   gap: 8px;
-  min-width: 360px;
+  min-width: 330px;
 }
 
 .ai-category-candidate-action-row {
@@ -1019,21 +1026,29 @@ button { font-family: inherit; }
 }
 
 .ai-category-candidate-apply-state {
-  display: grid;
-  gap: 4px;
+  display: inline-flex;
+  align-items: center;
 }
 
-.ai-category-candidate-apply-state span {
-  color: var(--gray-700);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.ai-category-candidate-apply-state small,
-.ai-category-candidate-action-hint {
-  color: var(--gray-500);
+.ai-category-candidate-apply-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
   font-size: 12px;
-  line-height: 1.4;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.ai-category-candidate-apply-badge-applied {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.ai-category-candidate-apply-badge-pending {
+  background: var(--gray-100);
+  color: var(--gray-700);
 }
 
 .ai-category-candidate-apply-result {
@@ -1097,28 +1112,11 @@ button { font-family: inherit; }
   cursor: not-allowed;
 }
 
-.ai-category-candidate-table textarea {
-  width: 100%;
-  font: inherit;
-  min-height: 56px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  color: var(--gray-700);
-  font-size: 13px;
-  padding: 7px 10px;
-  background: var(--gray-50);
-  resize: vertical;
-}
-
 .ai-category-candidate-value-cell {
   min-width: 160px;
 }
 
 .ai-category-candidate-reason-cell {
-  min-width: 220px;
-}
-
-.ai-category-candidate-note-cell {
   min-width: 220px;
 }
 

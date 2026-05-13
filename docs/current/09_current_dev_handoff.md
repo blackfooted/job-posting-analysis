@@ -1,5 +1,26 @@
 # Current Dev Handoff
 
+## MVP Deployment UI Label Polish 완료
+
+- MVP 배포 전 화면 라벨/상태값/그리드 컬럼 정리를 완료했다.
+- 개별 공고 상세/분석 화면의 분석 결과 타이틀과 주요 분석 필드 label을 한글 사용자 기준으로 정리했다.
+- 데이터 정제 관리 화면의 조회조건 영역 title을 `조회조건`으로 통일하고, 상태/항목 유형/사전 반영/키워드 label을 한글화했다.
+- `review_items` 상태값은 화면에서 `미확정`/`확정`/`제외`로 표시하며, API 값은 `unconfirmed`/`confirmed`/`removed`를 유지한다.
+- 데이터 정제 관리의 field_type은 화면에서 `산업`/`도메인`/`직무`/`기술/도구`/`역량`으로 표시하며, API 값은 기존 내부값을 유지한다.
+- AI 추천 관리의 저장된 산업/도메인/직무 후보 그리드를 정리했다.
+- `분석 결과 반영` 컬럼명을 `반영상태`로 변경하고, 해당 컬럼은 `반영 완료`/`미반영` 상태만 표시한다.
+- 반영일시는 우측 `반영일시` 컬럼에 유지하며, 반영상태 컬럼 안에는 반영일시/이전 값/반영 필드를 표시하지 않는다.
+- `작업` 컬럼명을 `후보상태`로 변경했다.
+- 후보 그리드의 메모 컬럼과 메모 입력 UI는 MVP frontend grid에서 미노출 처리했다.
+- 후보상태 컬럼 안의 긴 설명 문구는 화면에 노출하지 않고 버튼 disabled 상태와 짧은 상태 표시로 정리했다.
+- backend/API/DB/config/package/API client/AI 추천 로직/analysis apply 로직 변경 없음.
+
+다음 단계:
+
+1. 공고 누적
+2. 데이터 정제
+3. AI 추천 품질 개선
+
 ## Frontend Deployment Readiness Check 완료
 
 - Render Static Site 배포 전 frontend readiness를 점검했다.
