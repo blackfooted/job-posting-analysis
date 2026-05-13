@@ -1983,6 +1983,10 @@ button { font-family: inherit; }
   text-align: left;
 }
 
+.posting-analysis-detail-list {
+  grid-template-columns: 1fr;
+}
+
 .posting-detail-item {
   display: grid;
   grid-template-columns: minmax(120px, 160px) 1fr;

@@ -42,6 +42,7 @@ const postingFormValidationMessages = {
 
 const reviewItemApplyFieldTypes = ['skill', 'competency']
 const categoryCandidateFieldTypes = ['industry', 'domain', 'position']
+const emptyDataMessage = '데이터가 없습니다'
 
 function App() {
   const reviewItemsPageSize = 15
@@ -2097,7 +2098,7 @@ function App() {
 
             {!reviewItemsLoading &&
               !reviewItemsError &&
-              reviewItems.length === 0 && <p>No review items</p>}
+              reviewItems.length === 0 && <p>{emptyDataMessage}</p>}
 
             {!reviewItemsLoading &&
               !reviewItemsError &&
@@ -2231,7 +2232,7 @@ function App() {
 
             {!postingsLoading &&
               !postingsError &&
-              postings.length === 0 && <p>추천을 조회할 공고가 없습니다.</p>}
+              postings.length === 0 && <p>{emptyDataMessage}</p>}
 
             {selectedAiPostingId && (
               <AiRecommendationHistoryList
@@ -2495,7 +2496,7 @@ function AiCategoryCandidateList({
                 <td colSpan="11">
                   {isLoading
                     ? '산업/도메인/직무 후보 목록을 불러오는 중입니다.'
-                    : '산업/도메인/직무 후보가 없습니다.'}
+                    : emptyDataMessage}
                 </td>
               </tr>
             ) : (
@@ -2697,7 +2698,7 @@ function AiRecommendationList({ title, items = [] }) {
     <section className="ai-recommendation-list">
       <h2>{title}</h2>
       {items.length === 0 ? (
-        <p>추천 항목이 없습니다.</p>
+        <p>{emptyDataMessage}</p>
       ) : (
         <div className="ai-recommendation-item-list">
           {items.map((item, index) => (
@@ -2718,7 +2719,7 @@ function AiReviewCandidateList({ items = [] }) {
     <section className="ai-recommendation-list">
       <h2>검토 후보</h2>
       {items.length === 0 ? (
-        <p>검토 후보가 없습니다.</p>
+        <p>{emptyDataMessage}</p>
       ) : (
         <div className="ai-review-candidate-list">
           {items.map((item, index) => (
@@ -2875,7 +2876,7 @@ function AiRecommendationHistoryList({
 
       {!isLoading && !error && items.length === 0 && (
         <p className="ai-recommendation-history-empty">
-          아직 저장된 AI 추천 이력이 없습니다.
+          {emptyDataMessage}
         </p>
       )}
 
@@ -3193,7 +3194,7 @@ function AiRecommendationApplyPanel({
         저장됩니다.
       </p>
       {items.length === 0 ? (
-        <p>저장/반영 가능한 AI 추천 항목이 없습니다.</p>
+        <p>{emptyDataMessage}</p>
       ) : (
         <div className="ai-recommendation-apply-list">
           {items.map((entry) => (
@@ -3673,7 +3674,7 @@ function AiRecommendationHistoryDetail({
           <section className="ai-recommendation-history-detail-list">
             <h3>기술/도구</h3>
             {skills.length === 0 ? (
-              <p>추천 항목이 없습니다.</p>
+              <p>{emptyDataMessage}</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {skills.map((item, index) => (
@@ -3701,7 +3702,7 @@ function AiRecommendationHistoryDetail({
           <section className="ai-recommendation-history-detail-list">
             <h3>역량</h3>
             {competencies.length === 0 ? (
-              <p>추천 항목이 없습니다.</p>
+              <p>{emptyDataMessage}</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {competencies.map((item, index) => (
@@ -3729,7 +3730,7 @@ function AiRecommendationHistoryDetail({
           <section className="ai-recommendation-history-detail-list">
             <h3>검토 후보</h3>
             {reviewItemCandidates.length === 0 ? (
-              <p>검토 후보가 없습니다.</p>
+              <p>{emptyDataMessage}</p>
             ) : (
               <div className="ai-recommendation-history-detail-item-list">
                 {reviewItemCandidates.map((item, index) => (
@@ -3794,7 +3795,7 @@ function ChartList({ title, items = [] }) {
     <article className="chart-list">
       <h3>{title}</h3>
       {chartItems.length === 0 ? (
-        <p className="dashboard-empty-state">표시할 데이터가 없습니다.</p>
+        <p className="dashboard-empty-state">{emptyDataMessage}</p>
       ) : (
         <div className="dashboard-pie-layout">
           <div className="dashboard-pie-chart" aria-label={`${title} 원형 차트`}>
@@ -3868,7 +3869,7 @@ function DashboardPieTooltip({ active, payload, total }) {
 
 function ComparisonTable({ items = [] }) {
   if (items.length === 0) {
-    return <p>No data</p>
+    return <p>{emptyDataMessage}</p>
   }
 
   return (
@@ -3907,7 +3908,7 @@ function ComparisonTable({ items = [] }) {
 
 function PostingsTable({ items = [], onViewDetail }) {
   if (items.length === 0) {
-    return <p>No postings</p>
+    return <p>{emptyDataMessage}</p>
   }
 
   return (
@@ -4178,7 +4179,7 @@ function PostingAnalysisDetail({ analysis, isLoading, error }) {
       {!isLoading && error && <p className="error">{error}</p>}
 
       {!isLoading && !error && (
-        <dl className="posting-detail-list">
+        <dl className="posting-detail-list posting-analysis-detail-list">
           {analysisItems.map(([label, value]) => (
             <div key={label} className="posting-detail-item">
               <dt>{label}</dt>
